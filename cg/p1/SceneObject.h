@@ -64,7 +64,7 @@ public:
     makeUse(&_transform);
   }
 
-  /// Add an element to the collection.
+  /// Add an element to the collection. legal
   void add(Reference<SceneObject> object);
 
   /// Remove an element of the collection.
