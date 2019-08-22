@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{4780518D-AFF4-44A9-BF4B-4329D56FF751}</ProjectGuid>
+    <RootNamespace>cg</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>..\..\lib\</OutDir>
+    <TargetName>$(ProjectName)D</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>..\..\lib\</OutDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeaderFile />
+      <PrecompiledHeaderOutputFile />
+      <AdditionalIncludeDirectories>../../externals/include;../../include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Lib>
+      <OutputFile>..\..\lib\$(TargetName)$(TargetExt)</OutputFile>
+      <AdditionalDependencies>glfw3.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>../../externals/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeaderFile />
+      <PrecompiledHeaderOutputFile />
+      <AdditionalIncludeDirectories>../../externals/include;../../include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+    <Lib>
+      <OutputFile>..\..\lib\$(TargetName)$(TargetExt)</OutputFile>
+      <AdditionalDependencies>glfw3.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>../../externals/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\include\core\Flags.h" />
+    <ClInclude Include="..\..\include\core\Globals.h" />
+    <ClInclude Include="..\..\include\core\NameableObject.h" />
+    <ClInclude Include="..\..\include\core\SharedObject.h" />
+    <ClInclude Include="..\..\include\geometry\Bounds3.h" />
+    <ClInclude Include="..\..\include\geometry\Ray.h" />
+    <ClInclude Include="..\..\include\geometry\TriangleMesh.h" />
+    <ClInclude Include="..\..\include\graphics\Application.h" />
+    <ClInclude Include="..\..\include\graphics\Color.h" />
+    <ClInclude Include="..\..\include\graphics\GLGraphics.h" />
+    <ClInclude Include="..\..\include\graphics\GLGraphicsBase.h" />
+    <ClInclude Include="..\..\include\graphics\GLMesh.h" />
+    <ClInclude Include="..\..\include\graphics\GLProgram.h" />
+    <ClInclude Include="..\..\include\graphics\GLWindow.h" />
+    <ClInclude Include="..\..\include\math\Matrix3x3.h" />
+    <ClInclude Include="..\..\include\math\Matrix4x4.h" />
+    <ClInclude Include="..\..\include\math\Quaternion.h" />
+    <ClInclude Include="..\..\include\math\Real.h" />
+    <ClInclude Include="..\..\include\math\RealLimits.h" />
+    <ClInclude Include="..\..\include\math\Vector3.h" />
+    <ClInclude Include="..\..\include\math\Vector4.h" />
+    <ClInclude Include="..\..\include\utils\MeshReader.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\externals\src\gl3w.c" />
+    <ClCompile Include="..\..\externals\src\imgui.cpp" />
+    <ClCompile Include="..\..\externals\src\imgui_draw.cpp" />
+    <ClCompile Include="..\..\externals\src\imgui_impl_glfw.cpp" />
+    <ClCompile Include="..\..\externals\src\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="..\..\src\Application.cpp" />
+    <ClCompile Include="..\..\src\Color.cpp" />
+    <ClCompile Include="..\..\src\GLGraphics.cpp" />
+    <ClCompile Include="..\..\src\GLGraphicsBase.cpp" />
+    <ClCompile Include="..\..\src\GLProgram.cpp" />
+    <ClCompile Include="..\..\src\GLWindow.cpp" />
+    <ClCompile Include="..\..\src\MeshReader.cpp" />
+    <ClCompile Include="..\..\src\NameableObject.cpp" />
+    <ClCompile Include="..\..\src\TriangleMesh.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
