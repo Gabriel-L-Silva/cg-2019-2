@@ -48,14 +48,17 @@ class Scene: public SceneNode
 {
 public:
   Color backgroundColor{Color::gray};
-  std::vector<SceneObject*> objects;
 
+  SceneObject* root;
 
   /// Constructs an empty scene.
   Scene(const char* name):
     SceneNode{name}
   {
     // do nothing
+		root = new SceneObject("root", this);
+		root->visible = false;
+
   }
 
 }; // Scene

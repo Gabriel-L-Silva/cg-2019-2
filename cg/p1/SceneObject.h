@@ -52,8 +52,9 @@ class SceneObject: public SceneNode
 {
 public:
   bool visible{true};
-  //std::vector<SceneObject*> children;
   std::vector<Reference<SceneObject>> children;
+	
+	std::vector<Reference<Component>> components;
 
   /// Constructs an empty scene object.
   SceneObject(const char* name, Scene* scene):
@@ -64,15 +65,20 @@ public:
     makeUse(&_transform);
   }
 
-  /// Add an element to the collection. legal
+	/// Operations over an element's objects collection
   void add(Reference<SceneObject> object);
 
-  /// Remove an element of the collection.
-  auto remove(Reference<SceneObject> object);
+  void remove(Reference<SceneObject> object);
 
-  /// Get a iterator over the object collection.
-  auto getIterator();
- 
+  auto getIterator(Reference<SceneObject> object);
+
+	/// Operations over an element's component collection
+	void add(Reference<Component> component);
+
+	void remove(Reference<Component> component);
+
+	auto getIterator(Reference<Component> component);
+
   /// Returns the scene which this scene object belong to.
   auto scene() const
   {

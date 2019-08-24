@@ -23,14 +23,13 @@
 //|                                                                 |
 //[]---------------------------------------------------------------[]
 //
-// OVERVIEW: SceneObject.cpp
+// OVERVIEW: Scene.cpp
 // ========
 // Source file for scene object.
 //
 // Author(s): Paulo Pagliosa (and your name)
 // Last revision: 25/08/2018
 
-#include "SceneObject.h"
 #include "Scene.h"
 
 namespace cg
@@ -39,75 +38,33 @@ namespace cg
 
 /////////////////////////////////////////////////////////////////////
 //
-// SceneObject implementation
+// Scene implementation
 // ===========
-void
-SceneObject::setParent(SceneObject* parent)
-{
-  if (parent == nullptr)
+
+	void
+		Scene::add(Reference<SceneObject> object)
 	{
-		_parent = this->_scene->root;
-	}
-	else if (_parent != this->_scene->root)
-	{
-		parent->remove(this);
-		parent->add(this);
-		
+		children.emplace_back(object);
 	}
 
-}
+	auto
+		Scene::remove(Reference<SceneObject> object)
+	{
+		auto iterator = children.begin();
 
-void 
-SceneObject::add(Reference<SceneObject> object)
-{
-	children.emplace_back(object);
-}
+		while (*iterator != object)
+			iterator++;
 
-void
-SceneObject::remove(Reference<SceneObject> object)
-{
-	auto iterator = children.begin();
+		Reference<SceneObject> removed = object;
+		children.erase(iterator);//*iterator faz sentido?
 
-	while (*iterator != object)
-		iterator++;
+		return removed;
+	}
 
-	//Reference <SceneObject> removed = object;
-	children.erase(iterator);
-
-	//return removed;
-}
-
-auto
-SceneObject::getIterator(Reference<SceneObject> object)
-{
-	return children.begin();
-}
-
-void
-SceneObject::add(Reference<Component> object)
-{
-	components.emplace_back(object);
-}
-
-void
-SceneObject::remove(Reference<Component> object)
-{
-	auto iterator = components.begin();
-
-	while (*iterator != object)
-		iterator++;
-
-	//Reference <SceneObject> removed = object;
-	components.erase(iterator);
-
-	//return removed;
-}
-
-auto
-SceneObject::getIterator(Reference<Component> object)
-{
-	return components.begin();
-}
-
+	auto
+		Scene::getIterator()
+	{
+		return children.begin();
+	}
 
 } // end namespace cg
