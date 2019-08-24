@@ -66,7 +66,12 @@ P1::buildScene()
 {
   _current = _scene = new Scene{"Scene 1"};
   _box = new SceneObject{"Box 1", _scene};
-  _primitive = makeBoxMesh();
+	//_box agora faz parte da raiz da cena
+	_box->setParent(_scene->root);
+	_primitive = makeBoxMesh();
+	/*for (int i = 0; i < 10; i++) {
+		_box->add(new SceneObject{ "void", _scene });
+	}*/
 }
 
 void
