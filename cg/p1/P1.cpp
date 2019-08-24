@@ -67,11 +67,17 @@ P1::buildScene()
   _current = _scene = new Scene{"Scene 1"};
   _box = new SceneObject{"Box 1", _scene};
 	//_box agora faz parte da raiz da cena
-	_box->setParent(_scene->root);
+	_box->setParent(nullptr);
+
 	_primitive = makeBoxMesh();
-	/*for (int i = 0; i < 10; i++) {
+	//Adiciona _primitive nos componentes de _box
+	_box->add((Reference<Component>)_primitive);
+	for (int i = 0; i < 5; i++) {
 		_box->add(new SceneObject{ "void", _scene });
-	}*/
+		for (int j = 0; j < 5; j++) {
+			_box->children.at(i)->add(new SceneObject{ "void", _scene });
+		}
+	}
 }
 
 void
@@ -91,6 +97,28 @@ namespace ImGui
 {
   void ShowDemoWindow(bool*);
 }
+
+//void treeChildren(ImGuiTreeNodeFlags node_flags, bool isOpen, int index, Reference<SceneObject> _box)
+//{
+//	if (isOpen)
+//	{
+//		for (int p = 0; p < _box->children.size(); p++)
+//		{
+//			if (_box->children.at(p)->children.empty())
+//			{
+//				node_flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen; // ImGuiTreeNodeFlags_Bullet
+//				ImGui::TreeNodeEx((void*)(intptr_t)p, node_flags, _box->children.at(p)->name());
+//			}
+//			else
+//			{
+//				auto open = ImGui::TreeNodeEx(_box->children.at(p), node_flags, _box->children.at(p)->name());
+//				/*ImGui::TreePop();*/
+//				treeChildren(node_flags, open, p, _box);
+//			}
+//		}
+//		ImGui::TreePop();
+//	}
+//}
 
 inline void
 P1::hierarchyWindow()
@@ -122,12 +150,24 @@ P1::hierarchyWindow()
     _current = _scene;
   if (open)
   {
-    flag |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
-    ImGui::TreeNodeEx(_box,
+    flag |= ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+    open = ImGui::TreeNodeEx(_box,
       _current == _box ? flag | ImGuiTreeNodeFlags_Selected : flag,
       _box->name());
+
     if (ImGui::IsItemClicked())
       _current = _box;
+		//treeChildren(flag, open, 0, _box);
+		if (open) {
+			flag |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+			for (int i = 0; i < _box->children.size(); i++) {
+				ImGui::TreeNodeEx(_box->children.at(i),
+					_current == _box->children.at(i) ? flag | ImGuiTreeNodeFlags_Selected : flag,
+					_box->children.at(i)->name());
+				if (ImGui::IsItemClicked())
+					_current = _box->children.at(i);
+			}
+		}
     ImGui::TreePop();
   }
   ImGui::End();
