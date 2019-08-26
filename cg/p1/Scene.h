@@ -61,6 +61,18 @@ public:
 
   }
 
+	~Scene()
+	{
+		// remove all the childrens from the root node
+		for (int i = 0; i < root->children.size(); i++)
+		{
+			root->children.at(i).~Reference();
+		}
+
+		// perguntar pro pagliboy
+		free(root);
+	}
+
 }; // Scene
 
 } // end namespace cg
