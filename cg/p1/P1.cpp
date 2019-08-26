@@ -73,10 +73,18 @@ P1::buildScene()
 	_primitive = makeBoxMesh();
 	//Adiciona _primitive nos componentes de _box
 	_box->add((Reference<Component>)_primitive);
+
+	std::string name{"Object"};
   for (int i = 0; i < 5; i++) {
-		_box->add(new SceneObject{ "void", _scene });
+		std::string name{ "Object" + std::to_string(i) };
+		_box->add(new SceneObject{ name.c_str(), _scene });
 		for (int j = 0; j < 5; j++) {
-			_box->children.at(i)->add(new SceneObject{ "void", _scene });
+			std::string name{ "Object" + std::to_string(j) };
+			_box->children.at(i)->add(new SceneObject{ name.c_str(), _scene });
+			for (int k = 0; k < 5; k++) {
+				std::string name{ "Object" + std::to_string(k) };
+				_box->children.at(i)->children.at(j)->add(new SceneObject{ name.c_str(), _scene });
+			}
 		}
 	}
 }
@@ -99,34 +107,35 @@ namespace ImGui
   void ShowDemoWindow(bool*);
 }
 
-void treeChildren(ImGuiTreeNodeFlags flag, bool open, Reference<SceneObject> _sceneObject, SceneNode* _current)
+void treeChildren(ImGuiTreeNodeFlags flag, bool open, Reference<SceneObject> _sceneObject, SceneNode** _current)
 {
 	if (open)
 	{
-		if (_sceneObject->children.empty()) {
-			flag |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
-			auto open = ImGui::TreeNodeEx(_sceneObject,
-				_current == _sceneObject ? flag | ImGuiTreeNodeFlags_Selected : flag,
-				_sceneObject->name());
-			/* Nao funciona como o esparado, inspector não mostra quando o ngc é clicado
-			if (ImGui::IsItemClicked())
-				_current = _sceneObject;*/
-		}
-		else {
-			flag |= ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_NoTreePushOnOpen;
-			auto open = ImGui::TreeNodeEx(_sceneObject,
-				_current == _sceneObject ? flag | ImGuiTreeNodeFlags_Selected : flag,
-				_sceneObject->name());
-			/* Nao funciona como o esparado, inspector não mostra quando o ngc é clicado
-			if (ImGui::IsItemClicked())
-				_current = _sceneObject;*/
+		for (int i = 0; i < _sceneObject->children.size(); i++)
+		{
+			if (_sceneObject->children.at(i)->children.empty()) 
+			{
+				flag |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+				ImGui::TreeNodeEx(_sceneObject->children.at(i),
+					*_current == _sceneObject->children.at(i) ? flag | ImGuiTreeNodeFlags_Selected : flag,
+					_sceneObject->children.at(i)->name());
+				if (ImGui::IsItemClicked()) 
+					*_current = _sceneObject->children.at(i);
+				
+			}
+			else
+			{
+				flag |= ImGuiTreeNodeFlags_OpenOnArrow;
+				auto open = ImGui::TreeNodeEx(_sceneObject->children.at(i),
+					*_current == _sceneObject->children.at(i) ? flag | ImGuiTreeNodeFlags_Selected : flag,
+					_sceneObject->children.at(i)->name());
 
-			auto it = _sceneObject->children.begin();
-			auto end = _sceneObject->children.end();
-			for (; it != end; it++) {
-				treeChildren(flag, open, *it, _current);
-			}	
+				if (ImGui::IsItemClicked())
+					*_current = _sceneObject->children.at(i);
+				treeChildren(flag, open, _sceneObject->children.at(i), _current);
+			}
 		}
+		ImGui::TreePop();
 	}
 }
 
@@ -151,6 +160,28 @@ P1::hierarchyWindow()
   }
   ImGui::Separator();
 
+
+	//ImGuiTreeNodeFlags flag{ ImGuiTreeNodeFlags_OpenOnArrow };
+	//auto open = ImGui::TreeNodeEx(_scene,
+	//	_current == _scene ? flag | ImGuiTreeNodeFlags_Selected : flag,
+	//	_scene->name());
+
+	//if (ImGui::IsItemClicked())
+	//	_current = _scene;
+	//if (open)
+	//{
+	//	flag |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+	//	ImGui::TreeNodeEx(_box,
+	//		_current == _box ? flag | ImGuiTreeNodeFlags_Selected : flag,
+	//		_box->name());
+	//	if (ImGui::IsItemClicked())
+	//		_current = _box;
+	//	ImGui::TreePop();
+	//}
+	//ImGui::End();
+
+
+
   ImGuiTreeNodeFlags flag{ImGuiTreeNodeFlags_OpenOnArrow};
   auto open = ImGui::TreeNodeEx(_scene,
     _current == _scene ? flag | ImGuiTreeNodeFlags_Selected : flag,
@@ -158,11 +189,8 @@ P1::hierarchyWindow()
 
   if (ImGui::IsItemClicked())
     _current = _scene;
-	treeChildren(flag, open, _scene->root->children.at(0),_current);
-	if (open)
-	{
-		ImGui::TreePop();
-	}
+	for(int i =0; i < _scene->root->children.size(); i++)
+		treeChildren(flag, open, _scene->root, &_current);
   ImGui::End();
 }
 

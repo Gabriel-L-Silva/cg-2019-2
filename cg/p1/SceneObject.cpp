@@ -78,11 +78,6 @@ SceneObject::remove(Reference<SceneObject> object)
 	//return removed;
 }
 
-auto
-SceneObject::getIterator(Reference<SceneObject> object)
-{
-	return children.begin();
-}
 
 void
 SceneObject::add(Reference<Component> object)
@@ -102,12 +97,6 @@ SceneObject::remove(Reference<Component> object)
 	components.erase(iterator);
 
 	//return removed;
-}
-
-auto
-SceneObject::getIterator(Reference<Component> object)
-{
-	return components.begin();
 }
 
 

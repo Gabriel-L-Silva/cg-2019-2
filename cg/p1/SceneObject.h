@@ -70,14 +70,26 @@ public:
 
   void remove(Reference<SceneObject> object);
 
-  auto getIterator(Reference<SceneObject> object);
+	auto getChildrenIter() {
+		return children.begin();
+	}
+
+	auto getChildrenEnd() {
+		return children.end();
+	}
 
 	/// Operations over an element's component collection
 	void add(Reference<Component> component);
 
 	void remove(Reference<Component> component);
 
-	auto getIterator(Reference<Component> component);
+	auto getComponentIter() {
+		return components.begin();
+	}
+
+	auto getComponentEnd() {
+		return components.end();
+	}
 
   /// Returns the scene which this scene object belong to.
   auto scene() const

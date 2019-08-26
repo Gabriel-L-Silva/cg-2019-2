@@ -49,7 +49,7 @@ class Scene: public SceneNode
 public:
   Color backgroundColor{Color::gray};
 
-  SceneObject* root;
+  Reference<SceneObject> root;
 
   /// Constructs an empty scene.
   Scene(const char* name):
@@ -61,17 +61,11 @@ public:
 
   }
 
-	~Scene()
-	{
-		// remove all the childrens from the root node
-		for (int i = 0; i < root->children.size(); i++)
-		{
-			root->children.at(i).~Reference();
-		}
-
-		// perguntar pro pagliboy
-		free(root);
-	}
+	//~Scene()
+	//{
+	//	// perguntar pro pagliboy
+	//	free(root);
+	//}
 
 }; // Scene
 
