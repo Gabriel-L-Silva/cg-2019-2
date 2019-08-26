@@ -99,36 +99,36 @@ namespace ImGui
   void ShowDemoWindow(bool*);
 }
 
-//void treeChildren(ImGuiTreeNodeFlags flag, bool open, Reference<SceneObject> _sceneObject, SceneNode* _current)
-//{
-//	if (open)
-//	{
-//		if (_sceneObject->children.empty()) {
-//			flag |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
-//			auto open = ImGui::TreeNodeEx(_sceneObject,
-//				_current == _sceneObject ? flag | ImGuiTreeNodeFlags_Selected : flag,
-//				_sceneObject->name());
-//			/* Nao funciona como o esparado, inspector não mostra quando o ngc é clicado
-//			if (ImGui::IsItemClicked())
-//				_current = _sceneObject;*/
-//		}
-//		else {
-//			flag |= ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_NoTreePushOnOpen;
-//			auto open = ImGui::TreeNodeEx(_sceneObject,
-//				_current == _sceneObject ? flag | ImGuiTreeNodeFlags_Selected : flag,
-//				_sceneObject->name());
-//			/* Nao funciona como o esparado, inspector não mostra quando o ngc é clicado
-//			if (ImGui::IsItemClicked())
-//				_current = _sceneObject;*/
-//
-//			auto it = _sceneObject->children.begin();
-//			auto end = _sceneObject->children.end();
-//			for (; it != end; it++) {
-//				treeChildren(flag, open, *it, _current);
-//			}	
-//		}
-//	}
-//}
+void treeChildren(ImGuiTreeNodeFlags flag, bool open, Reference<SceneObject> _sceneObject, SceneNode* _current)
+{
+	if (open)
+	{
+		if (_sceneObject->children.empty()) {
+			flag |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+			auto open = ImGui::TreeNodeEx(_sceneObject,
+				_current == _sceneObject ? flag | ImGuiTreeNodeFlags_Selected : flag,
+				_sceneObject->name());
+			/* Nao funciona como o esparado, inspector não mostra quando o ngc é clicado
+			if (ImGui::IsItemClicked())
+				_current = _sceneObject;*/
+		}
+		else {
+			flag |= ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+			auto open = ImGui::TreeNodeEx(_sceneObject,
+				_current == _sceneObject ? flag | ImGuiTreeNodeFlags_Selected : flag,
+				_sceneObject->name());
+			/* Nao funciona como o esparado, inspector não mostra quando o ngc é clicado
+			if (ImGui::IsItemClicked())
+				_current = _sceneObject;*/
+
+			auto it = _sceneObject->children.begin();
+			auto end = _sceneObject->children.end();
+			for (; it != end; it++) {
+				treeChildren(flag, open, *it, _current);
+			}	
+		}
+	}
+}
 
 inline void
 P1::hierarchyWindow()
@@ -158,7 +158,7 @@ P1::hierarchyWindow()
 
   if (ImGui::IsItemClicked())
     _current = _scene;
-	//treeChildren(flag, open, _scene->root->children.at(0),_current);
+	treeChildren(flag, open, _scene->root->children.at(0),_current);
 	if (open)
 	{
 		ImGui::TreePop();
