@@ -160,28 +160,6 @@ P1::hierarchyWindow()
   }
   ImGui::Separator();
 
-
-	//ImGuiTreeNodeFlags flag{ ImGuiTreeNodeFlags_OpenOnArrow };
-	//auto open = ImGui::TreeNodeEx(_scene,
-	//	_current == _scene ? flag | ImGuiTreeNodeFlags_Selected : flag,
-	//	_scene->name());
-
-	//if (ImGui::IsItemClicked())
-	//	_current = _scene;
-	//if (open)
-	//{
-	//	flag |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
-	//	ImGui::TreeNodeEx(_box,
-	//		_current == _box ? flag | ImGuiTreeNodeFlags_Selected : flag,
-	//		_box->name());
-	//	if (ImGui::IsItemClicked())
-	//		_current = _box;
-	//	ImGui::TreePop();
-	//}
-	//ImGui::End();
-
-
-
   ImGuiTreeNodeFlags flag{ImGuiTreeNodeFlags_OpenOnArrow};
   auto open = ImGui::TreeNodeEx(_scene,
     _current == _scene ? flag | ImGuiTreeNodeFlags_Selected : flag,
@@ -192,6 +170,7 @@ P1::hierarchyWindow()
 	for(int i =0; i < _scene->root->children.size(); i++)
 		treeChildren(flag, open, _scene->root, &_current);
   ImGui::End();
+
 }
 
 namespace ImGui

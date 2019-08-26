@@ -61,12 +61,12 @@ public:
 
   }
 
-	//~Scene()
-	//{
-	//	// perguntar pro pagliboy
-	//	free(root);
-	//}
-
+	/*~Scene()
+	{
+		 perguntar como fazer o destrutor pois esta dando erro
+		root.~Reference();
+	}
+*/
 }; // Scene
 
 } // end namespace cg
