@@ -108,26 +108,26 @@ P1::treeChildren(ImGuiTreeNodeFlags flag, bool open, Reference<SceneObject> scen
 		auto end = sceneObject->getChildrenEnd();
 		for (int i = 0; it != end; it++,i++)
 		{
-			if ((*it)->getChildrenAt(i)->isChildrenEmpty())
+			if ((*it)->isChildrenEmpty())
 			{
 				flag |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
-				ImGui::TreeNodeEx((*it)->getChildrenAt(i),
-					_current == (*it)->getChildrenAt(i) ? flag | ImGuiTreeNodeFlags_Selected : flag,
-					(*it)->getChildrenAt(i)->name());
+				ImGui::TreeNodeEx((*it),
+					_current == (*it) ? flag | ImGuiTreeNodeFlags_Selected : flag,
+					(*it)->name());
 				if (ImGui::IsItemClicked()) 
-					_current = (*it)->getChildrenAt(i);
+					_current = (*it);
 				
 			}
 			else
 			{
 				flag |= ImGuiTreeNodeFlags_OpenOnArrow;
-				auto open = ImGui::TreeNodeEx((*it)->getChildrenAt(i),
-					_current == (*it)->getChildrenAt(i) ? flag | ImGuiTreeNodeFlags_Selected : flag,
-					(*it)->getChildrenAt(i)->name());
+				auto open = ImGui::TreeNodeEx((*it),
+					_current == (*it) ? flag | ImGuiTreeNodeFlags_Selected : flag,
+					(*it)->name());
 
 				if (ImGui::IsItemClicked())
-					_current = (*it)->getChildrenAt(i);
-				treeChildren(flag, open, (*it)->getChildrenAt(i));
+					_current = (*it);
+				treeChildren(flag, open, (*it));
 			}
 		}
 		ImGui::TreePop();
