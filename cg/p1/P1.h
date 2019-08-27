@@ -26,7 +26,7 @@ public:
   /// Render the scene.
   void render() override;
 
-	void treeChildren(ImGuiTreeNodeFlags flag, bool open, Reference<SceneObject> _sceneObject);
+	void treeChildren(ImGuiTreeNodeFlags flag, bool open, Reference<SceneObject> it);
 private:
   GLSL::Program _program;
   Reference<Scene> _scene;

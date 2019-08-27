@@ -79,6 +79,18 @@ P1::buildScene()
 		std::string name{ "Object" + std::to_string(i) };
 		_box->add(new SceneObject{ name.c_str(), _scene });
 	}
+
+	Reference<SceneObject> _sceneObject;
+
+	for (int i = 0; i < 5; i++) {
+		std::string name{ "RootObject" + std::to_string(i) };
+		_sceneObject = new SceneObject{ name.c_str(), _scene };
+		for (int j = 0; j < 5; j++) {
+			std::string name{ "ObjectSon" + std::to_string(j) };
+			_sceneObject->add(new SceneObject{ name.c_str(), _scene });
+		}
+		_sceneObject->setParent(nullptr);
+	}
 }
 
 void
@@ -102,11 +114,11 @@ namespace ImGui
 void 
 P1::treeChildren(ImGuiTreeNodeFlags flag, bool open, Reference<SceneObject> sceneObject)
 {
-	if (open)
+	if (open && flag == ImGuiTreeNodeFlags_OpenOnArrow)
 	{
 		auto it  = sceneObject->getChildrenIter();
 		auto end = sceneObject->getChildrenEnd();
-		for (int i = 0; it != end; it++,i++)
+		for (; it != end; it++)
 		{
 			if ((*it)->isChildrenEmpty())
 			{
@@ -162,10 +174,11 @@ P1::hierarchyWindow()
 
   if (ImGui::IsItemClicked())
     _current = _scene;
-	for(int i =0; i < _scene->root->getChildrenSize(); i++)
-		treeChildren(flag, open, _scene->root);
-  ImGui::End();
-
+	/*auto it = _scene->root->getChildrenIter();
+	auto end = _scene->root->getChildrenEnd();
+	for(; it != end; it++)*/
+	treeChildren(flag, open, _scene->root);
+	ImGui::End();
 }
 
 namespace ImGui
