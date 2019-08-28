@@ -35,6 +35,7 @@ private:
   SceneNode* _current{};
   Color selectedWireframeColor{255, 102, 0};
   mat4f _transform{mat4f::identity()};
+	int _sceneObjectCounter = 0;
 
 
   void buildScene();

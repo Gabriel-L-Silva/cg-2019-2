@@ -74,19 +74,18 @@ P1::buildScene()
 	//Adiciona _primitive nos componentes de _box
 	_box->add((Reference<Component>)_primitive);
 
-	std::string name{"Object"};
   for (int i = 0; i < 5; i++) {
-		std::string name{ "Object" + std::to_string(i) };
+		std::string name{ "Object " + std::to_string(_sceneObjectCounter++) };
 		_box->add(new SceneObject{ name.c_str(), _scene });
 	}
 
 	Reference<SceneObject> _sceneObject;
 
 	for (int i = 0; i < 5; i++) {
-		std::string name{ "RootObject" + std::to_string(i) };
+		std::string name{ "Object " + std::to_string(_sceneObjectCounter++) };
 		_sceneObject = new SceneObject{ name.c_str(), _scene };
 		for (int j = 0; j < 5; j++) {
-			std::string name{ "ObjectSon" + std::to_string(j) };
+			std::string name{ "Object " + std::to_string(_sceneObjectCounter++) };
 			_sceneObject->add(new SceneObject{ name.c_str(), _scene });
 		}
 		_sceneObject->setParent(nullptr);
@@ -154,12 +153,28 @@ P1::hierarchyWindow()
     ImGui::OpenPopup("CreateObjectPopup");
   if (ImGui::BeginPopup("CreateObjectPopup"))
   {
-    ImGui::MenuItem("Empty Object");
+		if (ImGui::MenuItem("Empty Object"))
+		{
+			std::string name{ "Object " + std::to_string(_sceneObjectCounter++) };
+			auto sceneObject = new SceneObject{ name.c_str(), _scene };
+			SceneObject* current = nullptr;
+			current  = dynamic_cast<SceneObject*>(_current);
+			sceneObject->setParent(current);
+		}
     if (ImGui::BeginMenu("3D Object"))
     {
       if (ImGui::MenuItem("Box"))
       {
         // TODO: create a new box.
+				std::string name{ "Box " + std::to_string(_sceneObjectCounter++) };
+				auto sceneObject = new SceneObject{ name.c_str(), _scene };
+				SceneObject* current = nullptr;
+				current = dynamic_cast<SceneObject*>(_current);
+				sceneObject->setParent(current);
+
+				Component* primitive = nullptr;
+				primitive = dynamic_cast<Component*>(makeBoxMesh());
+				sceneObject->add(primitive);
       }
       ImGui::EndMenu();
     }
