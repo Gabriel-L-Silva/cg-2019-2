@@ -49,7 +49,7 @@ class Scene: public SceneNode
 public:
   Color backgroundColor{Color::gray};
 
-  Reference<SceneObject> root;
+  
 
   /// Constructs an empty scene.
   Scene(const char* name):
@@ -67,6 +67,12 @@ public:
 	//	delete(root);
 	//}
 
+	auto getRoot() {
+		return root;
+	}
+
+private:
+	Reference<SceneObject> root;
 }; // Scene
 
 } // end namespace cg

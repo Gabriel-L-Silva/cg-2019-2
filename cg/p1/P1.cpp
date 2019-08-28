@@ -174,10 +174,8 @@ P1::hierarchyWindow()
 
   if (ImGui::IsItemClicked())
     _current = _scene;
-	/*auto it = _scene->root->getChildrenIter();
-	auto end = _scene->root->getChildrenEnd();
-	for(; it != end; it++)*/
-	treeChildren(flag, open, _scene->root);
+	
+	treeChildren(flag, open, _scene->getRoot());
 	ImGui::End();
 }
 
