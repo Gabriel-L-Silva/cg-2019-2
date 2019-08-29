@@ -158,8 +158,7 @@ P1::hierarchyWindow()
 		{
 			std::string name{ "Object " + std::to_string(_sceneObjectCounter++) };
 			auto sceneObject = new SceneObject{ name.c_str(), _scene };
-			SceneObject* current = nullptr;
-			current  = dynamic_cast<SceneObject*>(_current);
+			SceneObject* current  = dynamic_cast<SceneObject*>(_current);
 			sceneObject->setParent(current);
 		}
     if (ImGui::BeginMenu("3D Object"))
@@ -271,6 +270,7 @@ P1::sceneObjectGui()
 	auto end = object->getComponentEnd();
 	for (; it != end; it++)
 	{
+		//Comparar com dynamic cast
 		if ((*it)->typeName() == "Transform")
 		{
 			if (ImGui::CollapsingHeader(object->transform()->typeName()))
@@ -336,19 +336,27 @@ P1::render()
 	{
 		if (!(*it)->visible)
 			return;
-		_program.setUniformMat4("transform", _transform);
+		auto compIt = (*it)->getComponentIter();
+		auto compEnd = (*it)->getComponentEnd();
+		for (; compIt != compEnd; compIt++) {
+			_program.setUniformMat4("transform", _transform);
 
-		auto m = _primitive->mesh();
+			auto primitive = dynamic_cast<Primitive*>((Component*)(*compIt));
+			if (primitive != nullptr)
+			{
+				auto m = primitive->mesh();
 
-		m->bind();
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		glDrawElements(GL_TRIANGLES, m->vertexCount(), GL_UNSIGNED_INT, 0);
-		if (_current != *it)
-			return;
-		m->setVertexColor(selectedWireframeColor);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		glDrawElements(GL_TRIANGLES, m->vertexCount(), GL_UNSIGNED_INT, 0);
-		m->useVertexColors();
+				m->bind();
+				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+				glDrawElements(GL_TRIANGLES, m->vertexCount(), GL_UNSIGNED_INT, 0);
+				if (_current != *it)
+					return;
+				m->setVertexColor(selectedWireframeColor);
+				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+				glDrawElements(GL_TRIANGLES, m->vertexCount(), GL_UNSIGNED_INT, 0);
+				m->useVertexColors();
+			}
+		}
 	}
 /*
 	GLWindow::render();

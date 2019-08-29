@@ -59,7 +59,7 @@ public:
     _scene{scene},
     _parent{}
   {
-		components.push_back(&_transform);
+	components.push_back(&_transform);
     makeUse(&_transform);
   }
 
@@ -78,7 +78,7 @@ public:
 		return children[index];
 	}
 
-	auto getChildrenEnd() 
+	auto getChildrenEnd() const
 	{
 		return children.end();
 	}
@@ -98,14 +98,23 @@ public:
 
 	void remove(Reference<Component> component);
 
-	auto getComponentIter() {
+	auto getComponentIter() const
+	{
 		return components.begin();
 	}
 
-	auto getComponentEnd() {
+	auto getComponentEnd() const
+	{
 		return components.end();
 	}
 
+	/*
+	template<typename C>
+	C* findComponent() const
+	{
+		
+	}
+	*/
   /// Returns the scene which this scene object belong to.
   auto scene() const
   {

@@ -49,7 +49,9 @@ class Scene: public SceneNode
 public:
   Color backgroundColor{Color::gray};
 
-  
+  /*
+	manter uma lista de primitives
+	*/
 
   /// Constructs an empty scene.
   Scene(const char* name):

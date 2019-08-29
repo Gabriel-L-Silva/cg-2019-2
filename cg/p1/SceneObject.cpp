@@ -56,7 +56,6 @@ SceneObject::setParent(SceneObject* parent)
 		_parent = parent;
 		parent->add(this);
 	}
-
 }
 
 void 
