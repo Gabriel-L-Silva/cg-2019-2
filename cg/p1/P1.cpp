@@ -330,19 +330,54 @@ void
 P1::render()
 {
   GLWindow::render();
-  if (!_box->visible)
-    return;
-  _program.setUniformMat4("transform", _transform);
+	auto it = _scene->getRoot()->getChildrenIter();
+	auto end = _scene->getRoot()->getChildrenEnd();
+	for (; it != end; it++)
+	{
+		if (!(*it)->visible)
+			return;
+		_program.setUniformMat4("transform", _transform);
 
-  auto m = _primitive->mesh();
+		auto m = _primitive->mesh();
 
-  m->bind();
-  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-  glDrawElements(GL_TRIANGLES, m->vertexCount(), GL_UNSIGNED_INT, 0);
-  if (_current != _box)
-    return;
-  m->setVertexColor(selectedWireframeColor);  
-  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-  glDrawElements(GL_TRIANGLES, m->vertexCount(), GL_UNSIGNED_INT, 0);
-  m->useVertexColors();
+		m->bind();
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glDrawElements(GL_TRIANGLES, m->vertexCount(), GL_UNSIGNED_INT, 0);
+		if (_current != *it)
+			return;
+		m->setVertexColor(selectedWireframeColor);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glDrawElements(GL_TRIANGLES, m->vertexCount(), GL_UNSIGNED_INT, 0);
+		m->useVertexColors();
+	}
+/*
+	GLWindow::render();
+	auto it = _scene->getRoot()->getChildrenIter();
+	auto end = _scene->getRoot()->getChildrenEnd();
+	for (; it != end; it++)
+	{
+		if (!(*it)->visible)
+			return;
+		auto compIt = (*it)->getComponentIter();
+		auto compEnd = (*it)->getComponentEnd();
+		for (; compIt != compEnd; compIt++) {
+			_program.setUniformMat4("transform", (*it)->transform());
+
+			auto primitive = dynamic_cast<Primitive*>((Component*)(*compIt));
+			if (primitive != nullptr)
+			{
+				auto m = primitive->mesh();
+
+				m->bind();
+				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+				glDrawElements(GL_TRIANGLES, m->vertexCount(), GL_UNSIGNED_INT, 0);
+				if (_current != *it)
+					return;
+				m->setVertexColor(selectedWireframeColor);
+				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+				glDrawElements(GL_TRIANGLES, m->vertexCount(), GL_UNSIGNED_INT, 0);
+				m->useVertexColors();
+			}
+		}
+	}*/
 }

@@ -2,6 +2,7 @@
 #define __P1_h
 
 #include "Primitive.h"
+#include "Transform.h"
 #include "Scene.h"
 #include "graphics/Application.h"
 
@@ -27,6 +28,9 @@ public:
   void render() override;
 
 	void treeChildren(ImGuiTreeNodeFlags flag, bool open, Reference<SceneObject> it);
+
+	void renderPrimitives(Reference<SceneObject> object);
+
 private:
   GLSL::Program _program;
   Reference<Scene> _scene;
