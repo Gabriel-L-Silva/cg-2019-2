@@ -71,6 +71,7 @@ P1::buildScene()
 	_box->setParent(nullptr);
 
 	_primitive = makeBoxMesh();
+	//_transform = new Transform();
 	//Adiciona _primitive nos componentes de _box
 	_box->add((Reference<Component>)_primitive);
 
@@ -266,17 +267,30 @@ P1::sceneObjectGui()
   ImGui::SameLine();
   ImGui::Checkbox("###visible", &object->visible);
   ImGui::Separator();
-  if (ImGui::CollapsingHeader(object->transform()->typeName()))
-  {
-    auto t = object->transform();
+	auto it = object->getComponentIter();
+	auto end = object->getComponentEnd();
+	for (; it != end; it++)
+	{
+		if ((*it)->typeName() == "Transform")
+		{
+			if (ImGui::CollapsingHeader(object->transform()->typeName()))
+			{
+				auto t = object->transform();
 
-    ImGui::TransformEdit(t);
-    _transform = t->localToWorldMatrix();
-  }
-  if (ImGui::CollapsingHeader(_primitive->typeName()))
-  {
-    // TODO: show primitive properties.
-  }
+				ImGui::TransformEdit(t);
+				_transform = t->localToWorldMatrix();
+			}
+		}
+		else if ((*it)->typeName() == "Primitive")
+		{
+			if (ImGui::CollapsingHeader(_primitive->typeName()))
+			{
+				// TODO: show primitive properties.
+			}
+		}
+	}
+	
+  
 }
 
 inline void
