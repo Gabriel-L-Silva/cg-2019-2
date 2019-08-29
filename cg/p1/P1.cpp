@@ -71,13 +71,25 @@ P1::buildScene()
 	_box->setParent(nullptr);
 
 	_primitive = makeBoxMesh();
+	//_transform = new Transform();
 	//Adiciona _primitive nos componentes de _box
 	_box->add((Reference<Component>)_primitive);
+
   for (int i = 0; i < 5; i++) {
-		_box->add(new SceneObject{ "void", _scene });
+		std::string name{ "Object " + std::to_string(_sceneObjectCounter++) };
+		_box->add(new SceneObject{ name.c_str(), _scene });
+	}
+
+	Reference<SceneObject> _sceneObject;
+
+	for (int i = 0; i < 5; i++) {
+		std::string name{ "Object " + std::to_string(_sceneObjectCounter++) };
+		_sceneObject = new SceneObject{ name.c_str(), _scene };
 		for (int j = 0; j < 5; j++) {
-			_box->children.at(i)->add(new SceneObject{ "void", _scene });
+			std::string name{ "Object " + std::to_string(_sceneObjectCounter++) };
+			_sceneObject->add(new SceneObject{ name.c_str(), _scene });
 		}
+		_sceneObject->setParent(nullptr);
 	}
 }
 
@@ -99,36 +111,40 @@ namespace ImGui
   void ShowDemoWindow(bool*);
 }
 
-//void treeChildren(ImGuiTreeNodeFlags flag, bool open, Reference<SceneObject> _sceneObject, SceneNode* _current)
-//{
-//	if (open)
-//	{
-//		if (_sceneObject->children.empty()) {
-//			flag |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
-//			auto open = ImGui::TreeNodeEx(_sceneObject,
-//				_current == _sceneObject ? flag | ImGuiTreeNodeFlags_Selected : flag,
-//				_sceneObject->name());
-//			/* Nao funciona como o esparado, inspector não mostra quando o ngc é clicado
-//			if (ImGui::IsItemClicked())
-//				_current = _sceneObject;*/
-//		}
-//		else {
-//			flag |= ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_NoTreePushOnOpen;
-//			auto open = ImGui::TreeNodeEx(_sceneObject,
-//				_current == _sceneObject ? flag | ImGuiTreeNodeFlags_Selected : flag,
-//				_sceneObject->name());
-//			/* Nao funciona como o esparado, inspector não mostra quando o ngc é clicado
-//			if (ImGui::IsItemClicked())
-//				_current = _sceneObject;*/
-//
-//			auto it = _sceneObject->children.begin();
-//			auto end = _sceneObject->children.end();
-//			for (; it != end; it++) {
-//				treeChildren(flag, open, *it, _current);
-//			}	
-//		}
-//	}
-//}
+void 
+P1::treeChildren(ImGuiTreeNodeFlags flag, bool open, Reference<SceneObject> sceneObject)
+{
+	if (open && flag == ImGuiTreeNodeFlags_OpenOnArrow)
+	{
+		auto it  = sceneObject->getChildrenIter();
+		auto end = sceneObject->getChildrenEnd();
+		for (; it != end; it++)
+		{
+			if ((*it)->isChildrenEmpty())
+			{
+				flag |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+				ImGui::TreeNodeEx((*it),
+					_current == (*it) ? flag | ImGuiTreeNodeFlags_Selected : flag,
+					(*it)->name());
+				if (ImGui::IsItemClicked()) 
+					_current = (*it);
+				
+			}
+			else
+			{
+				flag |= ImGuiTreeNodeFlags_OpenOnArrow;
+				auto open = ImGui::TreeNodeEx((*it),
+					_current == (*it) ? flag | ImGuiTreeNodeFlags_Selected : flag,
+					(*it)->name());
+
+				if (ImGui::IsItemClicked())
+					_current = (*it);
+				treeChildren(flag, open, (*it));
+			}
+		}
+		ImGui::TreePop();
+	}
+}
 
 inline void
 P1::hierarchyWindow()
@@ -138,12 +154,28 @@ P1::hierarchyWindow()
     ImGui::OpenPopup("CreateObjectPopup");
   if (ImGui::BeginPopup("CreateObjectPopup"))
   {
-    ImGui::MenuItem("Empty Object");
+		if (ImGui::MenuItem("Empty Object"))
+		{
+			std::string name{ "Object " + std::to_string(_sceneObjectCounter++) };
+			auto sceneObject = new SceneObject{ name.c_str(), _scene };
+			SceneObject* current = nullptr;
+			current  = dynamic_cast<SceneObject*>(_current);
+			sceneObject->setParent(current);
+		}
     if (ImGui::BeginMenu("3D Object"))
     {
       if (ImGui::MenuItem("Box"))
       {
         // TODO: create a new box.
+				std::string name{ "Box " + std::to_string(_sceneObjectCounter++) };
+				auto sceneObject = new SceneObject{ name.c_str(), _scene };
+				SceneObject* current = nullptr;
+				current = dynamic_cast<SceneObject*>(_current);
+				sceneObject->setParent(current);
+
+				Component* primitive = nullptr;
+				primitive = dynamic_cast<Component*>(makeBoxMesh());
+				sceneObject->add(primitive);
       }
       ImGui::EndMenu();
     }
@@ -158,12 +190,9 @@ P1::hierarchyWindow()
 
   if (ImGui::IsItemClicked())
     _current = _scene;
-	//treeChildren(flag, open, _scene->root->children.at(0),_current);
-	if (open)
-	{
-		ImGui::TreePop();
-	}
-  ImGui::End();
+	
+	treeChildren(flag, open, _scene->getRoot());
+	ImGui::End();
 }
 
 namespace ImGui
@@ -238,17 +267,30 @@ P1::sceneObjectGui()
   ImGui::SameLine();
   ImGui::Checkbox("###visible", &object->visible);
   ImGui::Separator();
-  if (ImGui::CollapsingHeader(object->transform()->typeName()))
-  {
-    auto t = object->transform();
+	auto it = object->getComponentIter();
+	auto end = object->getComponentEnd();
+	for (; it != end; it++)
+	{
+		if ((*it)->typeName() == "Transform")
+		{
+			if (ImGui::CollapsingHeader(object->transform()->typeName()))
+			{
+				auto t = object->transform();
 
-    ImGui::TransformEdit(t);
-    _transform = t->localToWorldMatrix();
-  }
-  if (ImGui::CollapsingHeader(_primitive->typeName()))
-  {
-    // TODO: show primitive properties.
-  }
+				ImGui::TransformEdit(t);
+				_transform = t->localToWorldMatrix();
+			}
+		}
+		else if ((*it)->typeName() == "Primitive")
+		{
+			if (ImGui::CollapsingHeader(_primitive->typeName()))
+			{
+				// TODO: show primitive properties.
+			}
+		}
+	}
+	
+  
 }
 
 inline void

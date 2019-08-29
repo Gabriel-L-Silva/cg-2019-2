@@ -46,14 +46,15 @@ SceneObject::setParent(SceneObject* parent)
 {
   if (parent == nullptr)
 	{
-		_parent = this->_scene->root;
-		_scene->root->add(this);
+		_parent = this->_scene->getRoot();
+		_scene->getRoot()->add(this);
 	}
-	else if (_parent != this->_scene->root)
+	else
 	{
-		parent->remove(this);
+		if(_parent != nullptr)
+			_parent->remove(this);
+		_parent = parent;
 		parent->add(this);
-		
 	}
 
 }
@@ -78,11 +79,6 @@ SceneObject::remove(Reference<SceneObject> object)
 	//return removed;
 }
 
-auto
-SceneObject::getIterator(Reference<SceneObject> object)
-{
-	return children.begin();
-}
 
 void
 SceneObject::add(Reference<Component> object)
@@ -102,12 +98,6 @@ SceneObject::remove(Reference<Component> object)
 	components.erase(iterator);
 
 	//return removed;
-}
-
-auto
-SceneObject::getIterator(Reference<Component> object)
-{
-	return components.begin();
 }
 
 

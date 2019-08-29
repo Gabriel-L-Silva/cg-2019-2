@@ -26,6 +26,7 @@ public:
   /// Render the scene.
   void render() override;
 
+	void treeChildren(ImGuiTreeNodeFlags flag, bool open, Reference<SceneObject> it);
 private:
   GLSL::Program _program;
   Reference<Scene> _scene;
@@ -34,6 +35,7 @@ private:
   SceneNode* _current{};
   Color selectedWireframeColor{255, 102, 0};
   mat4f _transform{mat4f::identity()};
+	int _sceneObjectCounter = 0;
 
 
   void buildScene();

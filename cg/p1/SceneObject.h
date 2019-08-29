@@ -52,9 +52,6 @@ class SceneObject: public SceneNode
 {
 public:
   bool visible{true};
-  std::vector<Reference<SceneObject>> children;
-	
-	std::vector<Reference<Component>> components;
 
   /// Constructs an empty scene object.
   SceneObject(const char* name, Scene* scene):
@@ -62,6 +59,7 @@ public:
     _scene{scene},
     _parent{}
   {
+		components.push_back(&_transform);
     makeUse(&_transform);
   }
 
@@ -70,14 +68,43 @@ public:
 
   void remove(Reference<SceneObject> object);
 
-  auto getIterator(Reference<SceneObject> object);
+	auto getChildrenIter()
+	{
+		return children.begin();
+	}
+
+	auto getChildrenAt(int index)
+	{
+		return children[index];
+	}
+
+	auto getChildrenEnd() 
+	{
+		return children.end();
+	}
+
+	auto isChildrenEmpty()
+	{
+		return children.empty();
+	}
+
+	auto getChildrenSize()
+	{
+		return children.size();
+	}
 
 	/// Operations over an element's component collection
 	void add(Reference<Component> component);
 
 	void remove(Reference<Component> component);
 
-	auto getIterator(Reference<Component> component);
+	auto getComponentIter() {
+		return components.begin();
+	}
+
+	auto getComponentEnd() {
+		return components.end();
+	}
 
   /// Returns the scene which this scene object belong to.
   auto scene() const
@@ -105,6 +132,8 @@ private:
   SceneObject* _parent;
   Transform _transform;
 
+	std::vector<Reference<SceneObject>> children;
+	std::vector<Reference<Component>> components;
   friend class Scene;
 
 }; // SceneObject
