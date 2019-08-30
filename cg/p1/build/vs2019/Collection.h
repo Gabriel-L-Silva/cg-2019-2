@@ -8,21 +8,33 @@ template <class T>
 class Collection
 {
 public:
-	void add(T object);
-	void remove(T object);
+	auto add(T object) {
+		_elements.emplace_back(object);
+	}
 
-	auto getIter() 
+	auto remove(T object) {
+		auto it = getIter();
+		while (*it != object)
+			it++;
+		_elements.erase(it);
+	}
+
+
+	auto getIter()
 	{
 		return _elements.begin();
 	}
-	auto getEnd() const
+
+	auto getEnd()
 	{
 		return _elements.end();
 	}
+
 	auto isEmpty()
 	{
 		return _elements.empty();
 	}
+
 private:
 	std::vector<T> _elements;
 };// Collection

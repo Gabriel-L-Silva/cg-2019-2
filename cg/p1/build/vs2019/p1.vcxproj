@@ -17,7 +17,6 @@
     <ClCompile Include="..\..\P1.cpp" />
     <ClCompile Include="..\..\SceneObject.cpp" />
     <ClCompile Include="..\..\Transform.cpp" />
-    <ClCompile Include="Collection.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Component.h" />

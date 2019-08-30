@@ -250,10 +250,12 @@ P1::sceneObjectGui()
 
   ImGui::ObjectNameInput(object);
   ImGui::SameLine();
-  ImGui::Checkbox("###visible", &object->visible);
+  ImGui::Checkbox("visible", &object->visible);
   ImGui::Separator();
+
 	auto it = object->getComponentIter();
 	auto end = object->getComponentEnd();
+
 	for (; it != end; it++)
 	{
 		//Comparar com dynamic cast

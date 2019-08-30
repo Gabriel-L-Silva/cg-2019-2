@@ -69,18 +69,23 @@ public:
 	void remove(Reference<Component> object);
 
 
-	std::vector<Reference<SceneObject>>::iterator getChildrenIter() {
-		_children.getIter();
+	auto getChildrenIter() {
+		return _children.getIter();
 	}
-	std::vector<Reference<SceneObject>>::iterator getChildrenEnd() {
-		_children.getEnd();
+	auto getChildrenEnd() {
+		return _children.getEnd();
 	}
 
-	std::vector<Reference<SceneObject>>::iterator getComponentIter() {
-		_components.getIter();
+	auto getComponentIter() {
+		return _components.getIter();
 	}
-	std::vector<Reference<SceneObject>>::iterator getComponentEnd() {
-		_components.getEnd();
+	auto getComponentEnd() {
+		return _components.getEnd();
+	}
+
+	bool isChildrenEmpty()
+	{
+		return _children.isEmpty();
 	}
 	/*
 	template<typename C>
@@ -115,8 +120,8 @@ private:
   SceneObject* _parent;
   Transform _transform;
 
-	Collection<Reference<SceneObject>> _children;
-	Collection<Reference<Component>> _components;
+	Collection<Reference<SceneObject>> _children();
+	Collection<Reference<Component>> _components();
   friend class Scene;
 
 }; // SceneObject

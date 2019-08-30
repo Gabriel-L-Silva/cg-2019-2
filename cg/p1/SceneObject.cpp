@@ -33,6 +33,7 @@
 #include "SceneObject.h"
 #include "Scene.h"
 #include "Primitive.h"
+
 namespace cg
 { // begin namespace cg
 
