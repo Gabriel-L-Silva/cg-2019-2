@@ -35,7 +35,7 @@
 
 #include "SceneNode.h"
 #include "Transform.h"
-#include <vector>
+#include "Collection.h"
 
 namespace cg
 { // begin namespace cg
@@ -59,55 +59,29 @@ public:
     _scene{scene},
     _parent{}
   {
-		components.push_back(&_transform);
+		_components.add(&_transform);
     makeUse(&_transform);
   }
 
-	/// Operations over an element's objects collection
-  void add(Reference<SceneObject> object);
+	void add(Reference<SceneObject> object);
+	void add(Reference<Component> object);
+	void remove(Reference<SceneObject> object);
+	void remove(Reference<Component> object);
 
-  void remove(Reference<SceneObject> object);
 
-	auto getChildrenIter()
-	{
-		return children.begin();
+	std::vector<Reference<SceneObject>>::iterator getChildrenIter() {
+		_children.getIter();
+	}
+	std::vector<Reference<SceneObject>>::iterator getChildrenEnd() {
+		_children.getEnd();
 	}
 
-	auto getChildrenAt(int index)
-	{
-		return children[index];
+	std::vector<Reference<SceneObject>>::iterator getComponentIter() {
+		_components.getIter();
 	}
-
-	auto getChildrenEnd() const
-	{
-		return children.end();
+	std::vector<Reference<SceneObject>>::iterator getComponentEnd() {
+		_components.getEnd();
 	}
-
-	auto isChildrenEmpty()
-	{
-		return children.empty();
-	}
-
-	auto getChildrenSize()
-	{
-		return children.size();
-	}
-
-	/// Operations over an element's component collection
-	void add(Reference<Component> component);
-
-	void remove(Reference<Component> component);
-
-	auto getComponentIter() const
-	{
-		return components.begin();
-	}
-
-	auto getComponentEnd() const
-	{
-		return components.end();
-	}
-
 	/*
 	template<typename C>
 	C* findComponent() const
@@ -141,8 +115,8 @@ private:
   SceneObject* _parent;
   Transform _transform;
 
-	std::vector<Reference<SceneObject>> children;
-	std::vector<Reference<Component>> components;
+	Collection<Reference<SceneObject>> _children;
+	Collection<Reference<Component>> _components;
   friend class Scene;
 
 }; // SceneObject

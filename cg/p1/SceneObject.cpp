@@ -47,12 +47,12 @@ SceneObject::setParent(SceneObject* parent)
   if (parent == nullptr)
 	{
 		_parent = this->_scene->getRoot();
-		_scene->getRoot()->add(this);
+		_scene->getRoot()->_children.add(this);
 	}
 	else
 	{
 		if(_parent != nullptr)
-			_parent->remove(this);
+			_parent->_children.remove(this);
 		_parent = parent;
 		parent->add(this);
 	}
@@ -61,21 +61,19 @@ SceneObject::setParent(SceneObject* parent)
 void 
 SceneObject::add(Reference<SceneObject> object)
 {
-	children.emplace_back(object);
+	_children.add(object);
 }
 
 void
 SceneObject::remove(Reference<SceneObject> object)
 {
-	auto iterator = children.begin();
+	auto it = _children.getIter();
 
-	while (*iterator != object)
-		iterator++;
+	while (*it != object)
+		it++;
 
-	//Reference <SceneObject> removed = object;
-	children.erase(iterator);
+	_children.remove(*it);
 
-	//return removed;
 }
 
 
@@ -87,19 +85,19 @@ SceneObject::add(Reference<Component> object)
 		_scene->addPrimitive(primitive);
 		primitive->_sceneObject = this;
 	}
-	components.emplace_back(object);
+	_components.add(object);
 }
 
 void
 SceneObject::remove(Reference<Component> object)
 {
-	auto iterator = components.begin();
+	auto it = _components.getIter();
 
-	while (*iterator != object)
-		iterator++;
+	while (*it != object)
+		it++;
 
 	//Reference <SceneObject> removed = object;
-	components.erase(iterator);
+	_components.remove(*it);
 
 	//return removed;
 }

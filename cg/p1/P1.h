@@ -34,8 +34,6 @@ public:
 private:
   GLSL::Program _program;
   Reference<Scene> _scene;
-  Reference<SceneObject> _box;
-  Reference<Primitive> _primitive;
   SceneNode* _current{};
   Color selectedWireframeColor{255, 102, 0};
   mat4f _transform{mat4f::identity()};

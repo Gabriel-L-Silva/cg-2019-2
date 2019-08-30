@@ -65,15 +65,6 @@ makeBoxMesh()
 inline void
 P1::buildScene()
 {
-  _current = _scene = new Scene{"Scene 1"};
-  _box = new SceneObject{"BoxBOX 1", _scene};
-	////_box agora faz parte da raiz da cena
-	_box->setParent(nullptr);
-
-	_primitive = makeBoxMesh();
-	////Adiciona _primitive nos componentes de _box
-	_box->add((Reference<Component>)_primitive);
-
 	Reference<SceneObject> sceneObject;
 
 	for (int i = 0; i < 5; i++) {
