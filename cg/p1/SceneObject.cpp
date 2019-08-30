@@ -32,7 +32,7 @@
 
 #include "SceneObject.h"
 #include "Scene.h"
-
+#include "Primitive.h"
 namespace cg
 { // begin namespace cg
 
@@ -82,6 +82,11 @@ SceneObject::remove(Reference<SceneObject> object)
 void
 SceneObject::add(Reference<Component> object)
 {
+	auto primitive = dynamic_cast<Primitive*>((Component*)object);
+	if (primitive != nullptr) {
+		_scene->addPrimitive(primitive);
+		primitive->_sceneObject = this;
+	}
 	components.emplace_back(object);
 }
 

@@ -50,6 +50,11 @@ class Transform;
 class Component: public SharedObject
 {
 public:
+	/*void setSceneObject(Reference<SceneObject> object)
+	{
+
+	}*/
+
   /// Returns the type name of this component.
   auto typeName() const
   {

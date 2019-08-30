@@ -27,7 +27,7 @@
 // ========
 // Class definition for scene.
 //
-// Author(s): Paulo Pagliosa (and your name)
+// Author(s): Paulo Pagliosa, Gabriel Lucas da Silva e Lucas Santana
 // Last revision: 25/08/2018
 
 #ifndef __Scene_h
@@ -36,6 +36,7 @@
 #include "SceneObject.h"
 #include "graphics/Color.h"
 #include <vector>
+#include "Primitive.h"
 namespace cg
 { // begin namespace cg
 
@@ -63,18 +64,31 @@ public:
 
   }
 
-	//~Scene()
-	//{
-	//	// perguntar como fazer o destrutor pois esta dando erro
-	//	delete(root);
-	//}
+	auto getPrimitiveIter()
+	{
+		return primitives.begin();
+	}
+
+	auto getPrimitiveEnd()
+	{
+		return primitives.end();
+	}
+
+	void addPrimitive(Reference<Primitive> p)
+	{
+		primitives.emplace_back(p);
+	}
 
 	auto getRoot() {
 		return root;
 	}
 
 private:
+	// lista de todos os sceneObj que tem primitive
+	std::vector<Reference<Primitive>> primitives;
+
 	Reference<SceneObject> root;
+	
 }; // Scene
 
 } // end namespace cg

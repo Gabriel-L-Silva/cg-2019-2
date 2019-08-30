@@ -66,30 +66,25 @@ inline void
 P1::buildScene()
 {
   _current = _scene = new Scene{"Scene 1"};
-  _box = new SceneObject{"Box 1", _scene};
-	//_box agora faz parte da raiz da cena
+  _box = new SceneObject{"BoxBOX 1", _scene};
+	////_box agora faz parte da raiz da cena
 	_box->setParent(nullptr);
 
 	_primitive = makeBoxMesh();
-	//_transform = new Transform();
-	//Adiciona _primitive nos componentes de _box
+	////Adiciona _primitive nos componentes de _box
 	_box->add((Reference<Component>)_primitive);
 
-  for (int i = 0; i < 5; i++) {
-		std::string name{ "Object " + std::to_string(_sceneObjectCounter++) };
-		_box->add(new SceneObject{ name.c_str(), _scene });
-	}
-
-	Reference<SceneObject> _sceneObject;
+	Reference<SceneObject> sceneObject;
 
 	for (int i = 0; i < 5; i++) {
-		std::string name{ "Object " + std::to_string(_sceneObjectCounter++) };
-		_sceneObject = new SceneObject{ name.c_str(), _scene };
+		std::string name{ "Box " + std::to_string(_sceneObjectCounter++) };
+		sceneObject = new SceneObject{ name.c_str(), _scene };
+		sceneObject->setParent(nullptr);
+		sceneObject->add((Reference<Component>)makeBoxMesh());
 		for (int j = 0; j < 5; j++) {
 			std::string name{ "Object " + std::to_string(_sceneObjectCounter++) };
-			_sceneObject->add(new SceneObject{ name.c_str(), _scene });
+			sceneObject->add(new SceneObject{ name.c_str(), _scene });
 		}
-		_sceneObject->setParent(nullptr);
 	}
 }
 
@@ -112,9 +107,9 @@ namespace ImGui
 }
 
 void 
-P1::treeChildren(ImGuiTreeNodeFlags flag, bool open, Reference<SceneObject> sceneObject)
+P1::treeChildren(bool open, Reference<SceneObject> sceneObject)
 {
-	if (open && flag == ImGuiTreeNodeFlags_OpenOnArrow)
+	if (open)
 	{
 		auto it  = sceneObject->getChildrenIter();
 		auto end = sceneObject->getChildrenEnd();
@@ -122,7 +117,7 @@ P1::treeChildren(ImGuiTreeNodeFlags flag, bool open, Reference<SceneObject> scen
 		{
 			if ((*it)->isChildrenEmpty())
 			{
-				flag |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+				auto flag = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
 				ImGui::TreeNodeEx((*it),
 					_current == (*it) ? flag | ImGuiTreeNodeFlags_Selected : flag,
 					(*it)->name());
@@ -132,14 +127,14 @@ P1::treeChildren(ImGuiTreeNodeFlags flag, bool open, Reference<SceneObject> scen
 			}
 			else
 			{
-				flag |= ImGuiTreeNodeFlags_OpenOnArrow;
+				auto flag = ImGuiTreeNodeFlags_OpenOnArrow;
 				auto open = ImGui::TreeNodeEx((*it),
 					_current == (*it) ? flag | ImGuiTreeNodeFlags_Selected : flag,
 					(*it)->name());
 
 				if (ImGui::IsItemClicked())
 					_current = (*it);
-				treeChildren(flag, open, (*it));
+				treeChildren(open, (*it));
 			}
 		}
 		ImGui::TreePop();
@@ -190,7 +185,7 @@ P1::hierarchyWindow()
   if (ImGui::IsItemClicked())
     _current = _scene;
 	
-	treeChildren(flag, open, _scene->getRoot());
+	treeChildren(open, _scene->getRoot());
 	ImGui::End();
 }
 
@@ -271,7 +266,8 @@ P1::sceneObjectGui()
 	for (; it != end; it++)
 	{
 		//Comparar com dynamic cast
-		if ((*it)->typeName() == "Transform")
+		auto casted = dynamic_cast<Transform*>((Component*)(*it));
+		if (casted != nullptr)//Se for Transform
 		{
 			if (ImGui::CollapsingHeader(object->transform()->typeName()))
 			{
@@ -281,11 +277,14 @@ P1::sceneObjectGui()
 				_transform = t->localToWorldMatrix();
 			}
 		}
-		else if ((*it)->typeName() == "Primitive")
+		else//Se for primitive
 		{
-			if (ImGui::CollapsingHeader(_primitive->typeName()))
+			auto casted = dynamic_cast<Primitive*>((Component*)(*it));
+			if (ImGui::CollapsingHeader(casted->typeName()))
 			{
 				// TODO: show primitive properties.
+				auto nVert = std::to_string(casted->mesh()->vertexCount());
+				ImGui::Text((std::string{ "Vertices: " } +nVert).c_str());
 			}
 		}
 	}
@@ -327,65 +326,62 @@ P1::gui()
 }
 
 void
-P1::render()
+P1::renderPrim(Reference<Primitive> p)
 {
-  GLWindow::render();
-	auto it = _scene->getRoot()->getChildrenIter();
-	auto end = _scene->getRoot()->getChildrenEnd();
-	for (; it != end; it++)
-	{
-		if (!(*it)->visible)
-			return;
-		auto compIt = (*it)->getComponentIter();
-		auto compEnd = (*it)->getComponentEnd();
-		for (; compIt != compEnd; compIt++) {
-			_program.setUniformMat4("transform", _transform);
+	if (p->sceneObject()->visible) {
+		_program.setUniformMat4("transform", p->sceneObject()->transform()->localToWorldMatrix());
+		//_program.setUniformMat4("transform", _transform);
 
-			auto primitive = dynamic_cast<Primitive*>((Component*)(*compIt));
-			if (primitive != nullptr)
-			{
-				auto m = primitive->mesh();
+		auto m = p->mesh();
 
-				m->bind();
-				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-				glDrawElements(GL_TRIANGLES, m->vertexCount(), GL_UNSIGNED_INT, 0);
-				if (_current != *it)
-					return;
-				m->setVertexColor(selectedWireframeColor);
-				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-				glDrawElements(GL_TRIANGLES, m->vertexCount(), GL_UNSIGNED_INT, 0);
-				m->useVertexColors();
-			}
+		m->bind();
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glDrawElements(GL_TRIANGLES, m->vertexCount(), GL_UNSIGNED_INT, 0);
+
+		// adiciona fios de arame no polígono
+		if (_current == p->sceneObject()) {
+			m->setVertexColor(selectedWireframeColor);
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			glDrawElements(GL_TRIANGLES, m->vertexCount(), GL_UNSIGNED_INT, 0);
+			m->useVertexColors();
 		}
 	}
-/*
+	
+}
+
+
+//GLWindow::render();
+
+
+void
+P1::render() {
 	GLWindow::render();
-	auto it = _scene->getRoot()->getChildrenIter();
-	auto end = _scene->getRoot()->getChildrenEnd();
+	auto it = _scene->getPrimitiveIter();
+	auto end = _scene->getPrimitiveEnd();
+
+	// itera nos primitivos
 	for (; it != end; it++)
 	{
-		if (!(*it)->visible)
-			return;
-		auto compIt = (*it)->getComponentIter();
-		auto compEnd = (*it)->getComponentEnd();
-		for (; compIt != compEnd; compIt++) {
-			_program.setUniformMat4("transform", (*it)->transform());
+		renderPrim(*it);
+	}
 
-			auto primitive = dynamic_cast<Primitive*>((Component*)(*compIt));
-			if (primitive != nullptr)
-			{
-				auto m = primitive->mesh();
+	/*if (!_box->visible)
+		return;
 
-				m->bind();
-				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-				glDrawElements(GL_TRIANGLES, m->vertexCount(), GL_UNSIGNED_INT, 0);
-				if (_current != *it)
-					return;
-				m->setVertexColor(selectedWireframeColor);
-				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-				glDrawElements(GL_TRIANGLES, m->vertexCount(), GL_UNSIGNED_INT, 0);
-				m->useVertexColors();
-			}
-		}
-	}*/
+	_program.setUniformMat4("transform", _transform);
+
+	auto m = _primitive->mesh();
+
+	m->bind();
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glDrawElements(GL_TRIANGLES, m->vertexCount(), GL_UNSIGNED_INT, 0);
+	if (_current != _box)
+		return;
+	m->setVertexColor(selectedWireframeColor);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glDrawElements(GL_TRIANGLES, m->vertexCount(), GL_UNSIGNED_INT, 0);
+	m->useVertexColors(); */
+	
 }
+
+

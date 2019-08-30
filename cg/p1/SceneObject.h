@@ -59,7 +59,7 @@ public:
     _scene{scene},
     _parent{}
   {
-	components.push_back(&_transform);
+		components.push_back(&_transform);
     makeUse(&_transform);
   }
 

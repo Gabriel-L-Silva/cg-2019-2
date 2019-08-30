@@ -27,9 +27,9 @@ public:
   /// Render the scene.
   void render() override;
 
-	void treeChildren(ImGuiTreeNodeFlags flag, bool open, Reference<SceneObject> it);
+	void renderPrim(Reference<Primitive>);
 
-	void renderPrimitives(Reference<SceneObject> object);
+	void treeChildren(bool open, Reference<SceneObject> it);
 
 private:
   GLSL::Program _program;
