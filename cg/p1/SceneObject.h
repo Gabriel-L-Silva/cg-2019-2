@@ -120,8 +120,8 @@ private:
   SceneObject* _parent;
   Transform _transform;
 
-	Collection<Reference<SceneObject>> _children();
-	Collection<Reference<Component>> _components();
+	Collection<Reference<SceneObject>> _children;
+	Collection<Reference<Component>> _components;
   friend class Scene;
 
 }; // SceneObject

@@ -29,7 +29,7 @@ public:
 
 	void renderPrim(Reference<Primitive>);
 
-	void treeChildren(bool open, Reference<SceneObject> it);
+	void treeChildren(bool open, std::vector<Reference<SceneObject>>::iterator it, std::vector<Reference<SceneObject>>::iterator end);
 
 private:
   GLSL::Program _program;

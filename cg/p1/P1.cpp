@@ -65,6 +65,7 @@ makeBoxMesh()
 inline void
 P1::buildScene()
 {
+	_scene = new Scene{"Scene 1"};
 	Reference<SceneObject> sceneObject;
 
 	for (int i = 0; i < 5; i++) {
@@ -98,12 +99,10 @@ namespace ImGui
 }
 
 void 
-P1::treeChildren(bool open, Reference<SceneObject> sceneObject)
+P1::treeChildren(bool open, std::vector<Reference<SceneObject>>::iterator it, std::vector<Reference<SceneObject>>::iterator end)
 {
 	if (open)
 	{
-		auto it  = sceneObject->getChildrenIter();
-		auto end = sceneObject->getChildrenEnd();
 		for (; it != end; it++)
 		{
 			if ((*it)->isChildrenEmpty())
@@ -125,7 +124,9 @@ P1::treeChildren(bool open, Reference<SceneObject> sceneObject)
 
 				if (ImGui::IsItemClicked())
 					_current = (*it);
-				treeChildren(open, (*it));
+				auto cIt = (*it)->getChildrenIter();
+				auto cEnd = (*it)->getChildrenEnd();
+				treeChildren(open, cIt, cEnd);
 			}
 		}
 		ImGui::TreePop();
@@ -175,8 +176,9 @@ P1::hierarchyWindow()
 
   if (ImGui::IsItemClicked())
     _current = _scene;
-	
-	treeChildren(open, _scene->getRoot());
+	auto it = _scene->getRootIt();
+	auto end = _scene->getRootEnd();
+	treeChildren(open, it, end);
 	ImGui::End();
 }
 

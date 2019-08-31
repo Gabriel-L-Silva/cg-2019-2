@@ -8,6 +8,8 @@ template <class T>
 class Collection
 {
 public:
+	Collection() {
+	}
 	auto add(T object) {
 		_elements.emplace_back(object);
 	}

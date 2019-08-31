@@ -47,8 +47,8 @@ SceneObject::setParent(SceneObject* parent)
 {
   if (parent == nullptr)
 	{
-		_parent = this->_scene->getRoot();
-		_scene->getRoot()->_children.add(this);
+		_parent = nullptr;
+		_scene->addRoot(this);
 	}
 	else
 	{

@@ -59,8 +59,6 @@ public:
     SceneNode{name}
   {
     // do nothing
-		root = new SceneObject("root", this);
-		root->visible = false;
 
   }
 
@@ -79,15 +77,25 @@ public:
 		primitives.emplace_back(p);
 	}
 
-	auto getRoot() {
-		return root;
+	auto getRootIt() 
+	{
+		return root.getIter();
+	}
+
+	auto getRootEnd() 
+	{
+		return root.getEnd();
+	}
+
+	auto addRoot(Reference<SceneObject> object)
+	{
+		return root.add(object);
 	}
 
 private:
 	// lista de todos os sceneObj que tem primitive
 	std::vector<Reference<Primitive>> primitives;
-
-	Reference<SceneObject> root;
+	Collection<Reference<SceneObject>> root;
 	
 }; // Scene
 
