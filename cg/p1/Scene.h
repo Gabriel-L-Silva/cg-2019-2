@@ -61,41 +61,48 @@ public:
     // do nothing
 
   }
-
 	auto getPrimitiveIter()
 	{
-		return primitives.begin();
+		return _primitives.getIter();
 	}
 
 	auto getPrimitiveEnd()
 	{
-		return primitives.end();
+		return _primitives.getEnd();
 	}
 
 	void addPrimitive(Reference<Primitive> p)
 	{
-		primitives.emplace_back(p);
+		_primitives.add(p);
 	}
 
 	auto getRootIt() 
 	{
-		return root.getIter();
+		return _root.getIter();
 	}
 
 	auto getRootEnd() 
 	{
-		return root.getEnd();
+		return _root.getEnd();
 	}
 
 	auto addRoot(Reference<SceneObject> object)
 	{
-		return root.add(object);
+		return _root.add(object);
+	}
+
+	auto remove(Reference<SceneObject> object) {
+		_root.remove(object);
+	}
+
+	auto remove(Reference<Primitive> object) {
+		_primitives.remove(object);
 	}
 
 private:
 	// lista de todos os sceneObj que tem primitive
-	std::vector<Reference<Primitive>> primitives;
-	Collection<Reference<SceneObject>> root;
+	Collection<Reference<Primitive>> _primitives;
+	Collection<Reference<SceneObject>> _root;
 	
 }; // Scene
 

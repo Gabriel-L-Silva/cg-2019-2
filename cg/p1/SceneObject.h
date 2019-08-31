@@ -36,6 +36,7 @@
 #include "SceneNode.h"
 #include "Transform.h"
 #include "Collection.h"
+#include <iostream>
 
 namespace cg
 { // begin namespace cg
