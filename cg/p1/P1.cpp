@@ -178,11 +178,11 @@ P1::removeCurrent() {
 
 bool
 P1::keyInputEvent(int key, int action, int mods) {
-	if (key == GLFW_KEY_DELETE && action == GLFW_RELEASE)
+	if (key == GLFW_KEY_DELETE && action == GLFW_RELEASE && mods == GLFW_MOD_CONTROL)
 		removeCurrent();
-	else if (key == GLFW_KEY_E && action == GLFW_RELEASE)
+	else if (key == GLFW_KEY_E && action == GLFW_RELEASE && mods == GLFW_MOD_CONTROL)
 		addEmptyCurrent();
-	else if (key == GLFW_KEY_B && action == GLFW_RELEASE)
+	else if (key == GLFW_KEY_B && action == GLFW_RELEASE && mods == GLFW_MOD_CONTROL)
 		addBoxCurrent();
 	/*else if (key == GLFW_KEY_RIGHT && action == GLFW_RELEASE)
 	{
@@ -224,7 +224,7 @@ P1::hierarchyWindow()
 			addEmptyCurrent();
 		}
 		ImGui::SameLine();
-		ImGui::TextColored({ 0.5,0.5,0.5,1 }, "Shortcut: 'E'");
+		ImGui::TextColored({ 0.5,0.5,0.5,1 }, "Shortcut: 'Ctrl + E'");
     if (ImGui::BeginMenu("3D Object"))
     {
       if (ImGui::MenuItem("Box"))
@@ -232,7 +232,7 @@ P1::hierarchyWindow()
 				addBoxCurrent();
       }
 			ImGui::SameLine();
-			ImGui::TextColored({ 0.5,0.5,0.5,1 }, "Shortcut: 'B'");
+			ImGui::TextColored({ 0.5,0.5,0.5,1 }, "Shortcut: 'Ctrl + B'");
       ImGui::EndMenu();
     }
     ImGui::EndPopup();
@@ -243,7 +243,7 @@ P1::hierarchyWindow()
 		removeCurrent();
 	}
 	ImGui::SameLine();
-	ImGui::TextColored({ 0.5,0.5,0.5,1 }, "Shortcut: 'Del'");
+	ImGui::TextColored({ 0.5,0.5,0.5,1 }, "Shortcut: 'Ctrl + Del'");
   ImGui::Separator();
 
   ImGuiTreeNodeFlags flag{ImGuiTreeNodeFlags_OpenOnArrow};
