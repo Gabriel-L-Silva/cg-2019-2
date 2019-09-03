@@ -62,6 +62,7 @@ SceneObject::setParent(SceneObject* parent)
 void 
 SceneObject::add(Reference<SceneObject> object)
 {
+	object->_parent = this;
 	_children.add(object);
 }
 

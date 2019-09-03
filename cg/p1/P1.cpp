@@ -76,6 +76,7 @@ P1::buildScene()
 		for (int j = 0; j < 5; j++) {
 			std::string name{ "Object " + std::to_string(_sceneObjectCounter++) };
 			sceneObject->add(new SceneObject{ name.c_str(), _scene });
+			
 		}
 	}
 }
@@ -133,6 +134,31 @@ P1::treeChildren(bool open, std::vector<Reference<SceneObject>>::iterator it, st
 	}
 }
 
+
+void
+P1::remove() {
+	if (_current != _scene)
+	{
+		SceneObject* sceneObject = dynamic_cast<SceneObject*>(_current);
+		auto parent = sceneObject->parent();
+
+		if (parent == nullptr) {
+			_current = _scene;
+			_scene->remove(sceneObject);
+		}
+		else
+		{
+			_current = parent;
+			parent->remove(sceneObject);
+		}
+	}
+}
+
+bool
+P1::keyInputEvent(int key, int action, int mods) {
+	remove();
+	return true;
+}
 inline void
 P1::hierarchyWindow()
 {
@@ -167,6 +193,11 @@ P1::hierarchyWindow()
     }
     ImGui::EndPopup();
   }
+	if (ImGui::Button("Delete"))
+	{
+		remove();
+	}
+	
   ImGui::Separator();
 
   ImGuiTreeNodeFlags flag{ImGuiTreeNodeFlags_OpenOnArrow};
@@ -181,6 +212,7 @@ P1::hierarchyWindow()
 	treeChildren(open, it, end);
 	ImGui::End();
 }
+
 
 namespace ImGui
 { // begin namespace ImGui

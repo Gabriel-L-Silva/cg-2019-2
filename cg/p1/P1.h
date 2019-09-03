@@ -31,6 +31,8 @@ public:
 
 	void treeChildren(bool open, std::vector<Reference<SceneObject>>::iterator it, std::vector<Reference<SceneObject>>::iterator end);
 
+	void remove();
+
 private:
   GLSL::Program _program;
   Reference<Scene> _scene;
@@ -47,7 +49,7 @@ private:
   void sceneGui();
   void sceneObjectGui();
   void objectGui();
-
+	bool keyInputEvent(int key, int action, int mods);
 }; // P1
 
 #endif // __P1_h
