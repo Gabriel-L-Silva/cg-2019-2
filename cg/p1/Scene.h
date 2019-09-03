@@ -99,6 +99,10 @@ public:
 		_primitives.remove(object);
 	}
 
+	bool isRootEmpty()
+	{
+		return _root.isEmpty();
+	}
 private:
 	// lista de todos os sceneObj que tem primitive
 	Collection<Reference<Primitive>> _primitives;
