@@ -6,6 +6,7 @@
 #include "Scene.h"
 #include "graphics/Application.h"
 
+
 using namespace cg;
 
 class P1: public GLWindow
@@ -29,17 +30,21 @@ public:
 
 	void renderPrim(Reference<Primitive>);
 
-	void treeChildren(bool open, Reference<SceneObject> it);
+	void treeChildren(bool open, std::vector<Reference<SceneObject>>::iterator it, std::vector<Reference<SceneObject>>::iterator end);
+
+	void removeCurrent();
+
+	void addEmptyCurrent();
+	void addBoxCurrent();
 
 private:
   GLSL::Program _program;
   Reference<Scene> _scene;
-  Reference<SceneObject> _box;
-  Reference<Primitive> _primitive;
   SceneNode* _current{};
   Color selectedWireframeColor{255, 102, 0};
   mat4f _transform{mat4f::identity()};
 	int _sceneObjectCounter = 0;
+	std::vector<Reference<SceneNode>> imGuiIt;
 
 
   void buildScene();
@@ -49,7 +54,7 @@ private:
   void sceneGui();
   void sceneObjectGui();
   void objectGui();
-
+	bool keyInputEvent(int key, int action, int mods);
 }; // P1
 
 #endif // __P1_h
