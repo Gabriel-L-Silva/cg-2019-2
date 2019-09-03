@@ -65,15 +65,7 @@ makeBoxMesh()
 inline void
 P1::buildScene()
 {
-  _current = _scene = new Scene{"Scene 1"};
-  _box = new SceneObject{"BoxBOX 1", _scene};
-	////_box agora faz parte da raiz da cena
-	_box->setParent(nullptr);
-
-	_primitive = makeBoxMesh();
-	////Adiciona _primitive nos componentes de _box
-	_box->add((Reference<Component>)_primitive);
-
+	_scene = new Scene{"Scene 1"};
 	Reference<SceneObject> sceneObject;
 
 	for (int i = 0; i < 5; i++) {
@@ -84,6 +76,7 @@ P1::buildScene()
 		for (int j = 0; j < 5; j++) {
 			std::string name{ "Object " + std::to_string(_sceneObjectCounter++) };
 			sceneObject->add(new SceneObject{ name.c_str(), _scene });
+			
 		}
 	}
 }
@@ -107,12 +100,10 @@ namespace ImGui
 }
 
 void 
-P1::treeChildren(bool open, Reference<SceneObject> sceneObject)
+P1::treeChildren(bool open, std::vector<Reference<SceneObject>>::iterator it, std::vector<Reference<SceneObject>>::iterator end)
 {
 	if (open)
 	{
-		auto it  = sceneObject->getChildrenIter();
-		auto end = sceneObject->getChildrenEnd();
 		for (; it != end; it++)
 		{
 			if ((*it)->isChildrenEmpty())
@@ -134,13 +125,92 @@ P1::treeChildren(bool open, Reference<SceneObject> sceneObject)
 
 				if (ImGui::IsItemClicked())
 					_current = (*it);
-				treeChildren(open, (*it));
+				auto cIt = (*it)->getChildrenIter();
+				auto cEnd = (*it)->getChildrenEnd();
+				treeChildren(open, cIt, cEnd);
 			}
 		}
 		ImGui::TreePop();
 	}
 }
 
+void
+P1::addEmptyCurrent()
+{
+	std::string name{ "Object " + std::to_string(_sceneObjectCounter++) };
+	auto sceneObject = new SceneObject{ name.c_str(), _scene };
+	SceneObject* current = dynamic_cast<SceneObject*>(_current);
+	sceneObject->setParent(current);
+}
+
+void
+P1::addBoxCurrent() 
+{
+	// TODO: create a new box.
+	std::string name{ "Box " + std::to_string(_sceneObjectCounter++) };
+	auto sceneObject = new SceneObject{ name.c_str(), _scene };
+	SceneObject* current = nullptr;
+	current = dynamic_cast<SceneObject*>(_current);
+	sceneObject->setParent(current);
+
+	Component* primitive = dynamic_cast<Component*>(makeBoxMesh());
+	sceneObject->add(primitive);
+}
+
+void
+P1::removeCurrent() {
+	if (_current != _scene && _current != nullptr)
+	{
+		SceneObject* sceneObject = dynamic_cast<SceneObject*>(_current);
+		auto parent = sceneObject->parent();
+
+		if (parent == nullptr) {
+			_current = _scene;
+			_scene->remove(sceneObject);
+		}
+		else
+		{
+			_current = parent;
+			parent->remove(sceneObject);
+		}
+	}
+}
+
+bool
+P1::keyInputEvent(int key, int action, int mods) {
+	if (key == GLFW_KEY_DELETE && action == GLFW_RELEASE && mods == GLFW_MOD_CONTROL)
+		removeCurrent();
+	else if (key == GLFW_KEY_E && action == GLFW_RELEASE && mods == GLFW_MOD_CONTROL)
+		addEmptyCurrent();
+	else if (key == GLFW_KEY_B && action == GLFW_RELEASE && mods == GLFW_MOD_CONTROL)
+		addBoxCurrent();
+	/*else if (key == GLFW_KEY_RIGHT && action == GLFW_RELEASE)
+	{
+		SceneObject* sceneObject = dynamic_cast<SceneObject*>(_current);
+		if (sceneObject != nullptr)
+		{
+			if (!sceneObject->isChildrenEmpty())
+				_current = *(sceneObject->getChildrenIter());
+		}
+		else if (!_scene->isRootEmpty())
+		{
+			_current = *(_scene->getRootIt());
+		}
+	}
+	else if (key == GLFW_KEY_LEFT && action == GLFW_RELEASE)
+	{
+		SceneObject* sceneObject = dynamic_cast<SceneObject*>(_current);
+		if (sceneObject != nullptr)
+		{
+			auto parent = sceneObject->parent();
+			if (parent != nullptr)
+				_current = parent;
+			else
+				_current = _scene;
+		}
+	}*/
+	return true;
+}
 inline void
 P1::hierarchyWindow()
 {
@@ -151,30 +221,29 @@ P1::hierarchyWindow()
   {
 		if (ImGui::MenuItem("Empty Object"))
 		{
-			std::string name{ "Object " + std::to_string(_sceneObjectCounter++) };
-			auto sceneObject = new SceneObject{ name.c_str(), _scene };
-			SceneObject* current  = dynamic_cast<SceneObject*>(_current);
-			sceneObject->setParent(current);
+			addEmptyCurrent();
 		}
+		ImGui::SameLine();
+		ImGui::TextColored({ 0.5,0.5,0.5,1 }, "Shortcut: 'Ctrl + E'");
     if (ImGui::BeginMenu("3D Object"))
     {
       if (ImGui::MenuItem("Box"))
       {
-        // TODO: create a new box.
-				std::string name{ "Box " + std::to_string(_sceneObjectCounter++) };
-				auto sceneObject = new SceneObject{ name.c_str(), _scene };
-				SceneObject* current = nullptr;
-				current = dynamic_cast<SceneObject*>(_current);
-				sceneObject->setParent(current);
-
-				Component* primitive = nullptr;
-				primitive = dynamic_cast<Component*>(makeBoxMesh());
-				sceneObject->add(primitive);
+				addBoxCurrent();
       }
+			ImGui::SameLine();
+			ImGui::TextColored({ 0.5,0.5,0.5,1 }, "Shortcut: 'Ctrl + B'");
       ImGui::EndMenu();
     }
     ImGui::EndPopup();
   }
+	ImGui::SameLine();
+	if (ImGui::Button("Delete"))
+	{
+		removeCurrent();
+	}
+	ImGui::SameLine();
+	ImGui::TextColored({ 0.5,0.5,0.5,1 }, "Shortcut: 'Ctrl + Del'");
   ImGui::Separator();
 
   ImGuiTreeNodeFlags flag{ImGuiTreeNodeFlags_OpenOnArrow};
@@ -184,10 +253,12 @@ P1::hierarchyWindow()
 
   if (ImGui::IsItemClicked())
     _current = _scene;
-	
-	treeChildren(open, _scene->getRoot());
+	auto it = _scene->getRootIt();
+	auto end = _scene->getRootEnd();
+	treeChildren(open, it, end);
 	ImGui::End();
 }
+
 
 namespace ImGui
 { // begin namespace ImGui
@@ -259,10 +330,12 @@ P1::sceneObjectGui()
 
   ImGui::ObjectNameInput(object);
   ImGui::SameLine();
-  ImGui::Checkbox("###visible", &object->visible);
+  ImGui::Checkbox("visible", &object->visible);
   ImGui::Separator();
+
 	auto it = object->getComponentIter();
 	auto end = object->getComponentEnd();
+
 	for (; it != end; it++)
 	{
 		//Comparar com dynamic cast

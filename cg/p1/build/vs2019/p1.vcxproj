@@ -26,6 +26,7 @@
     <ClInclude Include="..\..\Scene.h" />
     <ClInclude Include="..\..\SceneObject.h" />
     <ClInclude Include="..\..\Transform.h" />
+    <ClInclude Include="Collection.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
