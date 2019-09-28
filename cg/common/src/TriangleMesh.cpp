@@ -1,6 +1,6 @@
 //[]---------------------------------------------------------------[]
 //|                                                                 |
-//| Copyright (C) 2014, 2018 Orthrus Group.                         |
+//| Copyright (C) 2014, 2019 Orthrus Group.                         |
 //|                                                                 |
 //| This software is provided 'as-is', without any express or       |
 //| implied warranty. In no event will the authors be held liable   |
@@ -28,32 +28,33 @@
 // Source file for simple triangle mesh.
 //
 // Author: Paulo Pagliosa
-// Last revision: 15/09/2018
+// Last revision: 02/06/2019
 
-#include "geometry/TriangleMesh.h"
+#include "geometry/MeshSweeper.h"
 #include <memory>
 
 namespace cg
 { // begin namespace cg
 
 
-//////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
 //
 // TriangleMesh implementation
 // ============
 static uint32_t nextMeshId;
 
-TriangleMesh::TriangleMesh(const Data& data):
+TriangleMesh::TriangleMesh(Data&& data):
   id{++nextMeshId},
   _data{data}
 {
-  // do nothing
+  memset(&data, 0, sizeof(Data));
 }
 
 TriangleMesh::~TriangleMesh()
 {
   delete []_data.vertices;
   delete []_data.vertexNormals;
+  delete []_data.uv;
   delete []_data.triangles;
 }
 
@@ -107,6 +108,48 @@ TriangleMesh::TRS(const mat4f& trs)
 
   for (int i = 0; i < nv; ++i)
     _data.vertexNormals[i] = (r * _data.vertexNormals[i]).versor();
+}
+
+static inline void
+printv(const vec3f& p, FILE* f)
+{
+  fprintf(f, "%g,%g,%g", p.x, p.y, p.z);
+}
+
+static inline void
+printv(const vec2f& p, FILE* f)
+{
+  fprintf(f, "%g,%g", p.x, p.y);
+}
+
+void
+TriangleMesh::print(const char* s, FILE* f) const
+{
+  fprintf(f, "%s mesh\n{\n", s);
+  fprintf(f, "  vertices %d\n  {\n",  _data.numberOfVertices);
+  for (int i = 0; i < _data.numberOfVertices; ++i)
+  {
+    fprintf(f, "    %d ", i);
+    printv(_data.vertices[i], f);
+    if (_data.vertexNormals != nullptr)
+    {
+      fputc('/', f);
+      printv(_data.vertexNormals[i], f);
+    }
+    if (_data.uv != nullptr)
+    {
+      fputc('/', f);
+      printv(_data.uv[i], f);
+    }
+    fputc('\n', f);
+  }
+  fprintf(f, "  }\n  triangles %d\n  {\n", _data.numberOfTriangles);
+
+  auto t = _data.triangles;
+
+  for (int i = 0; i < _data.numberOfTriangles; ++i, ++t)
+    fprintf(f, "    %d %d,%d,%d\n", i, t->v[0], t->v[1], t->v[2]);
+  fprintf(f, "  }\n}\n");
 }
 
 } // end namespace cg

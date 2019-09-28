@@ -1,6 +1,6 @@
 //[]---------------------------------------------------------------[]
 //|                                                                 |
-//| Copyright (C) 2014, 2018 Orthrus Group.                         |
+//| Copyright (C) 2014, 2019 Orthrus Group.                         |
 //|                                                                 |
 //| This software is provided 'as-is', without any express or       |
 //| implied warranty. In no event will the authors be held liable   |
@@ -28,7 +28,7 @@
 // Math macros/static functions.
 //
 // Author: Paulo Pagliosa
-// Last revision: 01/08/2018
+// Last revision: 07/09/2019
 
 #ifndef __Real_h
 #define __Real_h
@@ -64,7 +64,7 @@ abs(real x)
 
 /// Returns the signal of x.
 template <typename real>
-HOST DEVICE inline real
+HOST DEVICE inline constexpr real
 sign(real x)
 {
   return static_cast<real>(x > 0 ? 1 : (x < 0 ? -1 : 0));
@@ -72,7 +72,7 @@ sign(real x)
 
 /// Returns true if x is close to zero.
 template <typename real>
-HOST DEVICE inline bool
+HOST DEVICE inline constexpr bool
 isZero(real x, real eps = Limits<real>::eps())
 {
   return abs<real>(x) <= eps;
@@ -80,7 +80,7 @@ isZero(real x, real eps = Limits<real>::eps())
 
 /// Returns true if x is close to y.
 template <typename real>
-HOST DEVICE inline bool
+HOST DEVICE inline constexpr bool
 isEqual(real x, real y, real eps = Limits<real>::eps())
 {
   return isZero<real>(x - y, eps);
@@ -88,7 +88,7 @@ isEqual(real x, real y, real eps = Limits<real>::eps())
 
 /// Returns true if x is positive.
 template <typename real>
-HOST DEVICE inline bool
+HOST DEVICE inline constexpr bool
 isPositive(real x, real eps = Limits<real>::eps())
 {
   return x > +eps;
@@ -96,7 +96,7 @@ isPositive(real x, real eps = Limits<real>::eps())
 
 /// Returns true if x is negative.
 template <typename real>
-HOST DEVICE inline bool
+HOST DEVICE inline constexpr bool
 isNegative(real x, real eps = Limits<real>::eps())
 {
   return x < -eps;
@@ -104,7 +104,7 @@ isNegative(real x, real eps = Limits<real>::eps())
 
 /// Returns true if (x, y) is close to null.
 template <typename real>
-HOST DEVICE inline bool
+HOST DEVICE inline constexpr bool
 isNull(real x, real y, real eps)
 {
   return isZero<real>(x, eps) && isZero<real>(y, eps);
@@ -112,7 +112,7 @@ isNull(real x, real y, real eps)
 
 /// Returns true if (x, y, z) is close to null.
 template <typename real>
-HOST DEVICE inline bool
+HOST DEVICE inline constexpr bool
 isNull(real x, real y, real z, real eps)
 {
   return isNull<real>(x, y, eps) && isZero<real>(z, eps);
@@ -120,7 +120,7 @@ isNull(real x, real y, real z, real eps)
 
 /// Returns true if (x, y, z, w) is close to null.
 template <typename real>
-HOST DEVICE inline bool
+HOST DEVICE inline constexpr bool
 isNull(real x, real y, real z, real w, real eps)
 {
   return isNull<real>(x, y, z, eps) && isZero<real>(w, eps);
@@ -128,7 +128,7 @@ isNull(real x, real y, real z, real w, real eps)
 
 /// Returns 1 / x.
 template <typename real>
-HOST DEVICE inline
+HOST DEVICE constexpr inline
 real inverse(real x)
 {
   return static_cast<real>(1 / x);
@@ -136,7 +136,7 @@ real inverse(real x)
 
 /// Returns x in radians.
 template <typename real>
-HOST DEVICE inline
+HOST DEVICE constexpr inline
 real toRadians(real x)
 {
   return static_cast<real>(x * M_PI / 180);
@@ -144,15 +144,15 @@ real toRadians(real x)
 
 /// Returns x in degrees.
 template <typename real>
-HOST DEVICE inline real
+HOST DEVICE inline constexpr real
 toDegrees(real x)
 {
-  return static_cast<real>(x * 180 / M_PI);
+  return static_cast<real>(x / M_PI * 180);
 }
 
 /// Returns x ^ 2.
 template <typename real>
-HOST DEVICE inline real
+HOST DEVICE inline constexpr real
 sqr(real x)
 {
   return x * x;
@@ -160,10 +160,26 @@ sqr(real x)
 
 /// Returns x ^ 3.
 template <typename real>
-HOST DEVICE inline real
+HOST DEVICE inline constexpr real
 cube(real x)
 {
   return x * x * x;
+}
+
+/// Returns a <= x <= b.
+template <typename real>
+HOST DEVICE inline constexpr real
+clamp(real x, real a, real b)
+{
+  return x < a ? a : (x > b ? b : x);
+}
+
+/// Returns pi.
+template <typename real>
+inline constexpr real
+pi()
+{
+  return (real)M_PI;
 }
 
 } // end namespace math

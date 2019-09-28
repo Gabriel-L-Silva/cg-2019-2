@@ -52,7 +52,7 @@
     <ClInclude Include="..\..\SceneNode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Collection.h">
+    <ClInclude Include="..\..\Collection.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

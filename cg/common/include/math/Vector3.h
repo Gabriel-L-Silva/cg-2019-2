@@ -28,14 +28,12 @@
 // Class definition for 3D vector.
 //
 // Author: Paulo Pagliosa
-// Last revision: 05/08/2019
+// Last revision: 05/09/2019
 
 #ifndef __Vector3_h
 #define __Vector3_h
 
-#include "math/Real.h"
-#include <algorithm>
-#include <cstdio>
+#include "math/Vector2.h"
 
 namespace cg
 { // begin namespace cg
@@ -49,8 +47,9 @@ template <typename real>
 class Vector3
 {
 public:
+  using vec2 = Vector2<real>;
   using vec3 = Vector3<real>;
-  using element_type = real;
+  using value_type = real;
 
   real x;
   real y;
@@ -79,6 +78,13 @@ public:
   explicit Vector3(real s)
   {
     set(s);
+  }
+
+  /// Constructs a Vector3 object from (v, z).
+  HOST DEVICE
+  explicit Vector3(const vec2& v, real z = 0)
+  {
+    set(v, z);
   }
 
   HOST DEVICE
@@ -123,6 +129,14 @@ public:
     x = y = z = s;
   }
 
+  /// Sets the coordinates of this object to (v, z).
+  HOST DEVICE
+  void set(const vec2& v, real z = 0)
+  {
+    x = v.x;
+    y = v.y;
+    this->z = z;
+  }
 
   /// Sets the coordinates of this object from v.
   HOST DEVICE

@@ -28,7 +28,7 @@
 // Class definition for 4D vector.
 //
 // Author: Paulo Pagliosa
-// Last revision: 05/08/2019
+// Last revision: 05/09/2019
 
 #ifndef __Vector4_h
 #define __Vector4_h
@@ -49,7 +49,7 @@ class Vector4
 public:
   using vec3 = Vector3<real>;
   using vec4 = Vector4<real>;
-  using element_type = real;
+  using value_type = real;
 
   real x;
   real y;

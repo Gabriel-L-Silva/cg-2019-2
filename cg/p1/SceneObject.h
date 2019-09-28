@@ -64,6 +64,11 @@ public:
     makeUse(&_transform);
   }
 
+	~SceneObject() {
+		_children.clear();
+		_components.clear();
+	}
+
 	void add(Reference<SceneObject> object);
 	void add(Reference<Component> object);
 	void remove(Reference<SceneObject> object);

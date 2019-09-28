@@ -28,7 +28,7 @@
 // Class definition for simple triangle mesh.
 //
 // Author: Paulo Pagliosa
-// Last revision: 05/08/2019
+// Last revision: 02/06/2019
 
 #ifndef __TriangleMesh_h
 #define __TriangleMesh_h
@@ -129,7 +129,7 @@ normalTRS(const Matrix4x4<real>& trs)
 }
 
 
-//////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
 //
 // TriangleMesh: simple triangle mesh class
 // ============
@@ -152,9 +152,10 @@ public:
   struct Data
   {
     int numberOfVertices;
+    int numberOfTriangles;
     vec3f* vertices;
     vec3f* vertexNormals;
-    int numberOfTriangles;
+    vec2f* uv{}; // TODO
     Triangle* triangles;
 
   }; // Data
@@ -163,7 +164,7 @@ public:
   Reference<SharedObject> userData;
 
   /// Constructs a triangle mesh from data.
-  TriangleMesh(const Data& data);
+  TriangleMesh(Data&& data);
 
   /// Destructor.
   ~TriangleMesh();
@@ -182,6 +183,13 @@ public:
   {
     return _data.vertexNormals != nullptr;
   }
+
+  bool hasUV() const
+  {
+    return _data.uv != nullptr;
+  }
+
+  void print(const char* s, FILE* f = stdout) const;
 
 private:
   Data _data;

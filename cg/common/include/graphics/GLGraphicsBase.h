@@ -1,6 +1,6 @@
 //[]---------------------------------------------------------------[]
 //|                                                                 |
-//| Copyright (C) 2014, 2018 Orthrus Group.                         |
+//| Copyright (C) 2014, 2019 Orthrus Group.                         |
 //|                                                                 |
 //| This software is provided 'as-is', without any express or       |
 //| implied warranty. In no event will the authors be held liable   |
@@ -28,7 +28,7 @@
 // Class definition for OpenGL graphics base.
 //
 // Author: Paulo Pagliosa
-// Last revision: 26/10/2018
+// Last revision: 16/02/2019
 
 #ifndef __GLGraphicsBase_h
 #define __GLGraphicsBase_h
@@ -47,6 +47,12 @@ namespace cg
 class GLGraphicsBase
 {
 public:
+  enum PolygonMode
+  {
+    LINE = GL_LINE,
+    FILL = GL_FILL
+  };
+
   // Destructor.
   ~GLGraphicsBase();
 
@@ -131,6 +137,16 @@ public:
     _triangleColors[2] = colors[2];
   }
 
+  auto polygonMode() const
+  {
+    return _polygonMode;
+  }
+
+  void setPolygonMode(PolygonMode mode)
+  {
+    glPolygonMode(GL_FRONT_AND_BACK, _polygonMode = mode);
+  }
+
 protected:
   // Constructor.
   GLGraphicsBase();
@@ -160,9 +176,10 @@ private:
   Color _triangleColors[3];
   GLint _trianglePointsLoc;
   GLint _triangleColorsLoc;
+  PolygonMode _polygonMode;
 
 }; // GLGraphicsBase
 
 } // end namespace cg
 
-#endif // __GLGraphicsBase
+#endif // __GLGraphicsBase_h

@@ -95,7 +95,16 @@
     <ClInclude Include="..\..\include\graphics\GLGraphicsBase.h">
       <Filter>Header Files\graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\graphics\GLGraphics.h">
+    <ClInclude Include="..\..\include\geometry\MeshSweeper.h">
+      <Filter>Header Files\geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\math\Vector2.h">
+      <Filter>Header Files\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\graphics\GLGraphics3.h">
+      <Filter>Header Files\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\graphics\View3.h">
       <Filter>Header Files\graphics</Filter>
     </ClInclude>
   </ItemGroup>
@@ -139,7 +148,13 @@
     <ClCompile Include="..\..\src\GLGraphicsBase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\GLGraphics.cpp">
+    <ClCompile Include="..\..\src\MeshSweeper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\GLGraphics3.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\View3.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

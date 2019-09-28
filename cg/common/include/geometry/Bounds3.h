@@ -33,7 +33,7 @@
 #ifndef __Bounds3_h
 #define __Bounds3_h
 
-#include "Geometry/Ray.h"
+#include "geometry/Ray.h"
 
 namespace cg
 { // begin namespace cg

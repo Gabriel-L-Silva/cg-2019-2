@@ -93,11 +93,13 @@
     <ClInclude Include="..\..\include\core\NameableObject.h" />
     <ClInclude Include="..\..\include\core\SharedObject.h" />
     <ClInclude Include="..\..\include\geometry\Bounds3.h" />
+    <ClInclude Include="..\..\include\geometry\MeshSweeper.h" />
     <ClInclude Include="..\..\include\geometry\Ray.h" />
     <ClInclude Include="..\..\include\geometry\TriangleMesh.h" />
     <ClInclude Include="..\..\include\graphics\Application.h" />
+    <ClInclude Include="..\..\include\graphics\View3.h" />
     <ClInclude Include="..\..\include\graphics\Color.h" />
-    <ClInclude Include="..\..\include\graphics\GLGraphics.h" />
+    <ClInclude Include="..\..\include\graphics\GLGraphics3.h" />
     <ClInclude Include="..\..\include\graphics\GLGraphicsBase.h" />
     <ClInclude Include="..\..\include\graphics\GLMesh.h" />
     <ClInclude Include="..\..\include\graphics\GLProgram.h" />
@@ -107,6 +109,7 @@
     <ClInclude Include="..\..\include\math\Quaternion.h" />
     <ClInclude Include="..\..\include\math\Real.h" />
     <ClInclude Include="..\..\include\math\RealLimits.h" />
+    <ClInclude Include="..\..\include\math\Vector2.h" />
     <ClInclude Include="..\..\include\math\Vector3.h" />
     <ClInclude Include="..\..\include\math\Vector4.h" />
     <ClInclude Include="..\..\include\utils\MeshReader.h" />
@@ -118,12 +121,14 @@
     <ClCompile Include="..\..\externals\src\imgui_impl_glfw.cpp" />
     <ClCompile Include="..\..\externals\src\imgui_impl_opengl3.cpp" />
     <ClCompile Include="..\..\src\Application.cpp" />
+    <ClCompile Include="..\..\src\View3.cpp" />
     <ClCompile Include="..\..\src\Color.cpp" />
-    <ClCompile Include="..\..\src\GLGraphics.cpp" />
+    <ClCompile Include="..\..\src\GLGraphics3.cpp" />
     <ClCompile Include="..\..\src\GLGraphicsBase.cpp" />
     <ClCompile Include="..\..\src\GLProgram.cpp" />
     <ClCompile Include="..\..\src\GLWindow.cpp" />
     <ClCompile Include="..\..\src\MeshReader.cpp" />
+    <ClCompile Include="..\..\src\MeshSweeper.cpp" />
     <ClCompile Include="..\..\src\NameableObject.cpp" />
     <ClCompile Include="..\..\src\TriangleMesh.cpp" />
   </ItemGroup>

@@ -59,8 +59,13 @@ public:
     SceneNode{name}
   {
     // do nothing
-
   }
+
+	~Scene()
+	{
+		_root.clear();
+		_primitives.clear();
+	}
 	auto getPrimitiveIter()
 	{
 		return _primitives.getIter();

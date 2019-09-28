@@ -96,7 +96,7 @@ private:
   int _vertexCount;
 
   template <typename T>
-  static auto size(int n)
+  static size_t size(int n)
   {
     return sizeof(T) * n;
   }

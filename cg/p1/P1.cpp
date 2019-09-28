@@ -76,7 +76,6 @@ P1::buildScene()
 		for (int j = 0; j < 5; j++) {
 			std::string name{ "Object " + std::to_string(_sceneObjectCounter++) };
 			sceneObject->add(new SceneObject{ name.c_str(), _scene });
-			
 		}
 	}
 }
@@ -403,7 +402,6 @@ P1::renderPrim(Reference<Primitive> p)
 {
 	if (p->sceneObject()->visible) {
 		_program.setUniformMat4("transform", p->sceneObject()->transform()->localToWorldMatrix());
-		//_program.setUniformMat4("transform", _transform);
 
 		auto m = p->mesh();
 
@@ -422,10 +420,6 @@ P1::renderPrim(Reference<Primitive> p)
 	
 }
 
-
-//GLWindow::render();
-
-
 void
 P1::render() {
 	GLWindow::render();
@@ -437,24 +431,6 @@ P1::render() {
 	{
 		renderPrim(*it);
 	}
-
-	/*if (!_box->visible)
-		return;
-
-	_program.setUniformMat4("transform", _transform);
-
-	auto m = _primitive->mesh();
-
-	m->bind();
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glDrawElements(GL_TRIANGLES, m->vertexCount(), GL_UNSIGNED_INT, 0);
-	if (_current != _box)
-		return;
-	m->setVertexColor(selectedWireframeColor);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	glDrawElements(GL_TRIANGLES, m->vertexCount(), GL_UNSIGNED_INT, 0);
-	m->useVertexColors(); */
-	
 }
 
 

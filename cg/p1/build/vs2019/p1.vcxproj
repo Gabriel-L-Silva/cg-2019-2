@@ -19,6 +19,7 @@
     <ClCompile Include="..\..\Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Collection.h" />
     <ClInclude Include="..\..\Component.h" />
     <ClInclude Include="..\..\Primitive.h" />
     <ClInclude Include="..\..\SceneNode.h" />
@@ -26,7 +27,6 @@
     <ClInclude Include="..\..\Scene.h" />
     <ClInclude Include="..\..\SceneObject.h" />
     <ClInclude Include="..\..\Transform.h" />
-    <ClInclude Include="Collection.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

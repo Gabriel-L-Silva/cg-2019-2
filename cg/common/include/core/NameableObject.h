@@ -1,6 +1,6 @@
 //[]---------------------------------------------------------------[]
 //|                                                                 |
-//| Copyright (C) 2014, 2018 Orthrus Group.                         |
+//| Copyright (C) 2014, 2019 Orthrus Group.                         |
 //|                                                                 |
 //| This software is provided 'as-is', without any express or       |
 //| implied warranty. In no event will the authors be held liable   |
@@ -28,7 +28,7 @@
 // Class definition for nameable object.
 //
 // Author: Paulo Pagliosa
-// Last revision: 21/09/2018
+// Last revision: 07/09/2019
 
 #ifndef __NameableObject_h
 #define __NameableObject_h
@@ -44,7 +44,7 @@ namespace cg
 //
 // NameableObject: nameable object class
 // ==============
-class NameableObject: public SharedObject
+class NameableObject: public virtual SharedObject
 {
 public:
   /// Returns the name of this object.

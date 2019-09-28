@@ -1,6 +1,6 @@
 //[]---------------------------------------------------------------[]
 //|                                                                 |
-//| Copyright (C) 2014, 2018 Orthrus Group.                         |
+//| Copyright (C) 2014, 2019 Orthrus Group.                         |
 //|                                                                 |
 //| This software is provided 'as-is', without any express or       |
 //| implied warranty. In no event will the authors be held liable   |
@@ -28,7 +28,7 @@
 // Source file for mesh reader.
 //
 // Author: Paulo Pagliosa
-// Last revision: 15/09/2018
+// Last revision: 05/09/2019
 
 #include "utils/MeshReader.h"
 #include <filesystem>
@@ -253,7 +253,7 @@ MeshReader::readOBJ(const char* filename)
   internal::readMeshData(file, data);
   fclose(file);
 
-  auto mesh = new TriangleMesh{data};
+  auto mesh = new TriangleMesh{std::move(data)};
 
   mesh->computeNormals();
   return mesh;

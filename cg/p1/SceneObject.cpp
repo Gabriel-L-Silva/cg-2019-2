@@ -69,12 +69,7 @@ SceneObject::add(Reference<SceneObject> object)
 void
 SceneObject::remove(Reference<SceneObject> object)
 {
-	auto it = _children.getIter();
-
-	while (*it != object)
-		it++;
-
-	_children.remove(*it);
+	_children.remove(object);
 
 }
 
@@ -93,13 +88,9 @@ SceneObject::add(Reference<Component> object)
 void
 SceneObject::remove(Reference<Component> object)
 {
-	auto it = _components.getIter();
-
-	while (*it != object)
-		it++;
 
 	//Reference <SceneObject> removed = object;
-	_components.remove(*it);
+	_components.remove(object);
 
 	//return removed;
 }
