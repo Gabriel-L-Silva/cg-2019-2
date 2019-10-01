@@ -458,16 +458,14 @@ P2::sceneObjectGui()
 		else if(auto p = dynamic_cast<Primitive*>((Component*)(*it)))//Se for primitive
 		{
 			auto notDelete{ true };
-			if (auto open = ImGui::CollapsingHeader(p->typeName(), &notDelete))
-			{												
-				if (!notDelete)
-				{
-				  // TODO: delete primitive
-					removePrimitive(p);
-				}
-				else if (open)
-				  inspectPrimitive(*p);
+			auto open = ImGui::CollapsingHeader(p->typeName(), &notDelete);
+
+			if (!notDelete)
+			{
+				// TODO: delete primitive
 			}
+			else if (open)
+				inspectPrimitive(*p);
 		}
 		else if (auto c = dynamic_cast<Camera*>((Component*)*it))//Se for camera
 		{
