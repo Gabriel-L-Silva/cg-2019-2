@@ -1,6 +1,6 @@
 //[]---------------------------------------------------------------[]
 //|                                                                 |
-//| Copyright (C) 2018, 2019 Orthrus Group.                         |
+//| Copyright (C) 2018 Orthrus Group.                               |
 //|                                                                 |
 //| This software is provided 'as-is', without any express or       |
 //| implied warranty. In no event will the authors be held liable   |
@@ -27,15 +27,16 @@
 // ========
 // Class definition for scene.
 //
-// Author(s): Paulo Pagliosa (and your name)
-// Last revision: 21/09/2019
+// Author(s): Paulo Pagliosa, Gabriel Lucas da Silva e Lucas Santana
+// Last revision: 25/08/2018
 
 #ifndef __Scene_h
 #define __Scene_h
 
 #include "SceneObject.h"
 #include "graphics/Color.h"
-
+#include <vector>
+#include "Primitive.h"
 namespace cg
 { // begin namespace cg
 
@@ -48,30 +49,80 @@ class Scene: public SceneNode
 {
 public:
   Color backgroundColor{Color::gray};
-  Color ambientLight{Color::black};
+	Color ambientLight{ Color::black };
+
+  /*
+	manter uma lista de primitives
+	*/
 
   /// Constructs an empty scene.
   Scene(const char* name):
-    SceneNode{name},
-    _root{"\0x1bRoot", *this}
+    SceneNode{name}
   {
-    SceneObject::makeUse(&_root);
+    // do nothing
+		gambito->_children.clear();
+		gambito->_components.clear();
   }
 
-  /// Returns the root scene object of this scene.
-  auto root() const
-  {
-    return &_root;
-  }
+	~Scene()
+	{
+		_root.clear();
+		_primitives.clear();
+	}
+	auto getPrimitiveIter()
+	{
+		return _primitives.getIter();
+	}
 
-  auto root()
-  {
-    return &_root;
-  }
+	auto getPrimitiveEnd()
+	{
+		return _primitives.getEnd();
+	}
 
+	void addPrimitive(Reference<Primitive> p)
+	{
+		_primitives.add(p);
+	}
+
+	auto getRootIt() 
+	{
+		return _root.getIter();
+	}
+
+	auto getRootEnd() 
+	{
+		return _root.getEnd();
+	}
+
+	auto addRoot(Reference<SceneObject> object)
+	{
+		return _root.add(object);
+	}
+
+	auto remove(Reference<SceneObject> object) {
+		_root.remove(object);
+	}
+
+	auto remove(Reference<Primitive> object) {
+		_primitives.remove(object);
+	}
+
+	bool isRootEmpty()
+	{
+		return _root.isEmpty();
+	}
+
+	auto root() const
+	{
+		return _root;
+	}
+
+	SceneObject* gambito = new SceneObject{ "fdc", this };
 private:
-  SceneObject _root;
-
+	// lista de todos os sceneObj que tem primitive
+	Collection<Reference<Primitive>> _primitives;
+	Collection<Reference<SceneObject>> _root;
+	
 }; // Scene
 
 } // end namespace cg

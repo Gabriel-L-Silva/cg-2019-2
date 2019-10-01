@@ -1,6 +1,6 @@
 //[]---------------------------------------------------------------[]
 //|                                                                 |
-//| Copyright (C) 2018, 2019 Orthrus Group.                         |
+//| Copyright (C) 2018 Orthrus Group.                               |
 //|                                                                 |
 //| This software is provided 'as-is', without any express or       |
 //| implied warranty. In no event will the authors be held liable   |
@@ -28,9 +28,11 @@
 // Source file for scene object.
 //
 // Author(s): Paulo Pagliosa (and your name)
-// Last revision: 07/09/2019
+// Last revision: 25/08/2018
 
 #include "SceneObject.h"
+#include "Scene.h"
+#include "Primitive.h"
 
 namespace cg
 { // begin namespace cg
@@ -43,8 +45,48 @@ namespace cg
 void
 SceneObject::setParent(SceneObject* parent)
 {
-  // TODO
-  _parent = parent;
+  if (parent == nullptr)
+	{
+		_parent = scene()->gambito;
+		_scene->addRoot(this);
+	}
+	else
+	{
+		if(_parent != nullptr)
+			_parent->_children.remove(this);
+		_parent = parent;
+		parent->add(this);
+	}
 }
+
+void 
+SceneObject::add(Reference<SceneObject> object)
+{
+	object->_parent = this;
+	_children.add(object);
+}
+
+void
+SceneObject::remove(Reference<SceneObject> object)
+{
+	_children.remove(object);
+}
+
+void
+SceneObject::add(Reference<Component> object)
+{
+	if (auto primitive = dynamic_cast<Primitive*>((Component*)object)) {
+		_scene->addPrimitive(primitive);
+	}
+	object->_sceneObject = this;
+	_components.add(object);
+}
+
+void
+SceneObject::remove(Reference<Component> object)
+{
+	_components.remove(object);
+}
+
 
 } // end namespace cg

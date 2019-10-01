@@ -30,6 +30,11 @@ public:
   /// Render the scene.
   void render() override;
 
+	void treeChildren(bool open, std::vector<Reference<SceneObject>>::iterator it, std::vector<Reference<SceneObject>>::iterator end);
+	void removeCurrent();
+	void addEmptyCurrent();
+	void addBoxCurrent();
+	void removePrimitive(Primitive*);
 private:
   enum ViewMode
   {
@@ -106,6 +111,7 @@ private:
 
   static void buildDefaultMeshes();
 
+	int _sceneObjectCounter = 0;
 }; // P2
 
 #endif // __P2_h

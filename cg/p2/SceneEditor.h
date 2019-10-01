@@ -52,12 +52,12 @@ public:
 
   SceneEditor(Scene& scene):
     _scene{&scene},
-    _editor{"\0x1bSceneEditor", scene},
+    _editor{"\0x1bSceneEditor", &scene},
     _camera{new Camera}
   {
     SceneObject::makeUse(&_editor);
-    _editor.setParent(scene.root());
-    _editor.addComponent(_camera);
+		_editor.setParent(scene.gambito);//nullptr == scene.root()
+    _editor.add(dynamic_cast<Component*>((Camera*)_camera));
   }
 
   const Camera* camera() const
@@ -87,7 +87,6 @@ public:
   }
 
   void newFrame();
-
 private:
   Reference<Scene> _scene;
   SceneObject _editor;

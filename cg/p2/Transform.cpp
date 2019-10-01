@@ -161,7 +161,7 @@ void
 Transform::update()
 {
   auto p = parent();
-
+	
   _matrix = p->_matrix * localMatrix();
   _position = translation(_matrix);
   _rotation = p->_rotation * _localRotation;
@@ -169,6 +169,11 @@ Transform::update()
   _inverseMatrix = inverseLocalMatrix() * p->_inverseMatrix;
   // TODO: update the transform of all scene object's children.
   changed = true;
+
+	auto it = this->sceneObject()->getChildrenIter();
+	auto end = this->sceneObject()->getChildrenEnd();
+	for (; it != end; it++)
+		(*it)->transform()->update();
 }
 
 void
@@ -186,6 +191,7 @@ Transform::parentChanged()
   _inverseMatrix = inverseLocalMatrix() * p->_inverseMatrix;
   // TODO: update the transform of all scene object's children.
   changed = true;
+	this->update();
 }
 
 void

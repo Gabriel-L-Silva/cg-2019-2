@@ -25,14 +25,15 @@
   <ItemGroup>
     <ClInclude Include="..\..\Assets.h" />
     <ClInclude Include="..\..\Camera.h" />
+    <ClInclude Include="..\..\Collection.h" />
     <ClInclude Include="..\..\Component.h" />
     <ClInclude Include="..\..\GLRenderer.h" />
     <ClInclude Include="..\..\Primitive.h" />
     <ClInclude Include="..\..\Renderer.h" />
+    <ClInclude Include="..\..\Scene.h" />
     <ClInclude Include="..\..\SceneEditor.h" />
     <ClInclude Include="..\..\SceneNode.h" />
     <ClInclude Include="..\..\P2.h" />
-    <ClInclude Include="..\..\Scene.h" />
     <ClInclude Include="..\..\SceneObject.h" />
     <ClInclude Include="..\..\Transform.h" />
   </ItemGroup>

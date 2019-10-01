@@ -25,7 +25,7 @@ P2::buildScene()
   _editor->setDefaultView((float)width() / (float)height());
   // **Begin initialization of temporary attributes
   // It should be replaced by your scene initialization
-  {
+  /*{
     auto o = new SceneObject{"Main Camera", *_scene};
     auto camera = new Camera;
 
@@ -37,8 +37,20 @@ P2::buildScene()
     o->setParent(_scene->root());
     _objects.push_back(o);
     Camera::setCurrent(camera);
-  }
+  }*/
   // **End initialization of temporary attributes
+	Reference<SceneObject> sceneObject;
+
+	for (int i = 0; i < 5; i++) {
+		std::string name{ "Box " + std::to_string(_sceneObjectCounter++) };
+		sceneObject = new SceneObject{ name.c_str(), _scene };
+		sceneObject->setParent(nullptr);
+		sceneObject->add(makePrimitive(_defaultMeshes.find("Box")));
+		for (int j = 0; j < 5; j++) {
+			std::string name{ "Object " + std::to_string(_sceneObjectCounter++) };
+			sceneObject->add(new SceneObject{ name.c_str(), _scene });
+		}
+	}
 }
 
 void
@@ -61,63 +73,129 @@ namespace ImGui
   void ShowDemoWindow(bool*);
 }
 
+void
+P2::treeChildren(bool open, std::vector<Reference<SceneObject>>::iterator it, std::vector<Reference<SceneObject>>::iterator end)
+{
+	if (open)
+	{
+		for (; it != end; it++)
+		{
+			if ((*it)->isChildrenEmpty())
+			{
+				auto flag = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+				ImGui::TreeNodeEx((*it),
+					_current == (*it) ? flag | ImGuiTreeNodeFlags_Selected : flag,
+					(*it)->name());
+				if (ImGui::IsItemClicked())
+					_current = (*it);
+
+			}
+			else
+			{
+				auto flag = ImGuiTreeNodeFlags_OpenOnArrow;
+				auto open = ImGui::TreeNodeEx((*it),
+					_current == (*it) ? flag | ImGuiTreeNodeFlags_Selected : flag,
+					(*it)->name());
+
+				if (ImGui::IsItemClicked())
+					_current = (*it);
+				auto cIt = (*it)->getChildrenIter();
+				auto cEnd = (*it)->getChildrenEnd();
+				treeChildren(open, cIt, cEnd);
+			}
+		}
+		ImGui::TreePop();
+	}
+}
+
+void
+P2::addEmptyCurrent()
+{
+	std::string name{ "Object " + std::to_string(_sceneObjectCounter++) };
+	auto sceneObject = new SceneObject{ name.c_str(), _scene };
+	SceneObject* current = dynamic_cast<SceneObject*>(_current);
+	sceneObject->setParent(current);
+}
+
+void
+P2::addBoxCurrent()
+{
+	// TODO: create a new box.
+	std::string name{ "Box " + std::to_string(_sceneObjectCounter++) };
+	auto sceneObject = new SceneObject{ name.c_str(), _scene };
+	SceneObject* current = nullptr;
+	current = dynamic_cast<SceneObject*>(_current);
+	sceneObject->setParent(current);
+
+	Component* primitive = dynamic_cast<Component*>(makePrimitive(_defaultMeshes.find("Box")));
+	sceneObject->add(primitive);
+}
+
+void
+P2::removeCurrent() {
+	if (_current != _scene && _current != nullptr)
+	{
+		SceneObject* sceneObject = dynamic_cast<SceneObject*>(_current);
+		auto parent = sceneObject->parent();
+
+		if (parent == nullptr) {
+			_current = _scene;
+			_scene->remove(sceneObject);
+		}
+		else
+		{
+			_current = parent;
+			parent->remove(sceneObject);
+		}
+	}
+}
+
 inline void
 P2::hierarchyWindow()
 {
-  ImGui::Begin("Hierarchy");
-  if (ImGui::Button("Create###object"))
-    ImGui::OpenPopup("CreateObjectPopup");
-  if (ImGui::BeginPopup("CreateObjectPopup"))
-  {
-    if (ImGui::MenuItem("Empty Object"))
-    {
-      // TODO: create an empty object.
-    }
-    if (ImGui::BeginMenu("3D Object"))
-    {
-      if (ImGui::MenuItem("Box"))
-      {
-        // TODO: create a new box.
-      }
-      if (ImGui::MenuItem("Sphere"))
-      {
-        // TODO: create a new sphere.
-      }
-      ImGui::EndMenu();
-    }
-    if (ImGui::MenuItem("Camera"))
-    {
-      // TODO: create a new camera.
-    }
-    ImGui::EndPopup();
-  }
-  ImGui::Separator();
+	ImGui::Begin("Hierarchy");
+	if (ImGui::Button("Create###object"))
+		ImGui::OpenPopup("CreateObjectPopup");
+	if (ImGui::BeginPopup("CreateObjectPopup"))
+	{
+		if (ImGui::MenuItem("Empty Object"))
+		{
+			addEmptyCurrent();
+		}
+		ImGui::SameLine();
+		ImGui::TextColored({ 0.5,0.5,0.5,1 }, "Shortcut: 'Ctrl + E'");
+		if (ImGui::BeginMenu("3D Object"))
+		{
+			if (ImGui::MenuItem("Box"))
+			{
+				addBoxCurrent();
+			}
+			ImGui::SameLine();
+			ImGui::TextColored({ 0.5,0.5,0.5,1 }, "Shortcut: 'Ctrl + B'");
+			ImGui::EndMenu();
+		}
+		ImGui::EndPopup();
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Delete"))
+	{
+		removeCurrent();
+	}
+	ImGui::SameLine();
+	ImGui::TextColored({ 0.5,0.5,0.5,1 }, "Shortcut: 'Ctrl + Del'");
+	ImGui::Separator();
 
-  // **Begin hierarchy of temporary scene objects
-  // It should be replaced by your hierarchy
-  auto f = ImGuiTreeNodeFlags_OpenOnArrow;
-  auto open = ImGui::TreeNodeEx(_scene,
-    _current == _scene ? f | ImGuiTreeNodeFlags_Selected : f,
-    _scene->name());
+	ImGuiTreeNodeFlags flag{ ImGuiTreeNodeFlags_OpenOnArrow };
+	auto open = ImGui::TreeNodeEx(_scene,
+		_current == _scene ? flag | ImGuiTreeNodeFlags_Selected : flag,
+		_scene->name());
 
-  if (ImGui::IsItemClicked())
-    _current = _scene;
-  if (open)
-  {
-    for (const auto& o : _objects)
-    {
-      auto f = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
-
-      ImGui::TreeNodeEx(o,
-        _current == o ? f | ImGuiTreeNodeFlags_Selected : f,
-        o->name());
-      if (ImGui::IsItemClicked())
-        _current = o;
-    }
-    ImGui::TreePop();
-  }
-  // **End hierarchy of temporary scene objects
-  ImGui::End();
+	if (ImGui::IsItemClicked())
+		_current = _scene;
+	auto it = _scene->getRootIt();
+	auto end = _scene->getRootEnd();
+	treeChildren(open, it, end);
+	ImGui::End();
 }
 
 namespace ImGui
@@ -306,6 +384,11 @@ P2::addComponentButton(SceneObject& object)
   }
 }
 
+void
+P2::removePrimitive(Primitive* p)
+{
+	p->sceneObject()->remove(dynamic_cast<Component*>((Primitive*)p));
+}
 inline void
 P2::sceneObjectGui()
 {
@@ -317,44 +400,80 @@ P2::sceneObjectGui()
   ImGui::SameLine();
   ImGui::Checkbox("###visible", &object->visible);
   ImGui::Separator();
-  if (ImGui::CollapsingHeader(object->transform()->typeName()))
-    ImGui::TransformEdit(object->transform());
+  //if (ImGui::CollapsingHeader(object->transform()->typeName()))
+  //  ImGui::TransformEdit(object->transform());
 
   // **Begin inspection of temporary components
   // It should be replaced by your component inspection
-  auto component = object->component();
+  //auto component = object->component();
 
-  if (auto p = dynamic_cast<Primitive*>(component))
-  {
-    auto notDelete{true};
-    auto open = ImGui::CollapsingHeader(p->typeName(), &notDelete);
+  //if (auto p = dynamic_cast<Primitive*>(component))
+  //{
+  //  auto notDelete{true};
+  //  auto open = ImGui::CollapsingHeader(p->typeName(), &notDelete);
 
-    if (!notDelete)
-    {
-      // TODO: delete primitive
-    }
-    else if (open)
-      inspectPrimitive(*p);
-  }
-  else if (auto c = dynamic_cast<Camera*>(component))
-  {
-    auto notDelete{true};
-    auto open = ImGui::CollapsingHeader(c->typeName(), &notDelete);
+  //  if (!notDelete)
+  //  {
+  //    // TODO: delete primitive
+  //  }
+  //  else if (open)
+  //    inspectPrimitive(*p);
+  //}
+  //else if (auto c = dynamic_cast<Camera*>(component))
+  //{
+  //  auto notDelete{true};
+  //  auto open = ImGui::CollapsingHeader(c->typeName(), &notDelete);
 
-    if (!notDelete)
-    {
-      // TODO: delete camera
-    }
-    else if (open)
-    {
-      auto isCurrent = c == Camera::current();
+  //  if (!notDelete)
+  //  {
+  //    // TODO: delete camera
+  //  }
+  //  else if (open)
+  //  {
+  //    auto isCurrent = c == Camera::current();
 
-      ImGui::Checkbox("Current", &isCurrent);
-      Camera::setCurrent(isCurrent ? c : nullptr);
-      inspectCamera(*c);
-    }
-  }
+  //    ImGui::Checkbox("Current", &isCurrent);
+  //    Camera::setCurrent(isCurrent ? c : nullptr);
+  //    inspectCamera(*c);
+  //  }
+  //}
   // **End inspection of temporary components
+	auto it = object->getComponentIter();
+	auto end = object->getComponentEnd();
+
+	for (; it != end; it++)
+	{
+		//Comparar com dynamic cast
+		//auto casted = dynamic_cast<Transform*>((Component*)(*it));
+		if (auto c = dynamic_cast<Transform*>((Component*)(*it)))//Se for Transform
+		{
+			if (ImGui::CollapsingHeader(object->transform()->typeName()))
+			{
+				auto t = object->transform();
+
+				ImGui::TransformEdit(t);
+				/*_transform = t->localToWorldMatrix();*/
+			}
+		}
+		else if(auto p = dynamic_cast<Primitive*>((Component*)(*it)))//Se for primitive
+		{
+			auto notDelete{ true };
+			if (auto open = ImGui::CollapsingHeader(p->typeName(), &notDelete))
+			{												
+				if (!notDelete)
+				{
+				  // TODO: delete primitive
+					removePrimitive(p);
+				}
+				else if (open)
+				  inspectPrimitive(*p);
+			}
+		}
+		else if (auto c = dynamic_cast<Camera*>((Component*)*it))//Se for camera
+		{
+
+		}
+	}
 }
 
 inline void
@@ -642,31 +761,46 @@ P2::render()
 
   // **Begin rendering of temporary scene objects
   // It should be replaced by your rendering code (and moved to scene editor?)
-  auto ec = _editor->camera();
-  const auto& p = ec->transform()->position();
-  auto vp = vpMatrix(ec);
+	auto ec = _editor->camera();
+	const auto& p = ec->transform()->position();
+	auto vp = vpMatrix(ec);
 
-  _program.setUniformMat4("vpMatrix", vp);
-  _program.setUniformVec4("ambientLight", _scene->ambientLight);
-  _program.setUniformVec3("lightPosition", p);
-  for (const auto& o : _objects)
-  {
-    if (!o->visible)
-      continue;
+	_program.setUniformMat4("vpMatrix", vp);
+	_program.setUniformVec4("ambientLight", _scene->ambientLight);
+	_program.setUniformVec3("lightPosition", p);
+	/*for (const auto& o : _objects)
+	{
+		if (!o->visible)
+			continue;
 
-    auto component = o->component();
+		auto component = o->component();
 
-    if (auto p = dynamic_cast<Primitive*>(component))
-      drawPrimitive(*p);
-    else if (auto c = dynamic_cast<Camera*>(component))
-      drawCamera(*c);
-    if (o == _current)
-    {
-      auto t = o->transform();
-      _editor->drawAxes(t->position(), mat3f{t->rotation()});
-    }
-  }
+		if (auto p = dynamic_cast<Primitive*>(component))
+			drawPrimitive(*p);
+		else if (auto c = dynamic_cast<Camera*>(component))
+			drawCamera(*c);
+		if (o == _current)
+		{
+			auto t = o->transform();
+			_editor->drawAxes(t->position(), mat3f{ t->rotation() });
+		}
+	}*/
   // **End rendering of temporary scene objects
+	//GLWindow::render();
+	auto it = _scene->getPrimitiveIter();
+	auto end = _scene->getPrimitiveEnd();
+
+	// itera nos primitivos
+	for (; it != end; it++)
+	{
+		auto o = dynamic_cast<Component*>((Primitive*)*it);
+		drawPrimitive(**it);
+		if (o->sceneObject() == _current)
+		{
+			auto t = o->transform();
+			_editor->drawAxes(t->position(), mat3f{ t->rotation() });
+		}
+	}
 }
 
 bool
