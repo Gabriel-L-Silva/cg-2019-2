@@ -56,7 +56,7 @@ public:
     _camera{new Camera}
   {
     SceneObject::makeUse(&_editor);
-		_editor.setParent(scene.gambito);//nullptr == scene.root()
+		_editor.setEditorParent();//nullptr == scene.root()
     _editor.add(dynamic_cast<Component*>((Camera*)_camera));
   }
 

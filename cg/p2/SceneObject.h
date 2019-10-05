@@ -75,6 +75,7 @@ public:
 	void remove(Reference<SceneObject> object);
 	void remove(Reference<Component> object);
 
+	void setEditorParent();
 
 	auto getChildrenIter() {
 		return _children.getIter();

@@ -88,7 +88,6 @@ public:
   }
 
   static void setCurrent(Camera* camera);
-
 private:
   float _viewAngle;
   float _height;

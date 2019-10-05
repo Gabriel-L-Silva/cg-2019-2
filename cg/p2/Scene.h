@@ -60,28 +60,26 @@ public:
     SceneNode{name}
   {
     // do nothing
-		gambito->_children.clear();
-		gambito->_components.clear();
   }
 
 	~Scene()
 	{
 		_root.clear();
-		_primitives.clear();
+		renderables.clear();
 	}
 	auto getPrimitiveIter()
 	{
-		return _primitives.getIter();
+		return renderables.getIter();
 	}
 
 	auto getPrimitiveEnd()
 	{
-		return _primitives.getEnd();
+		return renderables.getEnd();
 	}
 
-	void addPrimitive(Reference<Primitive> p)
+	void addRenderable(Reference<Component> p)
 	{
-		_primitives.add(p);
+		renderables.add(p);
 	}
 
 	auto getRootIt() 
@@ -103,8 +101,8 @@ public:
 		_root.remove(object);
 	}
 
-	auto remove(Reference<Primitive> object) {
-		_primitives.remove(object);
+	auto remove(Reference<Component> object) {
+		renderables.remove(object);
 	}
 
 	bool isRootEmpty()
@@ -117,10 +115,9 @@ public:
 		return _root;
 	}
 
-	SceneObject* gambito = new SceneObject{ "fdc", this };
 private:
 	// lista de todos os sceneObj que tem primitive
-	Collection<Reference<Primitive>> _primitives;
+	Collection<Reference<Component>> renderables;
 	Collection<Reference<SceneObject>> _root;
 	
 }; // Scene

@@ -33,6 +33,7 @@
 #include "SceneObject.h"
 #include "Scene.h"
 #include "Primitive.h"
+#include "Camera.h"
 
 namespace cg
 { // begin namespace cg
@@ -42,12 +43,18 @@ namespace cg
 //
 // SceneObject implementation
 // ===========
+
+void
+SceneObject::setEditorParent()
+{
+	_parent = nullptr;
+}
 void
 SceneObject::setParent(SceneObject* parent)
 {
   if (parent == nullptr)
 	{
-		_parent = scene()->gambito;
+		_parent = nullptr;
 		_scene->addRoot(this);
 	}
 	else
@@ -76,7 +83,11 @@ void
 SceneObject::add(Reference<Component> object)
 {
 	if (auto primitive = dynamic_cast<Primitive*>((Component*)object)) {
-		_scene->addPrimitive(primitive);
+		_scene->addRenderable(object);
+	}
+	else if (auto cam = dynamic_cast<Camera*>((Component*)object))
+	{
+		_scene->addRenderable(object);
 	}
 	object->_sceneObject = this;
 	_components.add(object);

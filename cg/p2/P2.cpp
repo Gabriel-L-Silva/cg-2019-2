@@ -2,7 +2,6 @@
 #include "P2.h"
 
 MeshMap P2::_defaultMeshes;
-
 inline void
 P2::buildDefaultMeshes()
 {
@@ -182,7 +181,7 @@ P2::hierarchyWindow()
 		removeCurrent();
 	}
 	ImGui::SameLine();
-	ImGui::TextColored({ 0.5,0.5,0.5,1 }, "Shortcut: 'Ctrl + Del'");
+	ImGui::TextColored({ 0.5,0.5,0.5,1 }, "Shortcut: 'Del'");
 	ImGui::Separator();
 
 	ImGuiTreeNodeFlags flag{ ImGuiTreeNodeFlags_OpenOnArrow };
@@ -356,11 +355,11 @@ P2::inspectCamera(Camera& camera)
     math::Limits<float>::inf(),
     "Near: %.2f",
     "Far: %.2f"))
-  {
+  { 
     if (n <= 0)
       n = MIN_DEPTH;
-    if (f - n < MIN_DEPTH)
-      f = n + MIN_DEPTH;
+    if (f*0.1f - n < MIN_DEPTH)
+      f = (n + MIN_DEPTH)/0.1f;
     camera.setClippingPlanes(n, f);
   }
 }
@@ -369,16 +368,31 @@ inline void
 P2::addComponentButton(SceneObject& object)
 {
   if (ImGui::Button("Add Component"))
-    ImGui::OpenPopup("AddComponentPopup");
+		ImGui::OpenPopup("AddComponentPopup");
   if (ImGui::BeginPopup("AddComponentPopup"))
   {
-    if (ImGui::MenuItem("Primitive"))
+    if (ImGui::BeginMenu("Primitives"))
     {
-      // TODO
+      // TODONE
+			
+			if (ImGui::MenuItem("Box"))
+			{
+				Component* primitive = dynamic_cast<Component*>(makePrimitive(_defaultMeshes.find("Box")));
+				object.add(primitive);
+			}
+			if (ImGui::MenuItem("Sphere"))
+			{
+				Component* primitive = dynamic_cast<Component*>(makePrimitive(_defaultMeshes.find("Sphere")));
+				object.add(primitive);
+			}
+			ImGui::EndMenu();
+			
     }
     if (ImGui::MenuItem("Camera"))
     {
-      // TODO
+      // TODONE
+			auto c = dynamic_cast<Component*>((Camera*) new Camera);
+			object.add(c);
     }
     ImGui::EndPopup();
   }
@@ -463,13 +477,34 @@ P2::sceneObjectGui()
 			if (!notDelete)
 			{
 				// TODO: delete primitive
+				object->remove(p);
+				_scene->remove(p);
+				it = object->getComponentIter();
+				end = object->getComponentEnd();
 			}
 			else if (open)
 				inspectPrimitive(*p);
 		}
 		else if (auto c = dynamic_cast<Camera*>((Component*)*it))//Se for camera
 		{
+			auto notDelete{ true };
+			auto open = ImGui::CollapsingHeader(c->typeName(), &notDelete);
 
+			if (!notDelete)
+			{
+				// TODO: delete primitive
+				object->remove(c);
+				it = object->getComponentIter();
+				end = object->getComponentEnd();
+			}
+			else if (open)
+			{
+				auto isCurrent = c == Camera::current();
+
+				ImGui::Checkbox("Current", &isCurrent);
+				Camera::setCurrent(isCurrent ? c : nullptr);		
+				inspectCamera(*c);
+			}
 		}
 	}
 }
@@ -710,7 +745,98 @@ P2::drawPrimitive(Primitive& primitive)
 inline void
 P2::drawCamera(Camera& camera)
 {
-  // TODO
+	float F, B, H, W;
+	auto BF = camera.clippingPlanes(F, B);  
+	B *= 0.1f;
+	auto m = mat4f{ camera.cameraToWorldMatrix() };
+	vec3f p1, p2, p3, p4, p5, p6, p7, p8;
+
+	if (camera.projectionType() == Camera::ProjectionType::Perspective)
+	{
+		auto tanAngle = tanf(camera.viewAngle() / 2 * M_PI / 180);
+
+		//p5					p6
+		//		p1	p2
+		//		p3	p4
+		//p7					p8
+
+		H = 2 * F * tanAngle;
+		W = H * camera.aspectRatio();
+
+		p1 = { -W/2,  H/2, -F };
+		p2 = { W/2,  H/2, -F };
+		p3 = { -W/2, -H/2, -F };
+		p4 = { W/2, -H/2, -F };
+
+		p1 = m.transform(p1);
+		p2 = m.transform(p2);
+		p3 = m.transform(p3);
+		p4 = m.transform(p4);
+
+		H = 2 * B * tanAngle;
+		W = H * camera.aspectRatio();
+
+		p5 = { -W/2,  H/2, -B };
+		p6 = { W/2,  H/2, -B };
+		p7 = { -W/2, -H/2, -B };
+		p8 = { W/2, -H/2, -B };
+
+		p5 = m.transform(p5);
+		p6 = m.transform(p6);
+		p7 = m.transform(p7);
+		p8 = m.transform(p8);
+
+	}
+	else if (camera.projectionType() == Camera::ProjectionType::Parallel)
+	{
+		H = camera.height();
+		W = H * camera.aspectRatio();
+
+		p1 = { -W / 2, H / 2, -F };
+		p2 = { W / 2, H / 2, -F };
+		p3 = { -W / 2, -H / 2, -F };
+		p4 = { W / 2, -H / 2, -F };
+
+		p5 = { -W / 2, H / 2, -B };
+		p6 = { W / 2, H / 2, -B };
+		p7 = { -W / 2, -H / 2, -B };
+		p8 = { W / 2, -H / 2, -B };
+
+		p1 = m.transform(p1);
+		p2 = m.transform(p2);
+		p3 = m.transform(p3);
+		p4 = m.transform(p4);
+		p5 = m.transform(p5);
+		p6 = m.transform(p6);
+		p7 = m.transform(p7);
+		p8 = m.transform(p8);
+
+	}
+	/*p1 = m.transform(p1);
+	p2 = m.transform(p2);
+	p3 = m.transform(p3);
+	p4 = m.transform(p4);
+	p5 = m.transform(p5);
+	p6 = m.transform(p6);
+	p7 = m.transform(p7);
+	p8 = m.transform(p8);*/
+
+	_editor->setLineColor(Color::green);
+
+	_editor->drawLine(p1, p2);
+	_editor->drawLine(p2, p4);
+	_editor->drawLine(p4, p3);
+	_editor->drawLine(p3, p1);
+
+	_editor->drawLine(p5, p6);
+	_editor->drawLine(p6, p8);
+	_editor->drawLine(p8, p7);
+	_editor->drawLine(p7, p5);
+		
+	_editor->drawLine(p1, p5);
+	_editor->drawLine(p2, p6);
+	_editor->drawLine(p3, p7);
+	_editor->drawLine(p4, p8);
 }
 
 inline void
@@ -791,9 +917,15 @@ P2::render()
 	// itera nos primitivos
 	for (; it != end; it++)
 	{
-		auto o = dynamic_cast<Component*>((Primitive*)*it);
-		drawPrimitive(**it);
-		if (o->sceneObject() == _current)
+		auto component = (Component*)*it;
+		auto o = (*it)->sceneObject();
+
+		if (auto p = dynamic_cast<Primitive*>(component))
+			drawPrimitive(*p);
+		else if (auto c = dynamic_cast<Camera*>(component))
+			if(c == Camera::current())
+				drawCamera(*c);
+		if (o == _current)
 		{
 			auto t = o->transform();
 			_editor->drawAxes(t->position(), mat3f{ t->rotation() });
@@ -813,6 +945,13 @@ P2::keyInputEvent(int key, int action, int mods)
 {
   auto active = action != GLFW_RELEASE && mods == GLFW_MOD_ALT;
 
+	if (key == GLFW_KEY_DELETE && action == GLFW_RELEASE)
+		removeCurrent();
+	else if (key == GLFW_KEY_E && action == GLFW_RELEASE && mods == GLFW_MOD_CONTROL)
+		addEmptyCurrent();
+	else if (key == GLFW_KEY_B && action == GLFW_RELEASE && mods == GLFW_MOD_CONTROL)
+		addBoxCurrent();
+	else
   switch (key)
   {
     case GLFW_KEY_W:

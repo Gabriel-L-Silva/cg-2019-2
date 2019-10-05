@@ -121,13 +121,21 @@ Transform::inverseLocalMatrix() const
 void
 Transform::setPosition(const vec3f& position)
 {
-  setLocalPosition(parent()->inverseTransform(position));
+	auto p = parent();
+	if(p != nullptr)
+	  setLocalPosition(p->inverseTransform(position));
+	else
+		setLocalPosition(position);
 }
 
 void
 Transform::setRotation(const quatf& rotation)
 {
-  setLocalRotation(parent()->_rotation.inverse() * rotation);
+	auto p = parent();
+	if(p != nullptr)
+		setLocalRotation(p->_rotation.inverse() * rotation);
+	else
+		setLocalRotation(rotation);
 }
 
 void
@@ -161,12 +169,22 @@ void
 Transform::update()
 {
   auto p = parent();
-	
-  _matrix = p->_matrix * localMatrix();
-  _position = translation(_matrix);
-  _rotation = p->_rotation * _localRotation;
-  _lossyScale = scale(_rotation, _matrix);
-  _inverseMatrix = inverseLocalMatrix() * p->_inverseMatrix;
+	if (p != nullptr)
+	{
+		_matrix = p->_matrix * localMatrix();
+		_position = translation(_matrix);
+		_rotation = p->_rotation * _localRotation;
+		_lossyScale = scale(_rotation, _matrix);
+		_inverseMatrix = inverseLocalMatrix() * p->_inverseMatrix;
+	}
+	else
+	{
+		_matrix = localMatrix();
+		_position = translation(_matrix);
+		_rotation = _localRotation;
+		_lossyScale = scale(_rotation, _matrix);
+		_inverseMatrix = inverseLocalMatrix();
+	}
   // TODO: update the transform of all scene object's children.
   changed = true;
 
@@ -180,15 +198,31 @@ void
 Transform::parentChanged()
 {
   auto p = parent();
-  auto m = p->_inverseMatrix * _matrix;
+	if (p != nullptr)
+	{
+		auto m = p->_inverseMatrix * _matrix;
 
-  _localPosition = translation(m);
-  _localRotation = p->_rotation.inverse() * _rotation;
-  _localEulerAngles = _localRotation.eulerAngles();
-  _localScale = scale(_localRotation, m);
-  _matrix = p->_matrix * localMatrix();
-  _lossyScale = scale(_rotation, _matrix);
-  _inverseMatrix = inverseLocalMatrix() * p->_inverseMatrix;
+		_localPosition = translation(m);
+		_localRotation = p->_rotation.inverse() * _rotation;
+		_localEulerAngles = _localRotation.eulerAngles();
+		_localScale = scale(_localRotation, m);
+		_matrix = p->_matrix * localMatrix();
+		_lossyScale = scale(_rotation, _matrix);
+		_inverseMatrix = inverseLocalMatrix() * p->_inverseMatrix;
+	}
+	else
+	{
+		auto m = _matrix;
+
+		_localPosition = translation(m);
+		_localRotation = _rotation;
+		_localEulerAngles = _localRotation.eulerAngles();
+		_localScale = scale(_localRotation, m);
+		_matrix = localMatrix();
+		_lossyScale = scale(_rotation, _matrix);
+		_inverseMatrix = inverseLocalMatrix();
+	}
+  
   // TODO: update the transform of all scene object's children.
   changed = true;
 	this->update();
