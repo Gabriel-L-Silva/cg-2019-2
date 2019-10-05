@@ -476,7 +476,7 @@ P2::sceneObjectGui()
 
 			if (!notDelete)
 			{
-				// TODO: delete primitive
+				// TODONE: delete primitive
 				object->remove(p);
 				_scene->remove(p);
 				it = object->getComponentIter();
@@ -492,7 +492,8 @@ P2::sceneObjectGui()
 
 			if (!notDelete)
 			{
-				// TODO: delete primitive
+				// TODONE: delete camera
+				c->setCurrent(nullptr);
 				object->remove(c);
 				it = object->getComponentIter();
 				end = object->getComponentEnd();
