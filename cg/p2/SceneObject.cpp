@@ -59,10 +59,10 @@ SceneObject::setParent(SceneObject* parent)
 	}
 	else
 	{
-		if(_parent != nullptr)
-			_parent->_children.remove(this);
-		_parent = parent;
+		auto p = _parent;
 		parent->add(this);
+		if(p != nullptr)
+			p->_children.remove(this);
 	}
 }
 
