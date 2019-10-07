@@ -62,6 +62,7 @@ public:
   {
 		this->add(&_transform);
     makeUse(&_transform);
+		_markedToRemove = false;
 
   }
 
@@ -115,13 +116,23 @@ public:
   }
 
   /// Sets the parent of this scene object.
-  void setParent(SceneObject* parent);
+  void setParent(SceneObject* parent, bool dropDrag = false);
 
   /// Returns the transform of this scene object.
   auto transform()
   {
     return &_transform;
   }
+
+	bool isMarkedToRemove()
+	{
+		return _markedToRemove;
+	}
+
+	void markToRemove()
+	{
+		_markedToRemove = true;
+	}
 
 private:
   Scene* _scene;
@@ -130,6 +141,9 @@ private:
 
 	Collection<Reference<SceneObject>> _children;
 	Collection<Reference<Component>> _components;
+
+	bool _markedToRemove;
+
   friend class Scene;
 
 }; // SceneObject

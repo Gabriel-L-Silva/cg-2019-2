@@ -30,11 +30,18 @@ public:
   /// Render the scene.
   void render() override;
 
-	void treeChildren(bool open, std::vector<Reference<SceneObject>>::iterator it, std::vector<Reference<SceneObject>>::iterator end);
+	void treeChildren(SceneObject*);
 	void removeCurrent();
 	void addEmptyCurrent();
 	void addBoxCurrent();
 	void removePrimitive(Primitive*);
+	void dragDrop(std::vector<Reference<SceneObject>>::iterator& it);
+	
+	bool isMarkedToDelete(SceneObject& o)
+	{
+		return o.isMarkedToRemove();
+	}
+
 private:
   enum ViewMode
   {

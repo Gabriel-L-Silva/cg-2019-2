@@ -57,9 +57,11 @@ public:
 
   /// Constructs an empty scene.
   Scene(const char* name):
-    SceneNode{name}
+    SceneNode{name},
+		_fakeRoot{"fakeRoot", this}
   {
     // do nothing
+		SceneObject::makeUse(&_fakeRoot);
   }
 
 	~Scene()
@@ -97,6 +99,11 @@ public:
 		return _root.add(object);
 	}
 
+	auto addFakeRoot(Reference<SceneObject> object)
+	{
+		return _fakeRoot._children.add(object);
+	}
+
 	auto remove(Reference<SceneObject> object) {
 		_root.remove(object);
 	}
@@ -115,10 +122,16 @@ public:
 		return _root;
 	}
 
+	auto getFakeRoot()
+	{
+		return &_fakeRoot;
+	}
+
 private:
 	// lista de todos os sceneObj que tem primitive
 	Collection<Reference<Component>> renderables;
 	Collection<Reference<SceneObject>> _root;
+	SceneObject _fakeRoot;
 	
 }; // Scene
 

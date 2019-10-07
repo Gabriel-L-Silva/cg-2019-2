@@ -50,19 +50,28 @@ SceneObject::setEditorParent()
 	_parent = nullptr;
 }
 void
-SceneObject::setParent(SceneObject* parent)
+SceneObject::setParent(SceneObject* parent, bool dropDrag)
 {
   if (parent == nullptr)
 	{
 		_parent = nullptr;
 		_scene->addRoot(this);
+		_scene->addFakeRoot(this);
 	}
 	else
 	{
 		auto p = _parent;
 		parent->add(this);
-		if(p != nullptr)
-			p->_children.remove(this);
+		
+		if (dropDrag)
+			markToRemove();
+		else 
+		{
+			if (p != nullptr)
+				p->remove(this);
+			else
+				_scene->remove(this);
+		}
 	}
 }
 
