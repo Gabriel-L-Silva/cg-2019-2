@@ -83,7 +83,9 @@ public:
 	auto getChildrenEnd() {
 		return _children.getEnd();
 	}
-
+	auto getChildrenSize() {
+		return _children.getSize();
+	}
 	auto getComponentIter() {
 		return _components.getIter();
 	}
@@ -115,7 +117,7 @@ public:
   }
 
   /// Sets the parent of this scene object.
-  void setParent(SceneObject* parent);
+  void setParent(SceneObject* parent, bool creating = false);
 
   /// Returns the transform of this scene object.
   auto transform()

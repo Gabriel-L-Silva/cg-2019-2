@@ -92,6 +92,11 @@ public:
 		return _root.getEnd();
 	}
 
+	auto getRootSize()
+	{
+		return _root.getSize();
+	}
+
 	auto addRoot(Reference<SceneObject> object)
 	{
 		return _root.add(object);

@@ -43,7 +43,7 @@ P2::buildScene()
 	for (int i = 0; i < 5; i++) {
 		std::string name{ "Box " + std::to_string(_sceneObjectCounter++) };
 		sceneObject = new SceneObject{ name.c_str(), _scene };
-		sceneObject->setParent(nullptr);
+		sceneObject->setParent(nullptr, true);
 		sceneObject->add(makePrimitive(_defaultMeshes.find("Box")));
 		for (int j = 0; j < 5; j++) {
 			std::string name{ "Object " + std::to_string(_sceneObjectCounter++) };
@@ -95,37 +95,57 @@ P2::dragDrop(SceneObject* sceneObject, std::vector<Reference<SceneObject>>::iter
 void
 P2::treeChildren(SceneObject* obj)
 {
+	auto open = false;
+	ImGuiTreeNodeFlags flag = ImGuiTreeNodeFlags_OpenOnArrow;
 	if (obj->isChildrenEmpty())
 	{
-		auto flag = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+		flag = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
 		ImGui::TreeNodeEx(obj,
 			_current == obj ? flag | ImGuiTreeNodeFlags_Selected : flag,
 			obj->name());
-		if (ImGui::IsItemClicked())
-			_current = obj;
 
-		//dragDrop(obj);
 	}
 	else
 	{
-		auto flag = ImGuiTreeNodeFlags_OpenOnArrow;
-		auto open = ImGui::TreeNodeEx(obj,
+		open = ImGui::TreeNodeEx(obj,
 			_current == obj ? flag | ImGuiTreeNodeFlags_Selected : flag,
 			obj->name());
 
 		if (ImGui::IsItemClicked())
 			_current = obj;
 
-		//dragDrop(obj);
+	}
 
-		if (open)
+	if (ImGui::IsItemClicked())
+		_current = obj;
+	
+	if (ImGui::BeginDragDropSource())
+	{
+		ImGui::SetDragDropPayload("SceneObject", &obj, sizeof(&obj));
+		ImGui::EndDragDropSource();
+	}
+
+	if (ImGui::BeginDragDropTarget())
+	{
+		if (auto * payload = ImGui::AcceptDragDropPayload("SceneObject"))
 		{
-			auto cIt = obj->getChildrenIter();
-			auto cEnd = obj->getChildrenEnd();
-			for (; cIt != cEnd; cIt++)
-				treeChildren(*cIt);
-			ImGui::TreePop();
+			auto o = *(SceneObject * *)payload->Data;
+			o->setParent(obj);
 		}
+		ImGui::EndDragDropTarget();
+	}
+
+	if (open)
+	{
+		auto cIt = obj->getChildrenIter();
+		auto cEnd = obj->getChildrenEnd();
+		auto size = obj->getChildrenSize();
+		for (; cIt != cEnd; cIt++)
+		{
+			treeChildren(*cIt);
+			if (obj->getChildrenSize() != size) break; //Desculpa, eu não sou capaz de fazer melhor
+		}
+		ImGui::TreePop();
 	}
 }
 
@@ -135,7 +155,7 @@ P2::addEmptyCurrent()
 	std::string name{ "Object " + std::to_string(_sceneObjectCounter++) };
 	auto sceneObject = new SceneObject{ name.c_str(), _scene };
 	SceneObject* current = dynamic_cast<SceneObject*>(_current);
-	sceneObject->setParent(current);
+	sceneObject->setParent(current, true);
 }
 
 void
@@ -146,7 +166,7 @@ P2::addBoxCurrent()
 	auto sceneObject = new SceneObject{ name.c_str(), _scene };
 	SceneObject* current = nullptr;
 	current = dynamic_cast<SceneObject*>(_current);
-	sceneObject->setParent(current);
+	sceneObject->setParent(current, true);
 
 	Component* primitive = dynamic_cast<Component*>(makePrimitive(_defaultMeshes.find("Box")));
 	sceneObject->add(primitive);
@@ -218,8 +238,12 @@ P2::hierarchyWindow()
 	{
 		auto it = _scene->getRootIt();
 		auto end = _scene->getRootEnd();
+		auto size = _scene->getRootSize();
 		for (; it != end; it++)
+		{
 			treeChildren(*it);
+			if (_scene->getRootSize() != size) break; //Desculpa, eu não sou capaz de fazer melhor
+		}
 		ImGui::TreePop();
 	}
 	ImGui::End();

@@ -51,7 +51,7 @@ SceneObject::setEditorParent()
 }
 
 void
-SceneObject::setParent(SceneObject* parent)
+SceneObject::setParent(SceneObject* parent, bool creating)
 {
   if (parent == nullptr)
 	{
@@ -64,9 +64,10 @@ SceneObject::setParent(SceneObject* parent)
 		parent->add(this);
 		if (p != nullptr)
 			p->remove(this);
-		else
+		else if (!creating)
 			_scene->remove(this);
 	}
+	transform()->parentChanged();
 }
 
 void 

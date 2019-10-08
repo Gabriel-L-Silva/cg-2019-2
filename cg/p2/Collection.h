@@ -32,6 +32,11 @@ public:
 		return _elements.end();
 	}
 
+	auto getSize()
+	{
+		return _elements.size();
+	}
+
 	auto isEmpty()
 	{
 		return _elements.empty();
