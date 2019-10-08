@@ -267,19 +267,33 @@ DragVec3(const char* label, vec3f& v)
 }
 
 void
+limitValues(vec3f& t)
+{
+	if (t.x < 0.001f)
+		t.x = 0.001f;
+	if (t.y < 0.001f)
+		t.y = 0.001f;
+	if (t.z < 0.001f)
+		t.z = 0.001f;
+}
+
+void
 TransformEdit(Transform* transform)
 {
   vec3f temp;
 
   temp = transform->localPosition();
-  if (ImGui::DragVec3("Position", temp))
+	if (ImGui::DragVec3("Position", temp))
     transform->setLocalPosition(temp);
   temp = transform->localEulerAngles();
-  if (ImGui::DragVec3("Rotation", temp))
-    transform->setLocalEulerAngles(temp);
+	if (ImGui::DragVec3("Rotation", temp))
+		transform->setLocalEulerAngles(temp);
   temp = transform->localScale();
-  if (ImGui::DragVec3("Scale", temp))
-    transform->setLocalScale(temp);
+	if (ImGui::DragVec3("Scale", temp))
+	{
+		limitValues(temp);
+		transform->setLocalScale(temp);
+	}
 }
 
 } // end namespace ImGui
