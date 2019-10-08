@@ -73,7 +73,7 @@ namespace ImGui
 }
 
 void
-P2::dragDrop(SceneObject* sceneObject, std::vector<Reference<SceneObject>>::iterator& it, std::vector<Reference<SceneObject>>::iterator& end)
+P2::dragDrop(SceneObject* sceneObject)
 {
 	if (ImGui::BeginDragDropSource())
 	{
@@ -119,21 +119,7 @@ P2::treeChildren(SceneObject* obj)
 	if (ImGui::IsItemClicked())
 		_current = obj;
 	
-	if (ImGui::BeginDragDropSource())
-	{
-		ImGui::SetDragDropPayload("SceneObject", &obj, sizeof(&obj));
-		ImGui::EndDragDropSource();
-	}
-
-	if (ImGui::BeginDragDropTarget())
-	{
-		if (auto * payload = ImGui::AcceptDragDropPayload("SceneObject"))
-		{
-			auto o = *(SceneObject * *)payload->Data;
-			o->setParent(obj);
-		}
-		ImGui::EndDragDropTarget();
-	}
+	dragDrop(obj);
 
 	if (open)
 	{

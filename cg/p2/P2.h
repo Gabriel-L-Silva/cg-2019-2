@@ -24,7 +24,7 @@ public:
   /// Initialize the app.
   void initialize() override;
 
-	void dragDrop(SceneObject* sceneObject, std::vector<Reference<SceneObject>>::iterator& it, std::vector<Reference<SceneObject>>::iterator& end);
+	void dragDrop(SceneObject* sceneObject);
 
   /// Update the GUI.
   void gui() override;
