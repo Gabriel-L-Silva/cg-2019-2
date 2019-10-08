@@ -49,6 +49,7 @@ SceneObject::setEditorParent()
 {
 	_parent = nullptr;
 }
+
 void
 SceneObject::setParent(SceneObject* parent)
 {
@@ -61,8 +62,10 @@ SceneObject::setParent(SceneObject* parent)
 	{
 		auto p = _parent;
 		parent->add(this);
-		if(p != nullptr)
-			p->_children.remove(this);
+		if (p != nullptr)
+			p->remove(this);
+		else
+			_scene->remove(this);
 	}
 }
 

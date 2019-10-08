@@ -24,13 +24,15 @@ public:
   /// Initialize the app.
   void initialize() override;
 
+	void dragDrop(SceneObject* sceneObject, std::vector<Reference<SceneObject>>::iterator& it, std::vector<Reference<SceneObject>>::iterator& end);
+
   /// Update the GUI.
   void gui() override;
 
   /// Render the scene.
   void render() override;
 
-	void treeChildren(bool open, std::vector<Reference<SceneObject>>::iterator it, std::vector<Reference<SceneObject>>::iterator end);
+	void treeChildren(SceneObject*);
 	void removeCurrent();
 	void addEmptyCurrent();
 	void addBoxCurrent();

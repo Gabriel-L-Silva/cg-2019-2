@@ -73,37 +73,59 @@ namespace ImGui
 }
 
 void
-P2::treeChildren(bool open, std::vector<Reference<SceneObject>>::iterator it, std::vector<Reference<SceneObject>>::iterator end)
+P2::dragDrop(SceneObject* sceneObject, std::vector<Reference<SceneObject>>::iterator& it, std::vector<Reference<SceneObject>>::iterator& end)
 {
-	if (open)
+	if (ImGui::BeginDragDropSource())
 	{
-		for (; it != end; it++)
+		ImGui::SetDragDropPayload("SceneObject", &sceneObject, sizeof(&sceneObject));
+		ImGui::EndDragDropSource();
+	}
+
+	if (ImGui::BeginDragDropTarget())
+	{
+		if (auto * payload = ImGui::AcceptDragDropPayload("SceneObject"))
 		{
-			if ((*it)->isChildrenEmpty())
-			{
-				auto flag = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
-				ImGui::TreeNodeEx((*it),
-					_current == (*it) ? flag | ImGuiTreeNodeFlags_Selected : flag,
-					(*it)->name());
-				if (ImGui::IsItemClicked())
-					_current = (*it);
-
-			}
-			else
-			{
-				auto flag = ImGuiTreeNodeFlags_OpenOnArrow;
-				auto open = ImGui::TreeNodeEx((*it),
-					_current == (*it) ? flag | ImGuiTreeNodeFlags_Selected : flag,
-					(*it)->name());
-
-				if (ImGui::IsItemClicked())
-					_current = (*it);
-				auto cIt = (*it)->getChildrenIter();
-				auto cEnd = (*it)->getChildrenEnd();
-				treeChildren(open, cIt, cEnd);
-			}
+			auto o = *(SceneObject * *)payload->Data;
+			o->setParent(sceneObject);
 		}
-		ImGui::TreePop();
+		ImGui::EndDragDropTarget();
+	}
+}
+
+void
+P2::treeChildren(SceneObject* obj)
+{
+	if (obj->isChildrenEmpty())
+	{
+		auto flag = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+		ImGui::TreeNodeEx(obj,
+			_current == obj ? flag | ImGuiTreeNodeFlags_Selected : flag,
+			obj->name());
+		if (ImGui::IsItemClicked())
+			_current = obj;
+
+		//dragDrop(obj);
+	}
+	else
+	{
+		auto flag = ImGuiTreeNodeFlags_OpenOnArrow;
+		auto open = ImGui::TreeNodeEx(obj,
+			_current == obj ? flag | ImGuiTreeNodeFlags_Selected : flag,
+			obj->name());
+
+		if (ImGui::IsItemClicked())
+			_current = obj;
+
+		//dragDrop(obj);
+
+		if (open)
+		{
+			auto cIt = obj->getChildrenIter();
+			auto cEnd = obj->getChildrenEnd();
+			for (; cIt != cEnd; cIt++)
+				treeChildren(*cIt);
+			ImGui::TreePop();
+		}
 	}
 }
 
@@ -191,9 +213,15 @@ P2::hierarchyWindow()
 
 	if (ImGui::IsItemClicked())
 		_current = _scene;
-	auto it = _scene->getRootIt();
-	auto end = _scene->getRootEnd();
-	treeChildren(open, it, end);
+
+	if (open)
+	{
+		auto it = _scene->getRootIt();
+		auto end = _scene->getRootEnd();
+		for (; it != end; it++)
+			treeChildren(*it);
+		ImGui::TreePop();
+	}
 	ImGui::End();
 }
 
