@@ -266,7 +266,7 @@ DragVec3(const char* label, vec3f& v)
   return DragFloat3(label, (float*)&v, 0.1f, 0.0f, 0.0f, "%.2g");
 }
 
-void
+void inline
 limitValues(vec3f& t)
 {
 	if (t.x < 0.001f)
