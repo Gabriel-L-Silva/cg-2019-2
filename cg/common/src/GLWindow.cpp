@@ -204,10 +204,10 @@ GLWindow::mainLoop()
         ImGui::EndPopup();
       }
     }
+    render();
     // Update the GUI.
     gui();
     // Render the scene.
-    render();
     ImGui::Render();
     glfwGetFramebufferSize(_window, &_displayWidth, &_displayHeight);
     glViewport(0, 0, _displayWidth, _displayHeight);

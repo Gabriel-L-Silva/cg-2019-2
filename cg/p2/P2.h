@@ -22,9 +22,7 @@ public:
   }
 
   /// Initialize the app.
-  void initialize() override;
-
-	void dragDrop(SceneObject* sceneObject);
+	void initialize() override;
 
   /// Update the GUI.
   void gui() override;
@@ -32,11 +30,14 @@ public:
   /// Render the scene.
   void render() override;
 
+	void dragDrop(SceneObject* sceneObject);
 	void treeChildren(SceneObject*);
 	void removeCurrent();
 	void addEmptyCurrent();
 	void addBoxCurrent();
 	void removePrimitive(Primitive*);
+
+
 private:
   enum ViewMode
   {
@@ -98,6 +99,7 @@ private:
   void sceneObjectGui();
   void objectGui();
   void editorViewGui();
+	void preview(Camera* c);
   void inspectPrimitive(Primitive&);
   void inspectCamera(Camera&);
   void addComponentButton(SceneObject&);

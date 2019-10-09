@@ -95,6 +95,7 @@ Camera::setAspectRatio(float value)
 void
 Camera::setClippingPlanes(float F, float B)
 {
+	
   if (F > B)
     std::swap(F, B);
   if (F < minFrontPlane)

@@ -47,8 +47,9 @@ namespace cg
 class GLRenderer: public Renderer
 {
 public:
-  GLRenderer(Scene& scene, Camera* camera = nullptr):
-    Renderer{scene, camera}
+	GLRenderer(Scene& scene, Camera* camera = nullptr) :
+		Renderer{ scene, camera },
+		_program{ }
   {
     // TODO
   }
@@ -56,6 +57,18 @@ public:
   void update() override;
   void render() override;
 
+	auto getProgram() const
+	{
+		return _program;
+	}
+
+	auto setProgram(GLSL::Program* program)
+	{
+		_program = program;
+	}
+
+private:
+	GLSL::Program* _program;
 }; // GLRenderer
 
 } // end namespace cg

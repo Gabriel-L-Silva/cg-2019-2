@@ -31,6 +31,7 @@
 // Last revision: 09/09/2019
 
 #include "GLRenderer.h"
+#include "P2.h"
 
 namespace cg
 { // begin namespace cg
@@ -50,11 +51,45 @@ GLRenderer::update()
 void
 GLRenderer::render()
 {
-  const auto& bc = _scene->backgroundColor;
+	auto _program = getProgram();
+	const auto& bc = _scene->backgroundColor;
 
-  glClearColor(bc.r, bc.g, bc.b, 1.0f);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  // TODO
+	glClearColor(bc.r, bc.g, bc.b, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	// TODO
+	auto c = camera();
+	const auto& p = c->transform()->position();
+	auto vp = vpMatrix(c);
+	_program->setUniformMat4("vpMatrix", vp);
+	_program->setUniformVec4("ambientLight", scene()->ambientLight);
+	_program->setUniformVec3("lightPosition", p);
+	const auto& s = _scene;
+	auto it = s->getPrimitiveIter();
+	auto end = s->getPrimitiveEnd();
+	for (; it != end; it++)
+	{
+		auto component = (Component*)* it;
+		auto o = (*it)->sceneObject();
+
+		if (auto primitive = dynamic_cast<Primitive*>(component))
+		{
+			auto m = glMesh(primitive->mesh());
+
+			if (nullptr == m)
+				return;
+
+			auto t = primitive->transform();
+			auto normalMatrix = mat3f{ t->worldToLocalMatrix() }.transposed();
+
+			_program->setUniformMat4("transform", t->localToWorldMatrix());
+			_program->setUniformMat3("normalMatrix", normalMatrix);
+			_program->setUniformVec4("color", primitive->color);
+			_program->setUniform("flatMode", (int)0);
+			m->bind();
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+			glDrawElements(GL_TRIANGLES, m->vertexCount(), GL_UNSIGNED_INT, 0);
+		}
+	}
 }
 
 } // end namespace cg

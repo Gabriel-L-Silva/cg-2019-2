@@ -1,3 +1,4 @@
+
 #include "geometry/MeshSweeper.h"
 #include "P2.h"
 
@@ -39,7 +40,12 @@ P2::buildScene()
   }*/
   // **End initialization of temporary attributes
 	Reference<SceneObject> sceneObject;
-
+	std::string name{ "Camera " + std::to_string(_sceneObjectCounter++) };
+	sceneObject = new SceneObject{ name.c_str(), _scene };
+	sceneObject->setParent(nullptr, true);
+	auto c = new Camera;
+	sceneObject->add(c);
+	Camera::setCurrent(c);
 	for (int i = 0; i < 5; i++) {
 		std::string name{ "Box " + std::to_string(_sceneObjectCounter++) };
 		sceneObject = new SceneObject{ name.c_str(), _scene };
@@ -60,6 +66,7 @@ P2::initialize()
   buildDefaultMeshes();
   buildScene();
   _renderer = new GLRenderer{*_scene};
+	_renderer->setProgram(&_program);
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_POLYGON_OFFSET_FILL);
   glPolygonOffset(1.0f, 1.0f);
@@ -269,12 +276,9 @@ DragVec3(const char* label, vec3f& v)
 void inline
 limitValues(vec3f& t)
 {
-	if (t.x < 0.001f)
-		t.x = 0.001f;
-	if (t.y < 0.001f)
-		t.y = 0.001f;
-	if (t.z < 0.001f)
-		t.z = 0.001f;
+	t.x = t.x < 0.001 ? 0.001f : t.x;
+	t.y = t.y < 0.001 ? 0.001f : t.y;
+	t.z = t.z < 0.001 ? 0.001f : t.z;
 }
 
 void
@@ -410,8 +414,8 @@ P2::inspectCamera(Camera& camera)
   { 
     if (n <= 0)
       n = MIN_DEPTH;
-    if (f*0.1f - n < MIN_DEPTH)
-      f = (n + MIN_DEPTH)/0.1f;
+		if (f - n < MIN_DEPTH)
+				f = (n + MIN_DEPTH);
     camera.setClippingPlanes(n, f);
   }
 }
@@ -541,6 +545,8 @@ P2::sceneObjectGui()
 		{
 			auto notDelete{ true };
 			auto open = ImGui::CollapsingHeader(c->typeName(), &notDelete);
+			
+			preview(c);
 
 			if (!notDelete)
 			{
@@ -550,6 +556,8 @@ P2::sceneObjectGui()
 				it = object->getComponentIter();
 				end = object->getComponentEnd();
 			}
+
+
 			else if (open)
 			{
 				auto isCurrent = c == Camera::current();
@@ -706,47 +714,81 @@ P2::showOptions()
 inline void
 P2::mainMenu()
 {
-  if (ImGui::BeginMainMenuBar())
-  {
-    if (ImGui::BeginMenu("File"))
-    {
-      fileMenu();
-      ImGui::EndMenu();
-    }
-    if (ImGui::BeginMenu("View"))
-    {
-      if (Camera::current() == 0)
-        ImGui::MenuItem("Edit View", nullptr, true, false);
-      else
-      {
-        static const char* viewLabels[]{"Editor", "Renderer"};
+	if (ImGui::BeginMainMenuBar())
+	{
+		if (ImGui::BeginMenu("File"))
+		{
+			fileMenu();
+			ImGui::EndMenu();
+		}
+		if (ImGui::BeginMenu("View"))
+		{
+			if (Camera::current() == 0)
+				ImGui::MenuItem("Edit View", nullptr, true, false);
+			else
+			{
+				static const char* viewLabels[]{ "Editor", "Renderer" };
 
-        if (ImGui::BeginCombo("View", viewLabels[_viewMode]))
-        {
-          for (auto i = 0; i < IM_ARRAYSIZE(viewLabels); ++i)
-          {
-            if (ImGui::Selectable(viewLabels[i], _viewMode == i))
-              _viewMode = (ViewMode)i;
-          }
-          ImGui::EndCombo();
-        }
-      }
-      ImGui::Separator();
-      ImGui::MenuItem("Assets Window", nullptr, &_showAssets);
-      ImGui::MenuItem("Editor View Settings", nullptr, &_showEditorView);
-      ImGui::EndMenu();
-    }
-    if (ImGui::BeginMenu("Tools"))
-    {
-      if (ImGui::BeginMenu("Options"))
-      {
-        showOptions();
-        ImGui::EndMenu();
-      }
-      ImGui::EndMenu();
-    }
-    ImGui::EndMainMenuBar();
-  }
+				if (ImGui::BeginCombo("View", viewLabels[_viewMode]))
+				{
+					for (auto i = 0; i < IM_ARRAYSIZE(viewLabels); ++i)
+					{
+						if (ImGui::Selectable(viewLabels[i], _viewMode == i))
+							_viewMode = (ViewMode)i;
+					}
+					ImGui::EndCombo();
+				}
+			}
+			ImGui::Separator();
+			ImGui::MenuItem("Assets Window", nullptr, &_showAssets);
+			ImGui::MenuItem("Editor View Settings", nullptr, &_showEditorView);
+			ImGui::EndMenu();
+		}
+		if (ImGui::BeginMenu("Tools"))
+		{
+			if (ImGui::BeginMenu("Options"))
+			{
+				showOptions();
+				ImGui::EndMenu();
+			}
+			ImGui::EndMenu();
+		}
+		ImGui::EndMainMenuBar();
+	}
+}
+
+inline void 
+P2::preview(Camera* c)
+{
+	
+	// 1st step: save current viewport (lower left corner = (0, 0))
+	// Viewport[0] = x, viewport[1] = y, viewport[2] = width, viewport[3] = height
+	GLint oldViewPort[4];
+	glGetIntegerv(GL_VIEWPORT, oldViewPort);
+
+	// 2nd step: adjust preview viewport
+	GLint viewPortHeight = (oldViewPort[3] / 5);
+	GLint viewPortWidth = c->aspectRatio() * viewPortHeight;
+	
+	GLint viewPortX = oldViewPort[2] / 2 - viewPortWidth / 2;
+	GLint viewPortY = 0;
+
+	glViewport(viewPortX, viewPortY, viewPortWidth, viewPortHeight);
+	
+	//3rd step: enable and define scissor
+	glScissor(viewPortX, viewPortY, viewPortWidth, viewPortHeight);
+	glEnable(GL_SCISSOR_TEST);
+	
+	// 4th step: draw primitives
+	renderScene();
+
+
+	// 5th step: desable scissor region
+	glDisable(GL_SCISSOR_TEST);
+
+	// 6th step: restore original viewport
+	glViewport(oldViewPort[0], oldViewPort[1], oldViewPort[2], oldViewPort[3]);
+	
 }
 
 void
@@ -757,7 +799,7 @@ P2::gui()
   inspectorWindow();
   assetsWindow();
   editorView();
-
+	//preview();
   /*
   static bool demo = true;
   ImGui::ShowDemoWindow(&demo);
@@ -800,7 +842,7 @@ P2::drawCamera(Camera& camera)
 {
 	float F, B, H, W;
 	auto BF = camera.clippingPlanes(F, B);  
-	B *= 0.1f;
+	//B *= 0.1f;
 	auto m = mat4f{ camera.cameraToWorldMatrix() };
 	vec3f p1, p2, p3, p4, p5, p6, p7, p8;
 
@@ -899,7 +941,7 @@ P2::renderScene()
   {
     _renderer->setCamera(camera);
     _renderer->setImageSize(width(), height());
-    _renderer->render();
+		_renderer->render();
     _program.use();
   }
 }
