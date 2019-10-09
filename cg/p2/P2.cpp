@@ -1028,6 +1028,18 @@ P2::render()
 	}
 }
 
+void
+P2::focus()
+{
+	if (auto o = dynamic_cast<SceneObject*>(_current))
+	{
+		auto t = o->transform();
+		auto localP = t->localPosition();
+		localP.z += FOCUS_OFFSET;
+		_editor->camera()->transform()->setLocalPosition(localP);
+	}
+}
+
 bool
 P2::windowResizeEvent(int width, int height)
 {
@@ -1046,6 +1058,8 @@ P2::keyInputEvent(int key, int action, int mods)
 		addEmptyCurrent();
 	else if (key == GLFW_KEY_B && action == GLFW_RELEASE && mods == GLFW_MOD_CONTROL)
 		addBoxCurrent();
+	else if (key == GLFW_KEY_F && action == GLFW_RELEASE && mods == GLFW_MOD_ALT)
+		focus();
 	else
   switch (key)
   {

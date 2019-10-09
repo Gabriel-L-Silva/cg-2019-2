@@ -1,5 +1,6 @@
 #ifndef __P2_h
 #define __P2_h
+#define FOCUS_OFFSET 10
 
 #include "Assets.h"
 #include "GLRenderer.h"
@@ -36,7 +37,7 @@ public:
 	void addEmptyCurrent();
 	void addBoxCurrent();
 	void removePrimitive(Primitive*);
-
+	void focus();
 
 private:
   enum ViewMode
