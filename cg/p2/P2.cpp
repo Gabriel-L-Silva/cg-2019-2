@@ -92,11 +92,14 @@ P2::dragDrop(SceneNode* sceneObject)
 	{
 		if (auto * payload = ImGui::AcceptDragDropPayload("SceneNode"))
 		{
-			auto o = *(SceneObject * *)payload->Data;
-			if (auto s = dynamic_cast<Scene*>(sceneObject))
-				o->setParent(nullptr);
-			else if (auto obj = dynamic_cast<SceneObject*>(sceneObject))
-				o->setParent(obj);
+			auto data = *(SceneNode * *)payload->Data;
+			if (auto o = dynamic_cast<SceneObject*>(data))
+			{
+				if (auto s = dynamic_cast<Scene*>(sceneObject))
+					o->setParent(nullptr);
+				else if (auto obj = dynamic_cast<SceneObject*>(sceneObject))
+					o->setParent(obj);
+			}
 		}
 		ImGui::EndDragDropTarget();
 	}
@@ -112,10 +115,27 @@ P2::treeChildren(SceneNode* obj)
 
 	if (s)
 	{
-		auto open = ImGui::TreeNodeEx(_scene,
+		open = ImGui::TreeNodeEx(_scene,
 			_current == _scene ? flag | ImGuiTreeNodeFlags_Selected : flag,
 			_scene->name());
+		
+		if (ImGui::IsItemClicked())
+			_current = obj;
 
+		dragDrop(obj);
+
+		if (open)
+		{
+			auto it = _scene->getRootIt();
+			auto end = _scene->getRootEnd();
+			auto size = _scene->getRootSize();
+			for (; it != end; it++)
+			{
+				treeChildren(*it);
+				if (_scene->getRootSize() != size) break; //Desculpa, eu não sou capaz de fazer melhor
+			}
+			ImGui::TreePop();
+		}
 	}
 	else if (o)
 	{
@@ -133,29 +153,11 @@ P2::treeChildren(SceneNode* obj)
 				_current == o ? flag | ImGuiTreeNodeFlags_Selected : flag,
 				o->name());
 		}
-	}
-	if (ImGui::IsItemClicked())
-		_current = obj;
 
-	dragDrop(obj);
+		if (ImGui::IsItemClicked())
+			_current = obj;
 
-	if(s)
-	{
-		if (open)
-		{
-			auto it = _scene->getRootIt();
-			auto end = _scene->getRootEnd();
-			auto size = _scene->getRootSize();
-			for (; it != end; it++)
-			{
-				treeChildren(*it);
-				if (_scene->getRootSize() != size) break; //Desculpa, eu não sou capaz de fazer melhor
-			}
-			ImGui::TreePop();
-		}
-	}
-	else if (o)
-	{
+		dragDrop(obj);
 		if (open)
 		{
 			auto cIt = o->getChildrenIter();
@@ -248,7 +250,7 @@ P2::hierarchyWindow()
 	ImGui::TextColored({ 0.5,0.5,0.5,1 }, "Shortcut: 'Del'");
 	ImGui::Separator();
 
-	treeChildren(_scene);
+	treeChildren((SceneNode*)_scene);
 	ImGui::End();
 }
 

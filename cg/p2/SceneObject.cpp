@@ -53,6 +53,7 @@ SceneObject::setEditorParent()
 void
 SceneObject::setParent(SceneObject* parent, bool creating)
 {
+	auto p = _parent;
   if (parent == nullptr)
 	{
 		_parent = nullptr;
@@ -60,13 +61,12 @@ SceneObject::setParent(SceneObject* parent, bool creating)
 	}
 	else
 	{
-		auto p = _parent;
 		parent->add(this);
-		if (p != nullptr)
-			p->remove(this);
-		else if (!creating)
-			_scene->remove(this);
 	}
+	if (p != nullptr)
+		p->remove(this);
+	else if (!creating)
+		_scene->remove(this);
 	transform()->parentChanged();
 }
 
