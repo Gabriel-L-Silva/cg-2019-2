@@ -31,8 +31,8 @@ public:
   /// Render the scene.
   void render() override;
 
-	void dragDrop(SceneObject* sceneObject);
-	void treeChildren(SceneObject*);
+	void dragDrop(SceneNode* sceneObject);
+	void treeChildren(SceneNode*);
 	void removeCurrent();
 	void addEmptyCurrent();
 	void addBoxCurrent();
