@@ -93,9 +93,9 @@ P2::dragDrop(SceneNode* sceneObject)
 		if (auto * payload = ImGui::AcceptDragDropPayload("SceneNode"))
 		{
 			auto o = *(SceneObject * *)payload->Data;
-			if (auto s = dynamic_cast<Scene*>(o))
+			if (auto s = dynamic_cast<Scene*>(sceneObject))
 				o->setParent(nullptr);
-			else if (auto obj = dynamic_cast<SceneObject*>(o))
+			else if (auto obj = dynamic_cast<SceneObject*>(sceneObject))
 				o->setParent(obj);
 		}
 		ImGui::EndDragDropTarget();
@@ -115,18 +115,7 @@ P2::treeChildren(SceneNode* obj)
 		auto open = ImGui::TreeNodeEx(_scene,
 			_current == _scene ? flag | ImGuiTreeNodeFlags_Selected : flag,
 			_scene->name());
-		if (open)
-		{
-			auto it = _scene->getRootIt();
-			auto end = _scene->getRootEnd();
-			auto size = _scene->getRootSize();
-			for (; it != end; it++)
-			{
-				treeChildren(*it);
-				if (_scene->getRootSize() != size) break; //Desculpa, eu não sou capaz de fazer melhor
-			}
-			ImGui::TreePop();
-		}
+
 	}
 	else if (o)
 	{
@@ -144,12 +133,29 @@ P2::treeChildren(SceneNode* obj)
 				_current == o ? flag | ImGuiTreeNodeFlags_Selected : flag,
 				o->name());
 		}
+	}
+	if (ImGui::IsItemClicked())
+		_current = obj;
 
-		if (ImGui::IsItemClicked())
-			_current = o;
+	dragDrop(obj);
 
-		dragDrop(o);
-
+	if(s)
+	{
+		if (open)
+		{
+			auto it = _scene->getRootIt();
+			auto end = _scene->getRootEnd();
+			auto size = _scene->getRootSize();
+			for (; it != end; it++)
+			{
+				treeChildren(*it);
+				if (_scene->getRootSize() != size) break; //Desculpa, eu não sou capaz de fazer melhor
+			}
+			ImGui::TreePop();
+		}
+	}
+	else if (o)
+	{
 		if (open)
 		{
 			auto cIt = o->getChildrenIter();
@@ -243,26 +249,6 @@ P2::hierarchyWindow()
 	ImGui::Separator();
 
 	treeChildren(_scene);
-	ImGuiTreeNodeFlags flag{ ImGuiTreeNodeFlags_OpenOnArrow };
-	auto open = ImGui::TreeNodeEx(_scene,
-		_current == _scene ? flag | ImGuiTreeNodeFlags_Selected : flag,
-		_scene->name());
-
-	if (ImGui::IsItemClicked())
-		_current = _scene;
-
-	if (open)
-	{
-		auto it = _scene->getRootIt();
-		auto end = _scene->getRootEnd();
-		auto size = _scene->getRootSize();
-		for (; it != end; it++)
-		{
-			treeChildren(*it);
-			if (_scene->getRootSize() != size) break; //Desculpa, eu não sou capaz de fazer melhor
-		}
-		ImGui::TreePop();
-	}
 	ImGui::End();
 }
 
