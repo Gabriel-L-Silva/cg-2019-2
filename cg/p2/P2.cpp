@@ -558,8 +558,6 @@ P2::sceneObjectGui()
 			auto notDelete{ true };
 			auto open = ImGui::CollapsingHeader(c->typeName(), &notDelete);
 
-			preview(c);
-
 			if (!notDelete)
 			{
 				// TODONE: delete camera
@@ -777,25 +775,30 @@ P2::preview(Camera* c)
 	// Viewport[0] = x, viewport[1] = y, viewport[2] = width, viewport[3] = height
 	GLint oldViewPort[4];
 	glGetIntegerv(GL_VIEWPORT, oldViewPort);
-
+	
+	
 	// 2nd step: adjust preview viewport
 	GLint viewPortHeight = (oldViewPort[3] / 5);
 	GLint viewPortWidth = c->aspectRatio() * viewPortHeight;
 
 	GLint viewPortX = oldViewPort[2] / 2 - viewPortWidth / 2;
 	GLint viewPortY = 0;
-
-	glViewport(viewPortX, viewPortY, viewPortWidth, viewPortHeight);
-
-	//3rd step: enable and define scissor
-	glScissor(viewPortX, viewPortY, viewPortWidth, viewPortHeight);
+	std::cout << viewPortX << " " << viewPortY << " " << viewPortWidth << " " << viewPortHeight << std::endl;
+	//draw Black BG for making lines
+	glViewport(viewPortX-1, viewPortY, viewPortWidth+2, viewPortHeight+1);
+	glScissor(viewPortX-1, viewPortY, viewPortWidth+2, viewPortHeight+1);
 	glEnable(GL_SCISSOR_TEST);
+	glClearColor(0, 0, 0, 1);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	//3rd step: enable and define scissor
+	glViewport(viewPortX, viewPortY, viewPortWidth, viewPortHeight);
+	glScissor(viewPortX, viewPortY, viewPortWidth, viewPortHeight);
 
 	// 4th step: draw primitives
 	renderScene();
 
 
-	// 5th step: desable scissor region
+	// 5th step: disable scissor region
 	glDisable(GL_SCISSOR_TEST);
 
 	// 6th step: restore original viewport
@@ -811,7 +814,6 @@ P2::gui()
 	inspectorWindow();
 	assetsWindow();
 	editorView();
-	//preview();
 	/*
 	static bool demo = true;
 	ImGui::ShowDemoWindow(&demo);
@@ -1030,14 +1032,21 @@ P2::render()
 		if (auto p = dynamic_cast<Primitive*>(component))
 			drawPrimitive(*p);
 		else if (auto c = dynamic_cast<Camera*>(component))
+		{
 			if (c == Camera::current())
+			{
 				drawCamera(*c);
+			}
+		}
 		if (o == _current)
 		{
 			auto t = o->transform();
 			_editor->drawAxes(t->position(), mat3f{ t->rotation() });
 		}
 	}
+	if(auto c = Camera::current())
+		if(dynamic_cast<SceneObject*>(_current) == c->sceneObject())
+			preview(c);
 }
 
 void
