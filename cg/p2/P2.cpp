@@ -791,10 +791,10 @@ P2::preview(int x, int y, int width, int height)
 	//glClearColor(0, 0, 0, 1);
 	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	// 2nd step: adjust preview viewport
-	GLint viewPortHeight = height;
-	GLint viewPortWidth = width;
 	GLint viewPortX = x;
 	GLint viewPortY = y;
+	GLint viewPortWidth = width;
+	GLint viewPortHeight = height;
 	
 	glViewport(viewPortX - 8, viewPortY-8, viewPortWidth + 16, viewPortHeight + 16);
 	glEnable(GL_SCISSOR_TEST);
@@ -872,7 +872,7 @@ P2::drawCamera(Camera& camera)
 
 	if (camera.projectionType() == Camera::ProjectionType::Perspective)
 	{
-		auto tanAngle = tanf(camera.viewAngle() / 2 * M_PI / 180);
+		auto tanAngle = tanf(camera.viewAngle() / 2 * (float)M_PI / 180.0f);
 
 		//p5					p6
 		//		p1	p2
@@ -1070,10 +1070,12 @@ P2::previewWindow(Camera* c)
 		ImVec2 vMin = ImGui::GetWindowContentRegionMin();
 		ImVec2 vMax = ImGui::GetWindowContentRegionMax();
 
-		auto x = ImGui::GetWindowPos().x;
-		auto y = ImGui::GetWindowPos().y;
+		int x = (int)(ImGui::GetWindowPos().x + vMin.x);
+		int y = (int)(h - (ImGui::GetWindowPos().y + vMax.y));
+		int width = (int)(vMax.x - vMin.x);
+		int height = (int)(vMax.y - vMin.y);
 
-		preview(x + vMin.x, h - (y + vMax.y), vMax.x - vMin.x, vMax.y - vMin.y);
+		preview(x, y, width, height);
 		//Cria retangulos em volta do preview
 		/*ImGui::GetWindowDrawList()->AddRectFilled(ImVec2{ x, y }, ImVec2{ x + vMin.x + vMax.x, y + vMin.y }, IM_COL32_BLACK);
 		ImGui::GetWindowDrawList()->AddRectFilled(ImVec2{ x + vMax.x, y }, ImVec2{ x + vMin.x + vMax.x, y + vMin.y + vMax.y }, IM_COL32_BLACK);
