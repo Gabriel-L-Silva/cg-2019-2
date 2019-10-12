@@ -777,7 +777,19 @@ P2::preview(int x, int y, int width, int height)
 	GLint oldViewPort[4];
 	glGetIntegerv(GL_VIEWPORT, oldViewPort);
 	
-	
+	//// 2nd step: adjust preview viewport
+	//GLint viewPortHeight = (oldViewPort[3] / 5);
+	//GLint viewPortWidth = c->aspectRatio() * viewPortHeight;
+
+	//GLint viewPortX = oldViewPort[2] / 2 - viewPortWidth / 2;
+	//GLint viewPortY = 0;
+	//std::cout << viewPortX << " " << viewPortY << " " << viewPortWidth << " " << viewPortHeight << std::endl;
+	////draw Black BG for making lines
+	//glViewport(viewPortX - 1, viewPortY, viewPortWidth + 2, viewPortHeight + 1);
+	//glScissor(viewPortX - 1, viewPortY, viewPortWidth + 2, viewPortHeight + 1);
+	//glEnable(GL_SCISSOR_TEST);
+	//glClearColor(0, 0, 0, 1);
+	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	// 2nd step: adjust preview viewport
 	GLint viewPortHeight = height;
 	GLint viewPortWidth = width;
