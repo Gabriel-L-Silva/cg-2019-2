@@ -74,6 +74,7 @@ public:
 	void add(Reference<Component> object);
 	void remove(Reference<SceneObject> object);
 	void remove(Reference<Component> object);
+	bool childrenContain(Reference<SceneObject>);
 
 	void setEditorParent();
 

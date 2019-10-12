@@ -100,7 +100,8 @@ private:
   void sceneObjectGui();
   void objectGui();
   void editorViewGui();
-	void preview(Camera* c);
+	void previewWindow(Camera* c);
+	void preview(int, int, int, int);
   void inspectPrimitive(Primitive&);
   void inspectCamera(Camera&);
   void addComponentButton(SceneObject&);

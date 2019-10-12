@@ -98,7 +98,8 @@ P2::dragDrop(SceneNode* sceneObject)
 				if (auto s = dynamic_cast<Scene*>(sceneObject))
 					o->setParent(nullptr);
 				else if (auto obj = dynamic_cast<SceneObject*>(sceneObject))
-					o->setParent(obj);
+					if(!o->childrenContain(obj))
+						o->setParent(obj);
 			}
 		}
 		ImGui::EndDragDropTarget();
@@ -768,7 +769,7 @@ P2::mainMenu()
 }
 
 inline void
-P2::preview(Camera* c)
+P2::preview(int x, int y, int width, int height)
 {
 
 	// 1st step: save current viewport (lower left corner = (0, 0))
@@ -778,22 +779,19 @@ P2::preview(Camera* c)
 	
 	
 	// 2nd step: adjust preview viewport
-	GLint viewPortHeight = (oldViewPort[3] / 5);
-	GLint viewPortWidth = c->aspectRatio() * viewPortHeight;
-
-	GLint viewPortX = oldViewPort[2] / 2 - viewPortWidth / 2;
-	GLint viewPortY = 0;
-	std::cout << viewPortX << " " << viewPortY << " " << viewPortWidth << " " << viewPortHeight << std::endl;
-	//draw Black BG for making lines
-	glViewport(viewPortX-1, viewPortY, viewPortWidth+2, viewPortHeight+1);
-	glScissor(viewPortX-1, viewPortY, viewPortWidth+2, viewPortHeight+1);
+	GLint viewPortHeight = height;
+	GLint viewPortWidth = width;
+	GLint viewPortX = x;
+	GLint viewPortY = y;
+	
+	glViewport(viewPortX - 8, viewPortY-8, viewPortWidth + 16, viewPortHeight + 16);
 	glEnable(GL_SCISSOR_TEST);
-	glClearColor(0, 0, 0, 1);
+	glScissor(viewPortX-8, viewPortY-8, viewPortWidth+16, viewPortHeight+16);
+	glClearColor(0, 0, 0, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	//3rd step: enable and define scissor
 	glViewport(viewPortX, viewPortY, viewPortWidth, viewPortHeight);
+	//3rd step: enable and define scissor
 	glScissor(viewPortX, viewPortY, viewPortWidth, viewPortHeight);
-
 	// 4th step: draw primitives
 	renderScene();
 
@@ -1046,9 +1044,32 @@ P2::render()
 	}
 	if(auto c = Camera::current())
 		if(dynamic_cast<SceneObject*>(_current) == c->sceneObject())
-			preview(c);
+			previewWindow(c);
 }
 
+void
+P2::previewWindow(Camera* c)
+{
+	auto h = height();
+	auto w = width();
+	ImGui::SetNextWindowBgAlpha(0);
+	if (ImGui::Begin("Preview"))
+	{
+		ImVec2 vMin = ImGui::GetWindowContentRegionMin();
+		ImVec2 vMax = ImGui::GetWindowContentRegionMax();
+
+		auto x = ImGui::GetWindowPos().x;
+		auto y = ImGui::GetWindowPos().y;
+
+		preview(x + vMin.x, h - (y + vMax.y), vMax.x - vMin.x, vMax.y - vMin.y);
+		//Cria retangulos em volta do preview
+		/*ImGui::GetWindowDrawList()->AddRectFilled(ImVec2{ x, y }, ImVec2{ x + vMin.x + vMax.x, y + vMin.y }, IM_COL32_BLACK);
+		ImGui::GetWindowDrawList()->AddRectFilled(ImVec2{ x + vMax.x, y }, ImVec2{ x + vMin.x + vMax.x, y + vMin.y + vMax.y }, IM_COL32_BLACK);
+		ImGui::GetWindowDrawList()->AddRectFilled(ImVec2{ x, y }, ImVec2{ x + vMin.x, y + vMin.y + vMax.y }, IM_COL32_BLACK);
+		ImGui::GetWindowDrawList()->AddRectFilled(ImVec2{ x, y + vMax.y }, ImVec2{ x + vMin.x + vMax.x, y + vMin.y + vMax.y }, IM_COL32_BLACK);*/
+	}
+	ImGui::End();
+}
 void
 P2::focus()
 {
@@ -1056,8 +1077,8 @@ P2::focus()
 	{
 		auto t = o->transform();
 		auto localP = t->localPosition();
-		localP.z += FOCUS_OFFSET;
 		_editor->camera()->transform()->setLocalPosition(localP);
+		_editor->camera()->transform()->translate(vec3f{ 0,0,FOCUS_OFFSET });
 	}
 }
 

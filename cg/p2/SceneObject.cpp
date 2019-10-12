@@ -103,5 +103,28 @@ SceneObject::remove(Reference<Component> object)
 	_components.remove(object);
 }
 
+bool
+SceneObject::childrenContain(Reference<SceneObject> obj)
+{
+	auto ret = false;
+	if (!_children.isEmpty())
+	{
+		auto it = _children.getIter();
+		auto end = _children.getEnd();
+		if (std::find(it, end, obj) != _children.getEnd())
+			return true;
+		else
+		{
+			it = _children.getIter();
+			end = _children.getEnd();
+			for (; it != end; it++)
+			{
+				ret = (*it)->childrenContain(obj);
+				if (ret) break;
+			}
+		}
+	}
+	return ret;
+}
 
 } // end namespace cg
