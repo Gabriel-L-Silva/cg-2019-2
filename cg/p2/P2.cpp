@@ -93,13 +93,13 @@ P2::dragDrop(SceneNode* sceneObject)
 		if (auto * payload = ImGui::AcceptDragDropPayload("SceneNode"))
 		{
 			auto data = *(SceneNode * *)payload->Data;
-			if (auto o = dynamic_cast<SceneObject*>(data))
+			if (auto source = dynamic_cast<SceneObject*>(data))
 			{
-				if (auto s = dynamic_cast<Scene*>(sceneObject))
-					o->setParent(nullptr);
-				else if (auto obj = dynamic_cast<SceneObject*>(sceneObject))
-					if(!o->childrenContain(obj))
-						o->setParent(obj);
+				if (dynamic_cast<Scene*>(sceneObject))
+					source->setParent(nullptr);
+				else if (auto target = dynamic_cast<SceneObject*>(sceneObject))
+					if(!source->childrenContain(target))
+						source->setParent(target);
 			}
 		}
 		ImGui::EndDragDropTarget();
@@ -780,6 +780,7 @@ P2::preview(int x, int y, int width, int height)
 	//// 2nd step: adjust preview viewport
 	//GLint viewPortHeight = (oldViewPort[3] / 5);
 	//GLint viewPortWidth = c->aspectRatio() * viewPortHeight;
+	//GLint viewPortWidth = c->aspectRatio() * viewPortHeight;
 
 	//GLint viewPortX = oldViewPort[2] / 2 - viewPortWidth / 2;
 	//GLint viewPortY = 0;
@@ -1032,7 +1033,7 @@ P2::render()
 	//GLWindow::render();
 	auto it = _scene->getPrimitiveIter();
 	auto end = _scene->getPrimitiveEnd();
-
+	Camera* cam = nullptr;
 	// itera nos primitivos
 	for (; it != end; it++)
 	{
@@ -1043,6 +1044,7 @@ P2::render()
 			drawPrimitive(*p);
 		else if (auto c = dynamic_cast<Camera*>(component))
 		{
+			cam = c;
 			if (c == Camera::current())
 			{
 				drawCamera(*c);
@@ -1054,9 +1056,9 @@ P2::render()
 			_editor->drawAxes(t->position(), mat3f{ t->rotation() });
 		}
 	}
-	if(auto c = Camera::current())
-		if(dynamic_cast<SceneObject*>(_current) == c->sceneObject())
-			previewWindow(c);
+	if(cam == Camera::current())
+		if(dynamic_cast<SceneObject*>(_current) == cam->sceneObject())
+			previewWindow(cam);
 }
 
 void
@@ -1064,6 +1066,8 @@ P2::previewWindow(Camera* c)
 {
 	auto h = height();
 	auto w = width();
+	ImGui::SetNextWindowSizeConstraints(ImVec2(-1, -1), ImVec2(-1, FLT_MAX));
+	ImGui::SetNextWindowSize(ImVec2{ 480,270 });
 	ImGui::SetNextWindowBgAlpha(0);
 	if (ImGui::Begin("Preview"))
 	{
@@ -1092,7 +1096,8 @@ P2::focus()
 		auto t = o->transform();
 		auto localP = t->localPosition();
 		_editor->camera()->transform()->setLocalPosition(localP);
-		_editor->camera()->transform()->translate(vec3f{ 0,0,FOCUS_OFFSET });
+		auto scale = t->localScale();
+		_editor->camera()->transform()->translate(vec3f{ 0,0,FOCUS_OFFSET+scale.x+scale.y+scale.z});
 	}
 }
 

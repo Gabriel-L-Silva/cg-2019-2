@@ -76,6 +76,7 @@ public:
 	void remove(Reference<Component> object);
 	bool childrenContain(Reference<SceneObject>);
 
+	template<class T> bool hasComponent();
 	void setEditorParent();
 
 	auto getChildrenIter() {

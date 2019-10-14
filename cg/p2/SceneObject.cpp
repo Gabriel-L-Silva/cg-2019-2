@@ -83,16 +83,42 @@ SceneObject::remove(Reference<SceneObject> object)
 	_children.remove(object);
 }
 
+
+template <class T>
+bool
+SceneObject::hasComponent()
+{
+	auto it = getComponentIter();
+	auto end = getComponentEnd();
+	for (; it != end; it++)
+	{
+		if (dynamic_cast<T>((Component*)*it))
+			return true;
+	}
+	return false;
+}
 void
 SceneObject::add(Reference<Component> object)
 {
-	if (auto primitive = dynamic_cast<Primitive*>((Component*)object)) {
-		_scene->addRenderable(object);
-	}
-	else if (auto cam = dynamic_cast<Camera*>((Component*)object))
+	if (dynamic_cast<Transform*>((Component*)object))
 	{
-		_scene->addRenderable(object);
+		if (hasComponent<Transform*>())
+			return;
 	}
+	else if (dynamic_cast<Primitive*>((Component*)object))
+	{
+		if (hasComponent<Primitive*>())
+			return;
+	}
+	else if (dynamic_cast<Camera*>((Component*)object))
+	{
+		if (hasComponent<Camera*>())
+			return;
+	}
+
+	if (!dynamic_cast<Transform*>((Component*)object))
+		_scene->addRenderable(object);
+	 
 	object->_sceneObject = this;
 	_components.add(object);
 }
