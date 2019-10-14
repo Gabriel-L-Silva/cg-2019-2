@@ -184,6 +184,20 @@ P2::addEmptyCurrent()
 }
 
 void
+P2::addSphereCurrent()
+{
+	// TODO: create a new sphere.
+	std::string name{ "Sphere " + std::to_string(_sceneObjectCounter++) };
+	auto sceneObject = new SceneObject{ name.c_str(), _scene };
+	SceneObject* current = nullptr;
+	current = dynamic_cast<SceneObject*>(_current);
+	sceneObject->setParent(current, true);
+
+	Component* primitive = dynamic_cast<Component*>(makePrimitive(_defaultMeshes.find("Sphere")));
+	sceneObject->add(primitive);
+}
+
+void
 P2::addBoxCurrent()
 {
 	// TODO: create a new box.
@@ -229,7 +243,7 @@ P2::hierarchyWindow()
 			addEmptyCurrent();
 		}
 		ImGui::SameLine();
-		ImGui::TextColored({ 0.5,0.5,0.5,1 }, "Shortcut: 'Ctrl + E'");
+		ImGui::TextColored({ 0.5,0.5,0.5,1 }, "Shortcut: 'Shift + E'");
 		if (ImGui::BeginMenu("3D Object"))
 		{
 			if (ImGui::MenuItem("Box"))
@@ -237,7 +251,13 @@ P2::hierarchyWindow()
 				addBoxCurrent();
 			}
 			ImGui::SameLine();
-			ImGui::TextColored({ 0.5,0.5,0.5,1 }, "Shortcut: 'Ctrl + B'");
+			ImGui::TextColored({ 0.5,0.5,0.5,1 }, "Shortcut: 'Shift + B'");
+			if (ImGui::MenuItem("Sphere"))
+			{
+				addSphereCurrent();
+			}
+			ImGui::SameLine();
+			ImGui::TextColored({ 0.5,0.5,0.5,1 }, "Shortcut: 'Shift + S'");
 			ImGui::EndMenu();
 		}
 		ImGui::EndPopup();
@@ -1066,8 +1086,9 @@ P2::previewWindow(Camera* c)
 {
 	auto h = height();
 	auto w = width();
+
 	ImGui::SetNextWindowSizeConstraints(ImVec2(-1, -1), ImVec2(-1, FLT_MAX));
-	ImGui::SetNextWindowSize(ImVec2{ 480,270 });
+	ImGui::SetNextWindowSize(ImVec2{ w/4.0f,h/4.0f });
 	ImGui::SetNextWindowBgAlpha(0);
 	if (ImGui::Begin("Preview"))
 	{
@@ -1097,7 +1118,7 @@ P2::focus()
 		auto localP = t->localPosition();
 		_editor->camera()->transform()->setLocalPosition(localP);
 		auto scale = t->localScale();
-		_editor->camera()->transform()->translate(vec3f{ 0,0,FOCUS_OFFSET+scale.x+scale.y+scale.z});
+		_editor->camera()->transform()->translate(vec3f{ 0,0,FOCUS_OFFSET+scale.x+((scale.y/2+FOCUS_OFFSET)/tanf(_editor->camera()->viewAngle()/360.0f*M_PI))+scale.z});
 	}
 }
 
@@ -1115,10 +1136,12 @@ P2::keyInputEvent(int key, int action, int mods)
 
 	if (key == GLFW_KEY_DELETE && action == GLFW_RELEASE)
 		removeCurrent();
-	else if (key == GLFW_KEY_E && action == GLFW_RELEASE && mods == GLFW_MOD_CONTROL)
+	else if (key == GLFW_KEY_E && action == GLFW_RELEASE && mods == GLFW_MOD_SHIFT)
 		addEmptyCurrent();
-	else if (key == GLFW_KEY_B && action == GLFW_RELEASE && mods == GLFW_MOD_CONTROL)
+	else if (key == GLFW_KEY_B && action == GLFW_RELEASE && mods == GLFW_MOD_SHIFT)
 		addBoxCurrent();
+	else if (key == GLFW_KEY_S && action == GLFW_RELEASE && mods == GLFW_MOD_SHIFT)
+		addSphereCurrent();
 	else if (key == GLFW_KEY_F && action == GLFW_RELEASE && mods == GLFW_MOD_ALT)
 		focus();
 	else

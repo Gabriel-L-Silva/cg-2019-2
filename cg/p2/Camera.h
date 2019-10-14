@@ -128,7 +128,7 @@ inline float
 Camera::clippingPlanes(float& F, float& B) const
 {
   F = _F;
-  B = _B*0.1f;
+  B = _B;
   return B - F;
 }
 

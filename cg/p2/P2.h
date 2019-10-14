@@ -36,6 +36,7 @@ public:
 	void removeCurrent();
 	void addEmptyCurrent();
 	void addBoxCurrent();
+	void addSphereCurrent();
 	void removePrimitive(Primitive*);
 	void focus();
 
