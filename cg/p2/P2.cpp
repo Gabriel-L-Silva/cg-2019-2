@@ -1118,7 +1118,7 @@ P2::focus()
 		auto localP = t->localPosition();
 		_editor->camera()->transform()->setLocalPosition(localP);
 		auto scale = t->localScale();
-		_editor->camera()->transform()->translate(vec3f{ 0,0,FOCUS_OFFSET+scale.x+((scale.y/2+FOCUS_OFFSET)/tanf(_editor->camera()->viewAngle()/360.0f*M_PI))+scale.z});
+		_editor->camera()->transform()->translate(vec3f{ 0,0,FOCUS_OFFSET+scale.x+((scale.y/2+FOCUS_OFFSET)/tanf(_editor->camera()->viewAngle()/360.0f*(float)M_PI))+scale.z});
 	}
 }
 
