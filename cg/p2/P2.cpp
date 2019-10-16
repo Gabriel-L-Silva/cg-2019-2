@@ -594,6 +594,8 @@ P2::sceneObjectGui()
 
 				ImGui::Checkbox("Current", &isCurrent);
 				Camera::setCurrent(isCurrent ? c : nullptr);
+				if (Camera::current() == nullptr)
+					_viewMode = ViewMode::Editor;
 				inspectCamera(*c);
 			}
 		}
@@ -825,8 +827,7 @@ P2::preview(int x, int y, int width, int height)
 	//3rd step: enable and define scissor
 	glScissor(viewPortX, viewPortY, viewPortWidth, viewPortHeight);
 	// 4th step: draw primitives
-	renderScene();
-
+	_renderer->render();
 
 	// 5th step: disable scissor region
 	glDisable(GL_SCISSOR_TEST);
@@ -992,7 +993,6 @@ P2::renderScene()
 
 constexpr auto CAMERA_RES = 0.01f;
 constexpr auto ZOOM_SCALE = 1.01f;
-
 void
 P2::render()
 {
@@ -1063,9 +1063,9 @@ P2::render()
 			drawPrimitive(*p);
 		else if (auto c = dynamic_cast<Camera*>(component))
 		{
-			cam = c;
-			if (c == Camera::current())
+			if(c->sceneObject() == dynamic_cast<SceneObject*>(_current))
 			{
+				cam = c;
 				drawCamera(*c);
 			}
 		}
@@ -1075,9 +1075,8 @@ P2::render()
 			_editor->drawAxes(t->position(), mat3f{ t->rotation() });
 		}
 	}
-	if(cam == Camera::current())
-		if(dynamic_cast<SceneObject*>(_current) == cam->sceneObject())
-			previewWindow(cam);
+	if(cam)
+		previewWindow(cam);
 }
 
 void
@@ -1086,10 +1085,9 @@ P2::previewWindow(Camera* c)
 	auto h = height();
 	auto w = width();
 
-	ImGui::SetNextWindowSizeConstraints(ImVec2(-1, -1), ImVec2(-1, FLT_MAX));
 	ImGui::SetNextWindowSize(ImVec2{ w/4.0f,h/4.0f });
 	ImGui::SetNextWindowBgAlpha(0);
-	if (ImGui::Begin("Preview"))
+	if (ImGui::Begin("Preview",NULL,ImGuiWindowFlags_NoResize))
 	{
 		ImVec2 vMin = ImGui::GetWindowContentRegionMin();
 		ImVec2 vMax = ImGui::GetWindowContentRegionMax();
@@ -1099,6 +1097,8 @@ P2::previewWindow(Camera* c)
 		int width = (int)(vMax.x - vMin.x);
 		int height = (int)(vMax.y - vMin.y);
 
+		_renderer->setCamera(c);
+		_renderer->setImageSize(w, h);
 		preview(x, y, width, height);
 		//Cria retangulos em volta do preview
 		/*ImGui::GetWindowDrawList()->AddRectFilled(ImVec2{ x, y }, ImVec2{ x + vMin.x + vMax.x, y + vMin.y }, IM_COL32_BLACK);

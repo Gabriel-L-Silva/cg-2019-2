@@ -39,7 +39,6 @@ public:
 	void addSphereCurrent();
 	void removePrimitive(Primitive*);
 	void focus();
-
 private:
   enum ViewMode
   {

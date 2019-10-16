@@ -75,10 +75,21 @@ public:
 	void remove(Reference<SceneObject> object);
 	void remove(Reference<Component> object);
 	bool childrenContain(Reference<SceneObject>);
-
-	template<class T> bool hasComponent();
 	void setEditorParent();
 
+	template <class T>
+	bool
+	hasComponent()
+	{
+		auto it = getComponentIter();
+		auto end = getComponentEnd();
+		for (; it != end; it++)
+		{
+			if (dynamic_cast<T>((Component*)* it))
+				return true;
+		}
+		return false;
+	}
 	auto getChildrenIter() {
 		return _children.getIter();
 	}

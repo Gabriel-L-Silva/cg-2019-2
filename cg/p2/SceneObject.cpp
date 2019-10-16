@@ -83,20 +83,6 @@ SceneObject::remove(Reference<SceneObject> object)
 	_children.remove(object);
 }
 
-
-template <class T>
-bool
-SceneObject::hasComponent()
-{
-	auto it = getComponentIter();
-	auto end = getComponentEnd();
-	for (; it != end; it++)
-	{
-		if (dynamic_cast<T>((Component*)*it))
-			return true;
-	}
-	return false;
-}
 void
 SceneObject::add(Reference<Component> object)
 {
