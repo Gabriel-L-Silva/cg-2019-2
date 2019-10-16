@@ -435,7 +435,6 @@ P2::inspectCamera(Camera& camera)
 	float f;
 
 	camera.clippingPlanes(n, f);
-
 	if (ImGui::DragFloatRange2("Clipping Planes",
 		&n,
 		&f,
@@ -447,8 +446,8 @@ P2::inspectCamera(Camera& camera)
 	{
 		if (n <= 0)
 			n = MIN_DEPTH;
-		if (f - n < MIN_DEPTH)
-			f = (n + MIN_DEPTH);
+		if (f*0.7f - n < MIN_DEPTH)
+			f = (n + MIN_DEPTH)/0.7f;
 		camera.setClippingPlanes(n, f);
 	}
 }
@@ -887,7 +886,7 @@ P2::drawCamera(Camera& camera)
 {
 	float F, B, H, W;
 	auto BF = camera.clippingPlanes(F, B);
-	//B *= 0.1f;
+	B *= 0.7f;
 	auto m = mat4f{ camera.cameraToWorldMatrix() };
 	vec3f p1, p2, p3, p4, p5, p6, p7, p8;
 
