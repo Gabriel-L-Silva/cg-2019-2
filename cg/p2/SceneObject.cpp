@@ -70,6 +70,26 @@ SceneObject::setParent(SceneObject* parent, bool creating)
 	transform()->parentChanged();
 }
 
+void
+SceneObject::removeComponentRenderable()
+{
+	auto it = getComponentIter();
+	auto end = getComponentEnd();
+
+	for (; it != end; it++)
+	{
+		if (!dynamic_cast<Transform*>((Component*)* it))
+			_scene->remove(*it);
+	}
+
+	auto childIt = getChildrenIter();
+	auto childEnd = getChildrenEnd();
+	for (; childIt != childEnd; childIt++)
+	{
+		(*childIt)->removeComponentRenderable();
+	}
+}
+
 void 
 SceneObject::add(Reference<SceneObject> object)
 {

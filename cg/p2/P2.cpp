@@ -218,6 +218,8 @@ P2::removeCurrent() {
 		SceneObject* sceneObject = dynamic_cast<SceneObject*>(_current);
 		auto parent = sceneObject->parent();
 
+		sceneObject->removeComponentRenderable();
+
 		if (parent == nullptr) {
 			_current = _scene;
 			_scene->remove(sceneObject);
