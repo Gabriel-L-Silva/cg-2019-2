@@ -1116,10 +1116,13 @@ P2::focus()
 	if (auto o = dynamic_cast<SceneObject*>(_current))
 	{
 		auto t = o->transform();
-		auto localP = t->localPosition();
-		_editor->camera()->transform()->setLocalPosition(localP);
-		auto scale = t->localScale();
-		_editor->camera()->transform()->translate(vec3f{ 0,0,FOCUS_OFFSET+scale.x+((scale.y/2+FOCUS_OFFSET)/tanf(_editor->camera()->viewAngle()/360.0f*(float)M_PI))+scale.z});
+		auto localP = t->position();
+		_editor->camera()->transform()->setPosition(localP);
+		auto scale = t->lossyScale();
+		auto ang = _editor->camera()->viewAngle();
+		auto x = scale.x / tanf(math::toRadians(ang/2));//pitágoras
+		auto y = scale.y / tanf(math::toRadians(ang/2));
+		_editor->camera()->transform()->translate(vec3f{ 0,0,x+y+scale.z});
 	}
 }
 
