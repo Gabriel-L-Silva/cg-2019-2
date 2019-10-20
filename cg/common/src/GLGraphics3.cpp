@@ -28,7 +28,7 @@
 // Source file for OpenGL 3D graphics.
 //
 // Author: Paulo Pagliosa
-// Last revision: 24/09/2019
+// Last revision: 16/10/2019
 
 #include "geometry/MeshSweeper.h"
 #include "graphics/GLGraphics3.h"
@@ -326,6 +326,34 @@ GLGraphics3::drawBounds(const Bounds3f& box)
   vec3f p6{p7.x, p1.y, p7.z};
   vec3f p8{p1.x, p7.y, p7.z};
 
+  drawLine(p1, p2);
+  drawLine(p2, p3);
+  drawLine(p3, p4);
+  drawLine(p1, p4);
+  drawLine(p5, p6);
+  drawLine(p6, p7);
+  drawLine(p7, p8);
+  drawLine(p5, p8);
+  drawLine(p3, p7);
+  drawLine(p2, p6);
+  drawLine(p4, p8);
+  drawLine(p1, p5);
+}
+
+void
+GLGraphics3::drawBounds(const Bounds3f& box, const mat4f& m)
+{
+  auto p1 = box.min();
+  auto p7 = box.max();
+  auto p2 = m.transform3x4({p7.x, p1.y, p1.z});
+  auto p3 = m.transform3x4({p7.x, p7.y, p1.z});
+  auto p4 = m.transform3x4({p1.x, p7.y, p1.z});
+  auto p5 = m.transform3x4({p1.x, p1.y, p7.z});
+  auto p6 = m.transform3x4({p7.x, p1.y, p7.z});
+  auto p8 = m.transform3x4({p1.x, p7.y, p7.z});
+
+  p1 = m.transform3x4(p1);
+  p7 = m.transform3x4(p7);
   drawLine(p1, p2);
   drawLine(p2, p3);
   drawLine(p3, p4);

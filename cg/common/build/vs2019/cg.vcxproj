@@ -58,6 +58,7 @@
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
       <AdditionalIncludeDirectories>../../externals/include;../../include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Lib>
       <OutputFile>..\..\lib\$(TargetName)$(TargetExt)</OutputFile>
@@ -76,6 +77,7 @@
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
       <AdditionalIncludeDirectories>../../externals/include;../../include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -97,6 +99,8 @@
     <ClInclude Include="..\..\include\geometry\Ray.h" />
     <ClInclude Include="..\..\include\geometry\TriangleMesh.h" />
     <ClInclude Include="..\..\include\graphics\Application.h" />
+    <ClInclude Include="..\..\include\graphics\GLImage.h" />
+    <ClInclude Include="..\..\include\graphics\Image.h" />
     <ClInclude Include="..\..\include\graphics\View3.h" />
     <ClInclude Include="..\..\include\graphics\Color.h" />
     <ClInclude Include="..\..\include\graphics\GLGraphics3.h" />
@@ -121,6 +125,8 @@
     <ClCompile Include="..\..\externals\src\imgui_impl_glfw.cpp" />
     <ClCompile Include="..\..\externals\src\imgui_impl_opengl3.cpp" />
     <ClCompile Include="..\..\src\Application.cpp" />
+    <ClCompile Include="..\..\src\GLImage.cpp" />
+    <ClCompile Include="..\..\src\Image.cpp" />
     <ClCompile Include="..\..\src\View3.cpp" />
     <ClCompile Include="..\..\src\Color.cpp" />
     <ClCompile Include="..\..\src\GLGraphics3.cpp" />
