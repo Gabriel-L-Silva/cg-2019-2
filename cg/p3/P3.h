@@ -122,6 +122,7 @@ private:
   static void buildDefaultMeshes();
 
 	int _sceneObjectCounter = 0;
+	int _cameraCounter = 0;
 }; // P3
 
 #endif // __P3_h

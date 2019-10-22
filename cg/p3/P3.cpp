@@ -263,6 +263,34 @@ P3::hierarchyWindow()
 			ImGui::TextColored({ 0.5,0.5,0.5,1 }, "Shortcut: 'Shift + S'");
 			ImGui::EndMenu();
 		}
+		if(ImGui::BeginMenu("Light"))
+		{
+			if (ImGui::MenuItem("Directional Light"))
+			{
+				// TODO: create a new directional light.
+			}
+			if (ImGui::MenuItem("Point Light"))
+			{
+				// TODO: create a new pontual light.
+			}
+			if (ImGui::MenuItem("Spotlight"))
+			{
+				// TODO: create a new spotlight.
+			}
+			ImGui::EndMenu();
+		}
+		if (ImGui::MenuItem("Camera"))
+		{
+			// create an empty object to add the camera 
+			std::string name{ "Camera " + std::to_string(_cameraCounter++) };
+			auto object = new SceneObject{ name.c_str(), _scene };
+			SceneObject* current = dynamic_cast<SceneObject*>(_current);
+			object->setParent(current, true);
+
+			auto c = dynamic_cast<Component*>((Camera*) new Camera);
+			object->add(c);
+			
+		}
 		ImGui::EndPopup();
 	}
 	ImGui::SameLine();
