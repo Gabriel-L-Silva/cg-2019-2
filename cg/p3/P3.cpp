@@ -214,6 +214,27 @@ P3::addBoxCurrent()
 }
 
 void
+P3::addLightCurrent(Light::Type T)
+{
+	std::string name{};
+	if(T == Light::Type::Directional)
+		name = { "Directional Light " + std::to_string(_dirLightCounter++) };
+	if (T == Light::Type::Spot)
+		name = { "Spot Light " + std::to_string(_spotLightCounter++) };
+	if (T == Light::Type::Point)
+		name = { "Point Light " + std::to_string(_pointLightCounter++) };
+
+	auto object = new SceneObject{ name.c_str(), _scene };
+	SceneObject* current = dynamic_cast<SceneObject*>(_current);
+	object->setParent(current, true);
+
+	Light* light = new Light();
+	light->setType(T);
+
+	auto l = dynamic_cast<Component*>(light);
+	object->add(l);
+}
+void
 P3::removeCurrent() {
 	if (_current != _scene && _current != nullptr)
 	{
@@ -268,44 +289,17 @@ P3::hierarchyWindow()
 			if (ImGui::MenuItem("Directional Light"))
 			{
 				// TODO: create a new directional light.
-
-				std::string name{ "Directional light " + std::to_string(_dirLightCounter++) };
-				auto object = new SceneObject{ name.c_str(), _scene };
-				SceneObject* current = dynamic_cast<SceneObject*>(_current);
-				object->setParent(current, true);
-
-				auto l = dynamic_cast<Component*>((Light*) new Light);
-				object->add(l);
+				addLightCurrent(Light::Type::Directional);
 			}
 			if (ImGui::MenuItem("Point Light"))
 			{
 				// TODO: create a new pontual light.
-
-				std::string name{ "Point light " + std::to_string(_pointLightCounter++) };
-				auto object = new SceneObject{ name.c_str(), _scene };
-				SceneObject* current = dynamic_cast<SceneObject*>(_current);
-				object->setParent(current, true);
-
-				Light* light = new Light();
-				light->setType(Light::Type::Point);
-
-				auto l = dynamic_cast<Component*>(light);
-				object->add(l);
+				addLightCurrent(Light::Type::Point);
 			}
 			if (ImGui::MenuItem("Spotlight"))
 			{
 				// TODO: create a new spotlight.
-
-				std::string name{ "Spotlight " + std::to_string(_spotLightCounter++) };
-				auto object = new SceneObject{ name.c_str(), _scene };
-				SceneObject* current = dynamic_cast<SceneObject*>(_current);
-				object->setParent(current, true);
-
-				Light* light = new Light();
-				light->setType(Light::Type::Spot);
-
-				auto l = dynamic_cast<Component*>(light);
-				object->add(l);
+				addLightCurrent(Light::Type::Spot);
 			}
 			ImGui::EndMenu();
 		}
@@ -590,7 +584,7 @@ P3::addComponentButton(SceneObject& object)
 				Light* light = new Light();
 				light->setType(Light::Type::Point);
 				Component* lightComponent = dynamic_cast<Component*>(light);
-				object.add(light);
+				object.add(lightComponent);
 			}
 			if (ImGui::MenuItem("Spot"))
 			{
@@ -598,14 +592,15 @@ P3::addComponentButton(SceneObject& object)
 				Light* light = new Light();
 				light->setType(Light::Type::Spot);
 				Component* lightComponent = dynamic_cast<Component*>(light);
-				object.add(light);
+				object.add(lightComponent);
 			}
 			if (ImGui::MenuItem("Directional"))
 			{
 				// TODONE
 				Light* light = new Light();
+				light->setType(Light::Type::Directional);
 				Component* lightComponent = dynamic_cast<Component*>(light);
-				object.add(light);
+				object.add(lightComponent);
 			}
 			ImGui::EndMenu();
 		}
@@ -617,18 +612,6 @@ P3::addComponentButton(SceneObject& object)
 		}
 		ImGui::EndPopup();
 	}
-}
-
-void
-P3::removePrimitive(Primitive* p)
-{
-	p->sceneObject()->remove(dynamic_cast<Component*>((Primitive*)p));
-}
-
-void
-P3::removeLight(Light* l)
-{
-	l->sceneObject()->remove(dynamic_cast<Component*>((Light*)l));
 }
 
 inline void

@@ -37,9 +37,9 @@ public:
 	void addEmptyCurrent();
 	void addBoxCurrent();
 	void addSphereCurrent();
-	void removePrimitive(Primitive*);
-	void removeLight(Light*);
+	void addLightCurrent(Light::Type);
 	void focus();
+
 private:
   enum ViewMode
   {

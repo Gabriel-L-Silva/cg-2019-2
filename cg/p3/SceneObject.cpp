@@ -138,6 +138,8 @@ SceneObject::add(Reference<Component> object)
 void
 SceneObject::remove(Reference<Component> object)
 {
+	if (!dynamic_cast<Transform*>((Component*)object))
+		_scene->remove(object);
 	_components.remove(object);
 }
 

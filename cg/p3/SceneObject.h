@@ -77,9 +77,8 @@ public:
 	bool childrenContain(Reference<SceneObject>);
 	void setEditorParent();
 	void removeComponentRenderable();
-	template <class T>
-	bool
-	hasComponent()
+
+	template <class T> bool	hasComponent()
 	{
 		auto it = getComponentIter();
 		auto end = getComponentEnd();
