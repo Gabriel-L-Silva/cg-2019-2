@@ -47,6 +47,7 @@ namespace cg
 class Light: public Component
 {
 public:
+
   enum Type
   {
     Directional,
@@ -73,8 +74,43 @@ public:
     _type = type;
   }
 
+	int decayValue() const
+	{
+		return _decayValue;
+	}
+
+	void setDecayValue(int value)
+	{
+		if (value <= 2 && value >= 0)
+			_decayValue = value;
+	}
+
+	int decayExponent() const
+	{
+		return _decayExponent;
+	}
+
+	void setDecayExponent(int value)
+	{
+		_decayExponent = value;
+	}
+
+	float openingAngle()
+	{
+		return _openingAngle;
+	}
+
+	void setOpeningAngle(float angle)
+	{
+		_openingAngle = angle;
+	}
+
 private:
   Type _type;
+	int _decayValue; // spot  and point
+	int _decayExponent; // spot
+	float _openingAngle; // spot
+
 
 }; // Light
 
