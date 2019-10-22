@@ -268,14 +268,44 @@ P3::hierarchyWindow()
 			if (ImGui::MenuItem("Directional Light"))
 			{
 				// TODO: create a new directional light.
+
+				std::string name{ "Directional light " + std::to_string(_dirLightCounter++) };
+				auto object = new SceneObject{ name.c_str(), _scene };
+				SceneObject* current = dynamic_cast<SceneObject*>(_current);
+				object->setParent(current, true);
+
+				auto l = dynamic_cast<Component*>((Light*) new Light);
+				object->add(l);
 			}
 			if (ImGui::MenuItem("Point Light"))
 			{
 				// TODO: create a new pontual light.
+
+				std::string name{ "Point light " + std::to_string(_pointLightCounter++) };
+				auto object = new SceneObject{ name.c_str(), _scene };
+				SceneObject* current = dynamic_cast<SceneObject*>(_current);
+				object->setParent(current, true);
+
+				Light* light = new Light();
+				light->setType(Light::Type::Point);
+
+				auto l = dynamic_cast<Component*>(light);
+				object->add(l);
 			}
 			if (ImGui::MenuItem("Spotlight"))
 			{
 				// TODO: create a new spotlight.
+
+				std::string name{ "Spotlight " + std::to_string(_spotLightCounter++) };
+				auto object = new SceneObject{ name.c_str(), _scene };
+				SceneObject* current = dynamic_cast<SceneObject*>(_current);
+				object->setParent(current, true);
+
+				Light* light = new Light();
+				light->setType(Light::Type::Spot);
+
+				auto l = dynamic_cast<Component*>(light);
+				object->add(l);
 			}
 			ImGui::EndMenu();
 		}
@@ -551,6 +581,34 @@ P3::addComponentButton(SceneObject& object)
 			ImGui::EndMenu();
 
 		}
+		if (ImGui::BeginMenu("Lights"))
+		{
+
+			if (ImGui::MenuItem("Point"))
+			{
+				// TODONE
+				Light* light = new Light();
+				light->setType(Light::Type::Point);
+				Component* lightComponent = dynamic_cast<Component*>(light);
+				object.add(light);
+			}
+			if (ImGui::MenuItem("Spot"))
+			{
+				// TODONE
+				Light* light = new Light();
+				light->setType(Light::Type::Spot);
+				Component* lightComponent = dynamic_cast<Component*>(light);
+				object.add(light);
+			}
+			if (ImGui::MenuItem("Directional"))
+			{
+				// TODONE
+				Light* light = new Light();
+				Component* lightComponent = dynamic_cast<Component*>(light);
+				object.add(light);
+			}
+			ImGui::EndMenu();
+		}
 		if (ImGui::MenuItem("Camera"))
 		{
 			// TODONE
@@ -566,6 +624,13 @@ P3::removePrimitive(Primitive* p)
 {
 	p->sceneObject()->remove(dynamic_cast<Component*>((Primitive*)p));
 }
+
+void
+P3::removeLight(Light* l)
+{
+	l->sceneObject()->remove(dynamic_cast<Component*>((Light*)l));
+}
+
 inline void
 P3::sceneObjectGui()
 {
@@ -686,20 +751,23 @@ P3::sceneObjectGui()
 				inspectCamera(*c);
 			}
 		}
-		else if (auto c = dynamic_cast<Light*>((Component*)* it))//Se for light
+		else if (auto l = dynamic_cast<Light*>((Component*)* it))//Se for light
 		{
 			auto notDelete{ true };
-			auto open = ImGui::CollapsingHeader(c->typeName(), &notDelete);
+			auto open = ImGui::CollapsingHeader(l->typeName(), &notDelete);
 
 			if (!notDelete)
 			{
-				// TODO: delete Light
+				// TODONE: delete Light
+				object->remove(l);
+				it = object->getComponentIter();
+				end = object->getComponentEnd();
 			}
 
 
 			else if (open)
 			{
-				inspectLight(*c);
+				inspectLight(*l);
 			}
 		}
 	}

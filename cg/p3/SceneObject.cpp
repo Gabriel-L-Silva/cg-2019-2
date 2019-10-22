@@ -34,6 +34,7 @@
 #include "Scene.h"
 #include "Primitive.h"
 #include "Camera.h"
+#include "Light.h"
 
 namespace cg
 { // begin namespace cg
@@ -119,6 +120,11 @@ SceneObject::add(Reference<Component> object)
 	else if (dynamic_cast<Camera*>((Component*)object))
 	{
 		if (hasComponent<Camera*>())
+			return;
+	}
+	else if (dynamic_cast<Light*>((Component*)object))
+	{
+		if (hasComponent<Light*>())
 			return;
 	}
 

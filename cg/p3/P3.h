@@ -38,6 +38,7 @@ public:
 	void addBoxCurrent();
 	void addSphereCurrent();
 	void removePrimitive(Primitive*);
+	void removeLight(Light*);
 	void focus();
 private:
   enum ViewMode
@@ -123,6 +124,10 @@ private:
 
 	int _sceneObjectCounter = 0;
 	int _cameraCounter = 0;
+	int _pointLightCounter = 0;
+	int _spotLightCounter = 0;
+	int _dirLightCounter = 0;
+	
 }; // P3
 
 #endif // __P3_h
