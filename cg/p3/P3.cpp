@@ -701,7 +701,7 @@ P3::sceneObjectGui()
 			{
 				// TODONE: delete primitive
 				object->remove(p);
-				_scene->remove(p);
+				//_scene->remove(p); OLHAR ESSE CARAIO
 				it = object->getComponentIter();
 				end = object->getComponentEnd();
 			}
