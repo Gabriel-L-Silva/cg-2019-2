@@ -482,6 +482,42 @@ P3::inspectLight(Light& light)
     ImGui::EndCombo();
   }
   light.setType(lt);
+
+	float ed = light.decayExponent();
+	float oa = light.openingAngle();
+	auto fl = light.decayValue();
+
+	if (light.type() == Light::Spot || light.type() == Light::Point)
+	{
+		
+		static const char* decayValues[]{ "None", "Linear", "Quadratic" };
+		auto fl = light.decayValue();
+
+		if (ImGui::BeginCombo("Fallof", decayValues[fl]))
+		{
+			for (auto i = 0; i < IM_ARRAYSIZE(decayValues); ++i)
+			{
+				bool selected = fl == i;
+
+				if (ImGui::Selectable(decayValues[i], selected))
+					fl = i;
+				if (selected)
+					ImGui::SetItemDefaultFocus();
+			}
+			ImGui::EndCombo();
+		}
+		light.setDecayValue(fl);
+
+		if (light.type() == Light::Spot)
+		{
+			ImGui::DragFloat("Decay exponent", &ed, 0.2f, 0.0f);
+			light.setDecayExponent(ed);
+
+			ImGui::DragFloat("Opening angle", &oa, 1.0f, 0.0f, 90.0f);
+			light.setOpeningAngle(oa);
+		}
+	}
+
   ImGui::ColorEdit3("Color", light.color);
 }
 
@@ -701,7 +737,6 @@ P3::sceneObjectGui()
 			{
 				// TODONE: delete primitive
 				object->remove(p);
-				//_scene->remove(p); OLHAR ESSE CARAIO
 				it = object->getComponentIter();
 				end = object->getComponentEnd();
 			}

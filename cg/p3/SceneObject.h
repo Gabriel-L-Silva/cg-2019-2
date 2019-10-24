@@ -105,6 +105,10 @@ public:
 		return _components.getEnd();
 	}
 
+	auto getComponentSize() {
+		return _components.getSize();
+	}
+
 	bool isChildrenEmpty()
 	{
 		return _children.isEmpty();
