@@ -510,7 +510,7 @@ P3::inspectLight(Light& light)
 
 		if (light.type() == Light::Spot)
 		{
-			ImGui::DragFloat("Decay exponent", &ed, 0.1f, 0.0f);
+			ImGui::DragFloat("Decay exponent", &ed, 0.2f, 0.0f);
 			light.setDecayExponent(ed);
 
 			ImGui::DragFloat("Opening angle", &oa, 1.0f, 0.0f, 90.0f);
