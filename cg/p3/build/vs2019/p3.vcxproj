@@ -38,6 +38,10 @@
     <ClInclude Include="..\..\SceneObject.h" />
     <ClInclude Include="..\..\Transform.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\assets\shaders\p3.fs" />
+    <None Include="..\..\assets\shaders\p3.vs" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{3FD1D91D-19DF-4C23-AD3C-02A6ECF35FE3}</ProjectGuid>

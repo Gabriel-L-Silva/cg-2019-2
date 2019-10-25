@@ -510,7 +510,7 @@ P3::inspectLight(Light& light)
 
 		if (light.type() == Light::Spot)
 		{
-			ImGui::DragFloat("Decay exponent", &ed, 0.2f, 0.0f);
+			ImGui::DragFloat("Decay exponent", &ed, 0.3f, 0.0f);
 			light.setDecayExponent(ed);
 
 			ImGui::DragFloat("Opening angle", &oa, 1.0f, 0.0f, 90.0f);
@@ -1081,7 +1081,141 @@ P3::drawPrimitive(Primitive& primitive)
 inline void
 P3::drawLight(Light& light)
 {
-  // TODO
+
+	auto m = mat4f{ light.sceneObject()->transform()->localToWorldMatrix() };
+	vec3f normal, points[8], p1, p2, p3, p4, p5, p6, p7, p8;
+
+	if (light.type() == Light::Directional)
+	{
+		normal = {0, -1, 0};
+		
+		p1 = {-0.5, 0, 0};
+		p2 = {0   , 0, 0};
+		p3 = {0.5 , 0, 0};
+
+		normal = m.transformVector(normal);
+
+		p1 = m.transform(p1);
+		p2 = m.transform(p2);
+		p3 = m.transform(p3);
+		
+		auto u = _editor->cone();
+		_editor->setVectorColor(Color::yellow);
+
+		_editor->drawVector(p1, normal, 1.0, *u);
+		_editor->drawVector(p2, normal, 1.0, *u);
+		_editor->drawVector(p3, normal, 1.0, *u);
+		
+	}
+
+	else if (light.type() == Light::Point)
+	{
+		p1 = { 1, 0, 0 };
+		p2 = { -1, 0, 0 };
+
+		p3 = { 0, 1, 0 };
+		p4 = { 0, -1, 0 };
+
+		p5 = { 0, 0, 1 };
+		p6 = { 0, 0, -1 };
+
+		p7 = { 0, 0, 1 };
+		p8 = { 0, 0, -1 };
+
+		vec3f p9 = { 1, 1, 1 };
+		vec3f p10 = { -1, 1, 1 };
+
+		vec3f p11 = { 1, -1, 1 };
+		vec3f p12 = { -1, -1, 1 };
+
+		vec3f p13 = { 1, 1, -1 };
+		vec3f p14 = { -1, 1, -1 };
+
+		vec3f p15 = { -1, -1, -1 };
+		vec3f p16 = { 1, -1, -1 };
+		
+
+		p1 = m.transform(p1);
+		p2 = m.transform(p2);
+		p3 = m.transform(p3);
+		p4 = m.transform(p4);
+		p5 = m.transform(p5);
+		p6 = m.transform(p6);
+		p7 = m.transform(p7);
+		p8 = m.transform(p8);
+
+		p9 = m.transform(p9);
+		p10 = m.transform(p10);
+		p11 = m.transform(p11);
+		p12 = m.transform(p12);
+		p13 = m.transform(p13);
+		p14 = m.transform(p14);
+		p15 = m.transform(p15);
+		p16 = m.transform(p16);
+
+		_editor->setLineColor(Color::yellow);
+		
+		_editor->drawLine(p1, p2);
+		_editor->drawLine(p3, p4);
+		_editor->drawLine(p5, p6);
+		_editor->drawLine(p7, p8);
+
+		_editor->drawLine(m.transform(vec3f{ 0,0,0 }), p9);
+		_editor->drawLine(m.transform(vec3f{ 0,0,0 }), p10);
+		_editor->drawLine(m.transform(vec3f{ 0,0,0 }), p11);
+		_editor->drawLine(m.transform(vec3f{ 0,0,0 }), p12);
+		_editor->drawLine(m.transform(vec3f{ 0,0,0 }), p13);
+		_editor->drawLine(m.transform(vec3f{ 0,0,0 }), p14);
+		_editor->drawLine(m.transform(vec3f{ 0,0,0 }), p15);
+		_editor->drawLine(m.transform(vec3f{ 0,0,0 }), p16);
+	
+	}
+
+	else 
+	{
+		// we need to get the opening angle in order to calculate the radius
+		float openingAngle = light.openingAngle();
+
+		// unsing a arbitrary value for the cone height, whe use pythagoras' theorem to get the radius
+		float height = 2;
+		float radius = std::tan(math::toRadians(openingAngle)) * height;
+
+		
+		vec3f center = m.transform(vec3f{ 0, -2, 0 });
+		vec3f origin = m.transform(vec3f{ 0.0, 0.0, 0.0 });
+
+		// cone side lines
+		p1 = {  radius, -2.0, 0.0};
+		p2 = { -radius, -2.0, 0.0 };
+
+		p3 = { 0.0, -2.0,  radius };
+		p4 = { 0.0, -2.0, -radius };
+
+		p1 = m.transform(p1);
+		p2 = m.transform(p2);
+
+		p3 = m.transform(p3);
+		p4 = m.transform(p4);
+
+		// normal vector used to draw the circle
+		vec3f normal = { 0.0,-2.0,0.0 };
+
+		// normal vector transformation
+		m.transpose();
+		m.invert();
+
+		normal = m.transformVector(normal);
+
+		// drawing
+		_editor->setLineColor(Color::yellow);
+
+		_editor->drawCircle(center, radius, normal);
+		_editor->drawLine(origin, p1);
+		_editor->drawLine(origin, p2);
+		_editor->drawLine(origin, p3);
+		_editor->drawLine(origin, p4);
+
+	}
 }
 
 inline void
@@ -1270,6 +1404,13 @@ P3::render()
 			{
 				cam = c;
 				drawCamera(*c);
+			}
+		}
+		else if (auto l = dynamic_cast<Light*>(component))
+		{
+			if (l->sceneObject() == dynamic_cast<SceneObject*>(_current))
+			{
+				drawLight(*l);
 			}
 		}
 		if (o == _current)

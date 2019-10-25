@@ -9,6 +9,9 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{93a46044-04ea-4e58-9795-9326f667836e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Main.cpp">
@@ -85,5 +88,13 @@
     <ClInclude Include="..\..\Collection.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\assets\shaders\p3.fs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\assets\shaders\p3.vs">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

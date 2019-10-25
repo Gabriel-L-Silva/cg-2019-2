@@ -109,6 +109,22 @@ public:
 		return _components.getSize();
 	}
 
+	//auto getPrimitive()
+	//{
+	//	auto it = _components.getIter();
+	//	auto end = _components.getEnd();
+
+	//	for (; *it != *end; it++)
+	//	{
+	//		if (dynamic_cast<Primitive*>((Component*)*it))
+	//		{
+	//			return *it;
+	//		}
+	//	}
+
+	//	return nullptr;
+	//}
+
 	bool isChildrenEmpty()
 	{
 		return _children.isEmpty();
