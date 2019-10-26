@@ -1083,7 +1083,7 @@ P3::drawLight(Light& light)
 {
 
 	auto m = mat4f{ light.sceneObject()->transform()->localToWorldMatrix() };
-	vec3f normal, points[16], p1, p2, p3, p4, p5, p6, p7, p8;
+	vec3f normal, points[16];
 
 	if (light.type() == Light::Directional)
 	{
@@ -1101,12 +1101,11 @@ P3::drawLight(Light& light)
 		for (int i = 0; i < 3; i++)
 			points[i] = m.transform(points[i]);
 		
-		auto u = _editor->cone();
 		_editor->setVectorColor(Color::yellow);
 
 		// drawing 
 		for (int i = 0; i < 3; i++)
-			_editor->drawVector(points[i], normal, 1.0, *u);
+			_editor->drawVector(points[i], normal, 1.0);
 		
 	}
 

@@ -28,7 +28,7 @@
 // Source file for OpenGL 3D graphics.
 //
 // Author: Paulo Pagliosa
-// Last revision: 16/10/2019
+// Last revision: 25/10/2019
 
 #include "geometry/MeshSweeper.h"
 #include "graphics/GLGraphics3.h"
@@ -382,30 +382,17 @@ GLGraphics3::drawNormals(TriangleMesh& mesh, const mat4f& t, const mat3f& n)
     const auto p = t.transform3x4(data.vertices[i]);
     const auto N = n.transform(data.vertexNormals[i]).versor();
 
-    drawVector(p, N, 0.5f, glyph);
+    drawAxis(p, N, 0.5f, glyph);
   }
   _flatMode = 0;
 }
 
 void
-GLGraphics3::drawVector(const vec3f& p,
-  const vec3f& d,
-  float s,
-  TriangleMesh& glyph)
+GLGraphics3::drawVector(const vec3f& p, const vec3f& d, float s)
 {
-  mat3f r;
-  vec3f q;
-
-  if (math::isZero(d.x) && math::isZero(d.z))
-    q = vec3f{0, 0, 1};
-  else
-    q.set(d.x, d.y + 1, d.z);
-  r[1] = d.versor();
-  r[0] = q.cross(r[1]).versor();
-  r[2] = r[0].cross(r[1]);
-  q = p + d * s;
-  drawLine(p, q);
-  drawMesh(glyph, q, r, vec3f{0.1f, 0.4f, 0.1f});
+  _flatMode = 1;
+  drawAxis(p, d, s, *cone());
+  _flatMode = 0;
 }
 
 void
@@ -418,11 +405,11 @@ GLGraphics3::drawAxes(const vec3f& p, const mat3f& r, float s)
   glDisable(GL_DEPTH_TEST);
   _flatMode = 1;
   setVectorColor(Color::red);
-  drawVector(p, r[0], s, glyph);
+  drawAxis(p, r[0], s, glyph);
   setVectorColor(Color::green);
-  drawVector(p, r[1], s, glyph);
+  drawAxis(p, r[1], s, glyph);
   setVectorColor(Color::blue);
-  drawVector(p, r[2], s, glyph);
+  drawAxis(p, r[2], s, glyph);
   _flatMode = 0;
   glPolygonMode(GL_FRONT_AND_BACK, polygonMode());
   if (dt)
@@ -444,6 +431,27 @@ GLGraphics3::drawXZPlane(float size, float step)
   drawLine(vec3f{-size, 0, 0}, vec3f{size, 0, 0});
   setLineColor(Color::blue);
   drawLine(vec3f{0, 0, -size}, vec3f{0, 0, size});
+}
+
+void
+GLGraphics3::drawAxis(const vec3f& p,
+  const vec3f& d,
+  float s,
+  TriangleMesh& glyph)
+{
+  mat3f r;
+  vec3f q;
+
+  if (math::isZero(d.x) && math::isZero(d.z))
+    q = vec3f{0, 0, 1};
+  else
+    q.set(d.x, d.y + 1, d.z);
+  r[1] = d.versor();
+  r[0] = q.cross(r[1]).versor();
+  r[2] = r[0].cross(r[1]);
+  q = p + d * s;
+  drawLine(p, q);
+  drawMesh(glyph, q, r, vec3f{0.1f, 0.4f, 0.1f});
 }
 
 } // end namespace cg

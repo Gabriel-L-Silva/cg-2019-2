@@ -28,7 +28,7 @@
 // Class definition for OpenGL 3D graphics.
 //
 // Author: Paulo Pagliosa
-// Last revision: 16/10/2019
+// Last revision: 25/10/2019
 
 #ifndef __GLGraphics3_h
 #define __GLGraphics3_h
@@ -120,7 +120,7 @@ public:
   void drawLine(const vec3f&, const vec3f&);
   void drawTriangle(const vec3f&, const vec3f&, const vec3f&);
   void drawCircle(const vec3f&, float, const vec3f&);
-  void drawVector(const vec3f&, const vec3f&, float, TriangleMesh&);
+  void drawVector(const vec3f&, const vec3f&, float);
   void drawNormals(TriangleMesh&, const mat4f&, const mat3f&);
   void drawAxes(const vec3f&, const mat3f&, float = 1.0f);
   void drawBounds(const Bounds3f&, const mat4f&);
@@ -156,6 +156,7 @@ private:
   Color _gridColor;
 
   void drawPolyline(const vec3f*, int, const mat4f&, bool = false);
+  void drawAxis(const vec3f&, const vec3f&, float, TriangleMesh&);
 
 }; // GLGraphics3
 
