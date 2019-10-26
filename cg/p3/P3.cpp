@@ -1083,91 +1083,72 @@ P3::drawLight(Light& light)
 {
 
 	auto m = mat4f{ light.sceneObject()->transform()->localToWorldMatrix() };
-	vec3f normal, points[8], p1, p2, p3, p4, p5, p6, p7, p8;
+	vec3f normal, points[16], p1, p2, p3, p4, p5, p6, p7, p8;
 
 	if (light.type() == Light::Directional)
 	{
+		// normal vector
 		normal = {0, -1, 0};
 		
-		p1 = {-0.5, 0, 0};
-		p2 = {0   , 0, 0};
-		p3 = {0.5 , 0, 0};
+		// initial points of the vectors
+		points[0] = { -0.5, 0, 0 };
+		points[1] = { 0   , 0, 0 };
+		points[2] = { 0.5 , 0, 0 };
 
+		// tranforming the points and the vector to local coord
 		normal = m.transformVector(normal);
 
-		p1 = m.transform(p1);
-		p2 = m.transform(p2);
-		p3 = m.transform(p3);
+		for (int i = 0; i < 3; i++)
+			points[i] = m.transform(points[i]);
 		
 		auto u = _editor->cone();
 		_editor->setVectorColor(Color::yellow);
 
-		_editor->drawVector(p1, normal, 1.0, *u);
-		_editor->drawVector(p2, normal, 1.0, *u);
-		_editor->drawVector(p3, normal, 1.0, *u);
+		// drawing 
+		for (int i = 0; i < 3; i++)
+			_editor->drawVector(points[i], normal, 1.0, *u);
 		
 	}
 
 	else if (light.type() == Light::Point)
 	{
-		p1 = { 1, 0, 0 };
-		p2 = { -1, 0, 0 };
+		// setting line points 
+		points[0] = { 1, 0, 0 };
+		points[1] = { -1, 0, 0 };
 
-		p3 = { 0, 1, 0 };
-		p4 = { 0, -1, 0 };
+		points[2] = { 0, 1, 0 };
+		points[3] = { 0, -1, 0 };
 
-		p5 = { 0, 0, 1 };
-		p6 = { 0, 0, -1 };
+		points[4] = { 0, 0, 1 };
+		points[5] = { 0, 0, -1 };
 
-		p7 = { 0, 0, 1 };
-		p8 = { 0, 0, -1 };
+		points[6] = { 0, 0, 1 };
+		points[7] = { 0, 0, -1 };
 
-		vec3f p9 = { 1, 1, 1 };
-		vec3f p10 = { -1, 1, 1 };
+		points[8] = { 1, 1, 1 };
+		points[9] = { -1, 1, 1 };
 
-		vec3f p11 = { 1, -1, 1 };
-		vec3f p12 = { -1, -1, 1 };
+		points[10] = { 1, -1, 1 };
+		points[11] = { -1, -1, 1 };
 
-		vec3f p13 = { 1, 1, -1 };
-		vec3f p14 = { -1, 1, -1 };
+		points[12] = { 1, 1, -1 };
+		points[13] = { -1, 1, -1 };
 
-		vec3f p15 = { -1, -1, -1 };
-		vec3f p16 = { 1, -1, -1 };
+		points[14] = { -1, -1, -1 };
+		points[15] = { 1, -1, -1 };
 		
+		// transforming points to local coord
+		for (int i = 0; i < 16; i++)
+			points[i] = m.transform(points[i]);
 
-		p1 = m.transform(p1);
-		p2 = m.transform(p2);
-		p3 = m.transform(p3);
-		p4 = m.transform(p4);
-		p5 = m.transform(p5);
-		p6 = m.transform(p6);
-		p7 = m.transform(p7);
-		p8 = m.transform(p8);
-
-		p9 = m.transform(p9);
-		p10 = m.transform(p10);
-		p11 = m.transform(p11);
-		p12 = m.transform(p12);
-		p13 = m.transform(p13);
-		p14 = m.transform(p14);
-		p15 = m.transform(p15);
-		p16 = m.transform(p16);
-
+		// drawing
 		_editor->setLineColor(Color::yellow);
 		
-		_editor->drawLine(p1, p2);
-		_editor->drawLine(p3, p4);
-		_editor->drawLine(p5, p6);
-		_editor->drawLine(p7, p8);
+		for (int i = 0; i < 8; i += 2)
+			_editor->drawLine(points[i], points[i+1]);
 
-		_editor->drawLine(m.transform(vec3f{ 0,0,0 }), p9);
-		_editor->drawLine(m.transform(vec3f{ 0,0,0 }), p10);
-		_editor->drawLine(m.transform(vec3f{ 0,0,0 }), p11);
-		_editor->drawLine(m.transform(vec3f{ 0,0,0 }), p12);
-		_editor->drawLine(m.transform(vec3f{ 0,0,0 }), p13);
-		_editor->drawLine(m.transform(vec3f{ 0,0,0 }), p14);
-		_editor->drawLine(m.transform(vec3f{ 0,0,0 }), p15);
-		_editor->drawLine(m.transform(vec3f{ 0,0,0 }), p16);
+		for (int i = 8; i < 16; i++)
+			_editor->drawLine(m.transform(vec3f{ 0,0,0 }), points[i]);
 	
 	}
 
@@ -1185,17 +1166,14 @@ P3::drawLight(Light& light)
 		vec3f origin = m.transform(vec3f{ 0.0, 0.0, 0.0 });
 
 		// cone side lines
-		p1 = {  radius, -2.0, 0.0};
-		p2 = { -radius, -2.0, 0.0 };
+		points[0] = {  radius, -2.0, 0.0};
+		points[1] = { -radius, -2.0, 0.0 };
 
-		p3 = { 0.0, -2.0,  radius };
-		p4 = { 0.0, -2.0, -radius };
+		points[2] = { 0.0, -2.0,  radius };
+		points[3] = { 0.0, -2.0, -radius };
 
-		p1 = m.transform(p1);
-		p2 = m.transform(p2);
-
-		p3 = m.transform(p3);
-		p4 = m.transform(p4);
+		for (int i = 0; i < 4; i++)
+			points[i] = m.transform(points[i]);
 
 		// normal vector used to draw the circle
 		vec3f normal = { 0.0,-2.0,0.0 };
@@ -1210,10 +1188,9 @@ P3::drawLight(Light& light)
 		_editor->setLineColor(Color::yellow);
 
 		_editor->drawCircle(center, radius, normal);
-		_editor->drawLine(origin, p1);
-		_editor->drawLine(origin, p2);
-		_editor->drawLine(origin, p3);
-		_editor->drawLine(origin, p4);
+
+		for (int i = 0; i < 4; i++)
+			_editor->drawLine(origin, points[i]);
 
 	}
 }
