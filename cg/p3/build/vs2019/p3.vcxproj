@@ -41,6 +41,10 @@
   <ItemGroup>
     <None Include="..\..\assets\shaders\p3.fs" />
     <None Include="..\..\assets\shaders\p3.vs" />
+    <None Include="..\..\assets\shaders\p3F.frag" />
+    <None Include="..\..\assets\shaders\p3F.vert" />
+    <None Include="..\..\assets\shaders\p3G.frag" />
+    <None Include="..\..\assets\shaders\p3G.vert" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

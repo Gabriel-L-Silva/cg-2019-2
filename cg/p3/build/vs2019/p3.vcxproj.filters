@@ -90,6 +90,18 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\assets\shaders\p3F.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\assets\shaders\p3F.vert">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\assets\shaders\p3G.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\assets\shaders\p3G.vert">
+      <Filter>Shaders</Filter>
+    </None>
     <None Include="..\..\assets\shaders\p3.fs">
       <Filter>Shaders</Filter>
     </None>
