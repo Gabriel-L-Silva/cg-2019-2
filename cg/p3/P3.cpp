@@ -486,8 +486,8 @@ P3::inspectLight(Light& light)
   }
   light.setType(lt);
 
-	float ed = light.decayExponent();
-	float oa = light.openingAngle();
+	auto ed = light.decayExponent();
+	auto oa = light.openingAngle();
 	auto fl = light.decayValue();
 
 	if (light.type() == Light::Spot || light.type() == Light::Point)
@@ -513,7 +513,7 @@ P3::inspectLight(Light& light)
 
 		if (light.type() == Light::Spot)
 		{
-			if (ImGui::DragFloat("Decay exponent", &ed, 0.3f, 0.0f))
+			if (ImGui::DragInt("Decay exponent", &ed, 0.3f, 0))
 				light.setDecayExponent(ed);
 
 			if (ImGui::DragFloat("Opening angle", &oa, 1.0f, 0.0f, 90.0f))
