@@ -17,7 +17,8 @@ class P3: public GLWindow
 public:
   P3(int width, int height):
     GLWindow{"cg2019 - P3", width, height},
-    _program{"P3"}
+    _programP{"P3 Phong"},
+		_programG{"P3 Gouraud"}
   {
     // do nothing
   }
@@ -63,7 +64,7 @@ private:
     Pan = 2
   };
 
-  GLSL::Program _program;
+  GLSL::Program _programP, _programG;
   Reference<Scene> _scene;
   Reference<SceneEditor> _editor;
   Reference<GLRenderer> _renderer;

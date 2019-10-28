@@ -68,17 +68,20 @@ P3::buildScene()
 void
 P3::initialize()
 {
-  Application::loadShaders(_program, "shaders/p3.vs", "shaders/p3.fs");
+  //Application::loadShaders(_program, "shaders/p3.vs", "shaders/p3.fs");
+	Application::loadShaders(_programG, "shaders/p3G.vert", "shaders/p3G.frag");
+	Application::loadShaders(_programP, "shaders/p3F.vert", "shaders/p3F.frag");
+
   Assets::initialize();
   buildDefaultMeshes();
   buildScene();
   _renderer = new GLRenderer{*_scene};
-	_renderer->setProgram(&_program);
+	_renderer->setProgram(&_programP);
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_POLYGON_OFFSET_FILL);
   glPolygonOffset(1.0f, 1.0f);
   glEnable(GL_LINE_SMOOTH);
-  _program.use();
+  _programG.use();
 }
 
 void
@@ -1030,6 +1033,8 @@ P3::preview(int x, int y, int width, int height)
 	// 4th step: draw primitives
 	_renderer->render();
 
+	_programG.use();
+
 	// 5th step: disable scissor region
 	glDisable(GL_SCISSOR_TEST);
 
@@ -1065,16 +1070,20 @@ P3::drawPrimitive(Primitive& primitive)
   auto t = primitive.transform();
   auto normalMatrix = mat3f{t->worldToLocalMatrix()}.transposed();
 
-  _program.setUniformMat4("transform", t->localToWorldMatrix());
-  _program.setUniformMat3("normalMatrix", normalMatrix);
-  _program.setUniformVec4("color", primitive.material.diffuse);
-  _program.setUniform("flatMode", (int)0);
+	_programG.setUniformMat4("transform", t->localToWorldMatrix());
+	_programG.setUniformMat3("normalMatrix", normalMatrix);
+	_programG.setUniformVec4("material.ambient", primitive.material.ambient);
+	_programG.setUniformVec4("material.diffuse", primitive.material.diffuse);
+	_programG.setUniformVec4("material.spot", primitive.material.spot);
+	_programG.setUniformVec4("material.shine", primitive.material.shine);
+	_programG.setUniform("flatMode", (int)0);
+
   m->bind();
   drawMesh(m, GL_FILL);
   if (primitive.sceneObject() != _current)
     return;
-  _program.setUniformVec4("color", _selectedWireframeColor);
-  _program.setUniform("flatMode", (int)1);
+	_programG.setUniformVec4("material.diffuse", _selectedWireframeColor);
+	_programG.setUniform("flatMode", (int)1);
   drawMesh(m, GL_LINE);
 }
 
@@ -1299,7 +1308,7 @@ P3::renderScene()
     _renderer->setCamera(camera);
     _renderer->setImageSize(width(), height());
     _renderer->render();
-    _program.use();
+		_programG.use();
   }
 }
 
@@ -1341,9 +1350,36 @@ P3::render()
   const auto& p = ec->transform()->position();
   auto vp = vpMatrix(ec);
 
-  _program.setUniformMat4("vpMatrix", vp);
-  _program.setUniformVec4("ambientLight", _scene->ambientLight);
-  _program.setUniformVec3("lightPosition", p);
+	_programG.setUniformMat4("vpMatrix", vp);
+	_programG.setUniformVec4("ambientLight", _scene->ambientLight);
+
+
+	// percorrer a lista de lights e passar os parametros de luz
+	auto itL = _scene->getPrimitiveIter();
+	auto endL = _scene->getPrimitiveEnd();
+	int numLights = 0;
+	std::string name;
+
+	_programG.setUniformVec3("camPos",p);
+
+	for (; itL != endL || numLights > 10; itL++)
+	{
+		if (auto l = dynamic_cast<Light*>((Component*)*itL))
+		{
+			name = "lights[" + std::to_string(numLights) + "].";
+			_programG.setUniform((name + "type").c_str(), l->type());
+			_programG.setUniform((name + "fallof").c_str(), l->decayValue());
+			_programG.setUniform((name + "decayExponent").c_str(), l->decayExponent());
+			_programG.setUniform((name + "openingAngle").c_str(), l->openingAngle());
+			_programG.setUniformVec3((name + "lightPosition").c_str(), l->sceneObject()->transform()->position());
+			_programG.setUniformVec4((name + "lightColor").c_str(), l->color);
+
+			numLights++;
+		}
+	}
+
+	_programG.setUniform("numLights", numLights);
+
   /*for (const auto& o : _objects)
   {
     if (!o->visible)

@@ -54,6 +54,9 @@ GLRenderer::render()
 	auto _program = getProgram();
 	const auto& bc = _scene->backgroundColor;
 
+	_program->use(); //garante que o programP está em uso 
+
+
 	glClearColor(bc.r, bc.g, bc.b, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	// TODONE

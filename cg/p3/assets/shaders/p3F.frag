@@ -88,7 +88,7 @@ void main()
 				L = normalize(lights[i].lightPosition - vec3(P));
 				temp = distance(lights[i].lightPosition, vec3(P));
 				float angle = acos(dot(Ldirection, L)); 
-				IL = (angle < radians(lights[i].openingAngle) ? lights[i].lightColor/(pow(temp, lights[i].fallof)) * pow(cos(angle), lights[i].decayExponent) : vec4(0);
+				IL = (angle < radians(lights[i].openingAngle)) ? lights[i].lightColor/(pow(temp, lights[i].fallof)) * pow(cos(angle), lights[i].decayExponent) : vec4(0);
 				break;
 		}
 

@@ -55,7 +55,7 @@ vec4 elementWise(vec4 firstVec, vec4 secVec)
 
 void main()
 {
-	vec3 Ldirection = vec3(0,-1,0);
+	vec3 Ldirection = normalize(vec3(0,-1,0));
 
 	vec4 P = transform * position;
 	vec3 L; //está invertido já
@@ -96,7 +96,7 @@ void main()
 				L = normalize(lights[i].lightPosition - vec3(P));
 				temp = distance(lights[i].lightPosition, vec3(P));
 				float angle = acos(dot(Ldirection, L)); 
-				IL = (angle < radians(lights[i].openingAngle) ? lights[i].lightColor/(pow(temp, lights[i].fallof)) * pow(cos(angle), lights[i].decayExponent) : vec4(0);
+				IL = (angle < radians(lights[i].openingAngle)) ? lights[i].lightColor/(pow(temp, lights[i].fallof)) * pow(cos(angle), lights[i].decayExponent) : vec4(0);
 				break;
 		}
 
