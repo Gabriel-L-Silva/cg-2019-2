@@ -1075,7 +1075,7 @@ P3::drawPrimitive(Primitive& primitive)
 	_programG.setUniformVec4("material.ambient", primitive.material.ambient);
 	_programG.setUniformVec4("material.diffuse", primitive.material.diffuse);
 	_programG.setUniformVec4("material.spot", primitive.material.spot);
-	_programG.setUniformVec4("material.shine", primitive.material.shine);
+	_programG.setUniform("material.shine", primitive.material.shine);
 	_programG.setUniform("flatMode", (int)0);
 
   m->bind();

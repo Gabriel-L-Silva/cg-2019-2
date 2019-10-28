@@ -98,7 +98,7 @@ void main()
 		OSIL = elementWise(material.spot, IL);
 
 		firstTemp = ODIL * max(dot(N, L), float(flatMode));
-		secTemp = OSIL * min(max(dot(R, V), 0), 1 - float(flatMode)); 
+		secTemp = OSIL * pow(min(max(dot(R, V), 0), 1 - float(flatMode)), material.shine);
 		//firstTemp = elementWise(ODIL, max(dot(N, L), float(flatMode)); 
 		//firstTemp = elementWise(OSIL, max(dot(N, L), float(flatMode) - 1);
 		fragmentColor += firstTemp + secTemp;
