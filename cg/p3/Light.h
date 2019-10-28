@@ -57,9 +57,10 @@ public:
 
   Color color{Color::white};
 
-  Light():
-    Component{"Light"},
-    _type{Directional}
+	Light() :
+		Component{ "Light" },
+		_type{ Directional },
+		_openningAngle{ 45 }
   {
     // do nothing
   }
@@ -95,21 +96,21 @@ public:
 		_decayExponent = value;
 	}
 
-	float openingAngle()
+	float openningAngle()
 	{
-		return _openingAngle;
+		return _openningAngle;
 	}
 
 	void setOpeningAngle(float angle)
 	{
-		_openingAngle = angle;
+		_openningAngle = angle;
 	}
 
 private:
   Type _type;
 	int _decayValue; // spot  and point
 	int _decayExponent; // spot
-	float _openingAngle; // spot
+	float _openningAngle; // spot
 
 
 }; // Light

@@ -14,9 +14,10 @@ struct lightProps
 	int type;
 	int fallof; // spot  and point
 	int decayExponent; // spot
-	float openingAngle; // spot
+	float openningAngle; // spot
 	vec3 lightPosition;
 	vec4 lightColor;
+	vec3 Ldirection;
 };
 
 // padrão pra todos os pontos
@@ -74,7 +75,7 @@ void main()
 		switch(lights[i].type)
 		{
 			case (0): //directional
-				L = Ldirection;
+				L = lights[i].Ldirection;
 				IL = lights[i].lightColor;
 				break;
 
@@ -87,8 +88,8 @@ void main()
 			case (2): //spot
 				L = normalize(lights[i].lightPosition - vec3(P));
 				temp = distance(lights[i].lightPosition, vec3(P));
-				float angle = acos(dot(Ldirection, L)); 
-				IL = (angle < radians(lights[i].openingAngle)) ? lights[i].lightColor/(pow(temp, lights[i].fallof)) * pow(cos(angle), lights[i].decayExponent) : vec4(0);
+				float angle = acos(dot(lights[i].Ldirection, L)); 
+				IL = (angle < radians(lights[i].openningAngle)) ? lights[i].lightColor/(pow(temp, lights[i].fallof)) * pow(cos(angle), lights[i].decayExponent) : vec4(0);
 				break;
 		}
 

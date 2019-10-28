@@ -487,7 +487,7 @@ P3::inspectLight(Light& light)
   light.setType(lt);
 
 	auto ed = light.decayExponent();
-	auto oa = light.openingAngle();
+	auto oa = light.openningAngle();
 	auto fl = light.decayValue();
 
 	if (light.type() == Light::Spot || light.type() == Light::Point)
@@ -1163,11 +1163,11 @@ P3::drawLight(Light& light)
 	else 
 	{
 		// we need to get the opening angle in order to calculate the radius
-		float openingAngle = light.openingAngle();
+		float openningAngle = light.openningAngle();
 
 		// unsing a arbitrary value for the cone height, whe use pythagoras' theorem to get the radius
 		float height = 2;
-		float radius = std::tan(math::toRadians(openingAngle)) * height;
+		float radius = std::tan(math::toRadians(openningAngle)) * height;
 
 		
 		vec3f center = m.transform(vec3f{ 0, -2, 0 });
@@ -1370,10 +1370,10 @@ P3::render()
 			_programG.setUniform((name + "type").c_str(), l->type());
 			_programG.setUniform((name + "fallof").c_str(), l->decayValue());
 			_programG.setUniform((name + "decayExponent").c_str(), l->decayExponent());
-			_programG.setUniform((name + "openingAngle").c_str(), l->openingAngle());
+			_programG.setUniform((name + "openningAngle").c_str(), l->openningAngle());
 			_programG.setUniformVec3((name + "lightPosition").c_str(), l->sceneObject()->transform()->position());
 			_programG.setUniformVec4((name + "lightColor").c_str(), l->color);
-
+			_programG.setUniformVec3((name + "Ldirection").c_str(), l->sceneObject()->transform()->rotation() * vec3f(0,1,0));
 			numLights++;
 		}
 	}
