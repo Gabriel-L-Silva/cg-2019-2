@@ -1352,6 +1352,8 @@ P3::previewWindow(Camera* c)
 		int width = (int)(vMax.x - vMin.x);
 		int height = (int)(vMax.y - vMin.y);
 
+		_programP.use();
+		loadLights(&_programP, c);
 		_renderer->setCamera(c);
 		_renderer->setImageSize(w, h);
 		preview(x, y, width, height);
