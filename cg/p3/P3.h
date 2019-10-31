@@ -30,6 +30,7 @@ public:
   void gui() override;
 
   /// Render the scene.
+	void loadLights(GLSL::Program* program, Camera* cam);
   void render() override;
 
 	void dragDrop(SceneNode* sceneObject);
@@ -70,7 +71,6 @@ private:
   Reference<GLRenderer> _renderer;
   // **Begin temporary attributes
   // Those are just to show some geometry
-  // They should be replaced by your scene hierarchy
   std::vector<Reference<SceneObject>> _objects;
   // **End temporary attributes
   SceneNode* _current{};

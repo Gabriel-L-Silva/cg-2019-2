@@ -23,26 +23,6 @@ P3::buildScene()
   _current = _scene = new Scene{"Scene 1"};
   _editor = new SceneEditor{*_scene};
   _editor->setDefaultView((float)width() / (float)height());
-  // **Begin initialization of temporary attributes
-  // It should be replaced by your scene initialization
- /* {
-    auto o = new SceneObject{"Main Camera", *_scene};
-    auto camera = new Camera;
-
-    o->addComponent(camera);
-    o->setParent(_scene->root());
-    _objects.push_back(o);
-    o = new SceneObject{"Directional Light", *_scene};
-    o->addComponent(new Light);
-    o->setParent(_scene->root());
-    _objects.push_back(o);
-    o = new SceneObject{"Box 1", *_scene};
-    o->addComponent(makePrimitive(_defaultMeshes.find("Box")));
-    o->setParent(_scene->root());
-    _objects.push_back(o);
-    Camera::setCurrent(camera);
-  }*/
-  // **End initialization of temporary attributes
 	Reference<SceneObject> sceneObject;
 	std::string name{ "Camera " + std::to_string(_sceneObjectCounter++) };
 	sceneObject = new SceneObject{ name.c_str(), _scene };
@@ -664,55 +644,7 @@ P3::sceneObjectGui()
   ImGui::SameLine();
   ImGui::Checkbox("###visible", &object->visible);
   ImGui::Separator();
-  //if (ImGui::CollapsingHeader(object->transform()->typeName()))
-  //  ImGui::TransformEdit(object->transform());
 
-  // **Begin inspection of temporary components
-  // It should be replaced by your component inspection
-  //auto component = object->component();
-
-  //if (auto p = dynamic_cast<Primitive*>(component))
-  //{
-  //  auto notDelete{true};
-  //  auto open = ImGui::CollapsingHeader(p->typeName(), &notDelete);
-
-  //  if (!notDelete)
-  //  {
-  //    // TODO: delete primitive
-  //  }
-  //  else if (open)
-  //    inspectPrimitive(*p);
-  //}
-  //else if (auto l = dynamic_cast<Light*>(component))
-  //{
-  //  auto notDelete{true};
-  //  auto open = ImGui::CollapsingHeader(l->typeName(), &notDelete);
-
-  //  if (!notDelete)
-  //  {
-  //    // TODO: delete light
-  //  }
-  //  else if (open)
-  //    inspectLight(*l);
-  //}
-  //else if (auto c = dynamic_cast<Camera*>(component))
-  //{
-  //  auto notDelete{true};
-  //  auto open = ImGui::CollapsingHeader(c->typeName(), &notDelete);
-
-  //  if (!notDelete)
-  //  {
-  //    // TODO: delete camera
-  //  }
-  //  else if (open)
-  //  {
-  //    auto isCurrent = c == Camera::current();
-
-  //    ImGui::Checkbox("Current", &isCurrent);
-  //    Camera::setCurrent(isCurrent ? c : nullptr);
-  //    inspectCamera(*c);
-  //  }
-  //}
   // **End inspection of temporary components
 	auto it = object->getComponentIter();
 	auto end = object->getComponentEnd();
@@ -998,24 +930,9 @@ P3::preview(int x, int y, int width, int height)
 {
 
 	// 1st step: save current viewport (lower left corner = (0, 0))
-	// Viewport[0] = x, viewport[1] = y, viewport[2] = width, viewport[3] = height
 	GLint oldViewPort[4];
 	glGetIntegerv(GL_VIEWPORT, oldViewPort);
 
-	//// 2nd step: adjust preview viewport
-	//GLint viewPortHeight = (oldViewPort[3] / 5);
-	//GLint viewPortWidth = c->aspectRatio() * viewPortHeight;
-	//GLint viewPortWidth = c->aspectRatio() * viewPortHeight;
-
-	//GLint viewPortX = oldViewPort[2] / 2 - viewPortWidth / 2;
-	//GLint viewPortY = 0;
-	//std::cout << viewPortX << " " << viewPortY << " " << viewPortWidth << " " << viewPortHeight << std::endl;
-	////draw Black BG for making lines
-	//glViewport(viewPortX - 1, viewPortY, viewPortWidth + 2, viewPortHeight + 1);
-	//glScissor(viewPortX - 1, viewPortY, viewPortWidth + 2, viewPortHeight + 1);
-	//glEnable(GL_SCISSOR_TEST);
-	//glClearColor(0, 0, 0, 1);
-	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	// 2nd step: adjust preview viewport
 	GLint viewPortX = x;
 	GLint viewPortY = y;
@@ -1031,6 +948,7 @@ P3::preview(int x, int y, int width, int height)
 	//3rd step: enable and define scissor
 	glScissor(viewPortX, viewPortY, viewPortWidth, viewPortHeight);
 	// 4th step: draw primitives
+	
 	_renderer->render();
 
 	_programG.use();
@@ -1273,14 +1191,6 @@ P3::drawCamera(Camera& camera)
 		p8 = m.transform(p8);
 
 	}
-	/*p1 = m.transform(p1);
-	p2 = m.transform(p2);
-	p3 = m.transform(p3);
-	p4 = m.transform(p4);
-	p5 = m.transform(p5);
-	p6 = m.transform(p6);
-	p7 = m.transform(p7);
-	p8 = m.transform(p8);*/
 
 	_editor->setLineColor(Color::green);
 
@@ -1305,6 +1215,8 @@ P3::renderScene()
 {
   if (auto camera = Camera::current())
   {
+		_programP.use();
+		loadLights(&_programP, camera);
     _renderer->setCamera(camera);
     _renderer->setImageSize(width(), height());
     _renderer->render();
@@ -1314,6 +1226,44 @@ P3::renderScene()
 
 constexpr auto CAMERA_RES = 0.01f;
 constexpr auto ZOOM_SCALE = 1.01f;
+
+void
+P3::loadLights(GLSL::Program* program, Camera* ec)
+{
+	
+	const auto& p = ec->transform()->position();
+	auto vp = vpMatrix(ec);
+
+	program->setUniformMat4("vpMatrix", vp);
+	program->setUniformVec4("ambientLight", _scene->ambientLight);
+
+
+	// percorrer a lista de lights e passar os parametros de luz
+	auto itL = _scene->getPrimitiveIter();
+	auto endL = _scene->getPrimitiveEnd();
+	int numLights = 0;
+	std::string name;
+
+	program->setUniformVec3("camPos", p);
+
+	for (; itL != endL || numLights > 10; itL++)
+	{
+		if (auto l = dynamic_cast<Light*>((Component*)* itL))
+		{
+			name = "lights[" + std::to_string(numLights) + "].";
+			program->setUniform((name + "type").c_str(), l->type());
+			program->setUniform((name + "fallof").c_str(), l->decayValue());
+			program->setUniform((name + "decayExponent").c_str(), l->decayExponent());
+			program->setUniform((name + "openningAngle").c_str(), l->openningAngle());
+			program->setUniformVec3((name + "lightPosition").c_str(), l->sceneObject()->transform()->position());
+			program->setUniformVec4((name + "lightColor").c_str(), l->color);
+			program->setUniformVec3((name + "Ldirection").c_str(), l->sceneObject()->transform()->rotation() * vec3f(0, 1, 0));
+			numLights++;
+		}
+	}
+
+	program->setUniform("numLights", numLights);
+}
 
 void
 P3::render()
@@ -1346,58 +1296,7 @@ P3::render()
 
   // **Begin rendering of temporary scene objects
   // It should be replaced by your rendering code (and moved to scene editor?)
-  auto ec = _editor->camera();
-  const auto& p = ec->transform()->position();
-  auto vp = vpMatrix(ec);
-
-	_programG.setUniformMat4("vpMatrix", vp);
-	_programG.setUniformVec4("ambientLight", _scene->ambientLight);
-
-
-	// percorrer a lista de lights e passar os parametros de luz
-	auto itL = _scene->getPrimitiveIter();
-	auto endL = _scene->getPrimitiveEnd();
-	int numLights = 0;
-	std::string name;
-
-	_programG.setUniformVec3("camPos",p);
-
-	for (; itL != endL || numLights > 10; itL++)
-	{
-		if (auto l = dynamic_cast<Light*>((Component*)*itL))
-		{
-			name = "lights[" + std::to_string(numLights) + "].";
-			_programG.setUniform((name + "type").c_str(), l->type());
-			_programG.setUniform((name + "fallof").c_str(), l->decayValue());
-			_programG.setUniform((name + "decayExponent").c_str(), l->decayExponent());
-			_programG.setUniform((name + "openningAngle").c_str(), l->openningAngle());
-			_programG.setUniformVec3((name + "lightPosition").c_str(), l->sceneObject()->transform()->position());
-			_programG.setUniformVec4((name + "lightColor").c_str(), l->color);
-			_programG.setUniformVec3((name + "Ldirection").c_str(), l->sceneObject()->transform()->rotation() * vec3f(0,1,0));
-			numLights++;
-		}
-	}
-
-	_programG.setUniform("numLights", numLights);
-
-  /*for (const auto& o : _objects)
-  {
-    if (!o->visible)
-      continue;
-
-    auto component = o->component();
-
-    if (auto p = dynamic_cast<Primitive*>(component))
-      drawPrimitive(*p);
-    else if (auto c = dynamic_cast<Camera*>(component))
-      drawCamera(*c);
-    if (o == _current)
-    {
-      auto t = o->transform();
-      _editor->drawAxes(t->position(), mat3f{t->rotation()});
-    }
-  }*/
-
+	loadLights(&_programG, _editor->camera());
 
 	auto it = _scene->getPrimitiveIter();
 	auto end = _scene->getPrimitiveEnd();
@@ -1456,11 +1355,6 @@ P3::previewWindow(Camera* c)
 		_renderer->setCamera(c);
 		_renderer->setImageSize(w, h);
 		preview(x, y, width, height);
-		//Cria retangulos em volta do preview
-		/*ImGui::GetWindowDrawList()->AddRectFilled(ImVec2{ x, y }, ImVec2{ x + vMin.x + vMax.x, y + vMin.y }, IM_COL32_BLACK);
-		ImGui::GetWindowDrawList()->AddRectFilled(ImVec2{ x + vMax.x, y }, ImVec2{ x + vMin.x + vMax.x, y + vMin.y + vMax.y }, IM_COL32_BLACK);
-		ImGui::GetWindowDrawList()->AddRectFilled(ImVec2{ x, y }, ImVec2{ x + vMin.x, y + vMin.y + vMax.y }, IM_COL32_BLACK);
-		ImGui::GetWindowDrawList()->AddRectFilled(ImVec2{ x, y + vMax.y }, ImVec2{ x + vMin.x + vMax.x, y + vMin.y + vMax.y }, IM_COL32_BLACK);*/
 	}
 	ImGui::End();
 }

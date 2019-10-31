@@ -56,16 +56,16 @@ GLRenderer::render()
 
 	_program->use(); //garante que o programP está em uso 
 
-
 	glClearColor(bc.r, bc.g, bc.b, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	// TODONE
 	auto c = camera();
-	const auto& p = c->transform()->position();
-	auto vp = vpMatrix(c);
-	_program->setUniformMat4("vpMatrix", vp);
-	_program->setUniformVec4("ambientLight", scene()->ambientLight);
-	_program->setUniformVec3("lightPosition", p);
+	//const auto& p = c->transform()->position();
+	//auto vp = vpMatrix(c);
+	//_program->setUniformMat4("vpMatrix", vp);
+	//_program->setUniformVec4("ambientLight", scene()->ambientLight);
+	//_program->setUniformVec3("lightPosition", p);
+	
 	const auto& s = _scene;
 	auto it = s->getPrimitiveIter();
 	auto end = s->getPrimitiveEnd();
@@ -86,7 +86,10 @@ GLRenderer::render()
 
 			_program->setUniformMat4("transform", t->localToWorldMatrix());
 			_program->setUniformMat3("normalMatrix", normalMatrix);
-			_program->setUniformVec4("color", primitive->material.ambient);//TODO: arrumar a cor
+			_program->setUniformVec4("material.ambient", primitive->material.ambient);
+			_program->setUniformVec4("material.diffuse", primitive->material.diffuse);
+			_program->setUniformVec4("material.spot", primitive->material.spot);
+			_program->setUniform("material.shine", primitive->material.shine);
 			_program->setUniform("flatMode", (int)0);
 			m->bind();
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
