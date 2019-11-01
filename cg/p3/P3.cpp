@@ -927,6 +927,13 @@ P3::mainMenu()
 			if (ImGui::MenuItem("Original Scene"))
 			{
 				_scene = _demos.at(0);
+				_renderer = new GLRenderer{ *_scene };
+				_renderer->setProgram(&_programP);
+				glEnable(GL_DEPTH_TEST);
+				glEnable(GL_POLYGON_OFFSET_FILL);
+				glPolygonOffset(1.0f, 1.0f);
+				glEnable(GL_LINE_SMOOTH);
+				_programG.use();
 				_current = _scene;
 
 			}
