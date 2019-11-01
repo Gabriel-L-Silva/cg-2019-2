@@ -70,6 +70,10 @@ public:
     return _type;
   }
 
+	void setColor(Color c)
+	{
+		color = c;
+	}
   void setType(Type type)
   {
     _type = type;

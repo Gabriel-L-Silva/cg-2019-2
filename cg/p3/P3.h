@@ -123,6 +123,7 @@ private:
 
   static void buildDefaultMeshes();
 
+	std::vector<Reference<Scene>> _demos;
 	int _sceneObjectCounter = 0;
 	int _cameraCounter = 0;
 	int _pointLightCounter = 0;

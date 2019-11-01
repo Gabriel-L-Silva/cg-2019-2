@@ -21,6 +21,7 @@ inline void
 P3::buildScene()
 {
   _current = _scene = new Scene{"Scene 1"};
+	_demos.push_back(_scene);
   _editor = new SceneEditor{*_scene};
   _editor->setDefaultView((float)width() / (float)height());
 	Reference<SceneObject> sceneObject;
@@ -921,6 +922,74 @@ P3::mainMenu()
       }
       ImGui::EndMenu();
     }
+		if (ImGui::BeginMenu("Scene Selector"))
+		{
+			if (ImGui::MenuItem("Original Scene"))
+			{
+				_scene = _demos.at(0);
+				_current = _scene;
+
+			}
+			if (ImGui::MenuItem("Scene 2"))
+			{
+				if (_demos.size() == 2)
+					_demos.pop_back();
+				auto s = new Scene{ "Scene 2" };
+				_renderer = new GLRenderer{ *s };
+				_renderer->setProgram(&_programP);
+				glEnable(GL_DEPTH_TEST);
+				glEnable(GL_POLYGON_OFFSET_FILL);
+				glPolygonOffset(1.0f, 1.0f);
+				glEnable(GL_LINE_SMOOTH);
+				_programG.use();
+				_demos.push_back(s);
+				_current = s;
+				_scene = s;
+
+				Reference<SceneObject> sceneObject;
+				std::string name{ "Camera " + std::to_string(_sceneObjectCounter++) };
+				sceneObject = new SceneObject{ name.c_str(), _scene };
+				sceneObject->setParent(nullptr, true);
+				auto c = new Camera;
+				sceneObject->add(c);
+				Camera::setCurrent(c);
+				c->transform()->translate(vec3f{ -5,2,4 });
+				c->transform()->rotate(vec3f{ 0,-90,0 });
+				auto o = new SceneObject{ "Spot Light", _scene };
+				auto l = new Light;
+				o->add(l);
+				o->setParent(nullptr, true);
+				l->setType(Light::Type::Spot);
+				l->sceneObject()->transform()->translate(vec3f{ 0,15,0 });
+				l->setColor(Color::cyan);
+				o = new SceneObject{ "Spot Light 2", _scene };
+				l = new Light;
+				o->add(l);
+				o->setParent(nullptr, true);
+				l->setType(Light::Type::Spot);
+				l->sceneObject()->transform()->translate(vec3f{ 0,-15,0 });
+				l->sceneObject()->transform()->rotate(vec3f{ 0,0,180 });
+				l->setColor(Color::magenta);
+				o = new SceneObject{ "Spot Light 3", _scene };
+				l = new Light;
+				o->add(l);
+				o->setParent(nullptr, true);
+				l->setType(Light::Type::Spot);
+				l->sceneObject()->transform()->translate(vec3f{ -5,2,4 });
+				l->sceneObject()->transform()->rotate(vec3f{ 0,0,90 });
+				l->setColor(Color::yellow);
+				for (int i = 0; i < 5; i++) {
+					std::string name{ "Sphere " + std::to_string(_sceneObjectCounter++) };
+					sceneObject = new SceneObject{ name.c_str(), _scene };
+					sceneObject->setParent(nullptr, true);
+					sceneObject->add(makePrimitive(_defaultMeshes.find("Sphere")));
+					sceneObject->transform()->translate(vec3f{ (float)(rand()%5),(float)(rand() % 5),(float)(rand() % 5) });
+				}
+				
+			}
+			ImGui::EndMenu();
+		}
+
     ImGui::EndMainMenuBar();
   }
 }
