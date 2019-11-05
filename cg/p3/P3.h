@@ -104,6 +104,7 @@ private:
   void editorViewGui();
 	void previewWindow(Camera* c);
 	void initScene2();
+	void initScene3();
 	void preview(int, int, int, int);
   void inspectPrimitive(Primitive&);
   void inspectShape(Primitive&);

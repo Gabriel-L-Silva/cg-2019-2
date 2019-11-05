@@ -940,9 +940,13 @@ P3::mainMenu()
     }
 		if (ImGui::BeginMenu("Scene Selector"))
 		{
+
 			if (ImGui::MenuItem("Original Scene"))
 			{
+				_sceneObjectCounter = 0;
 				_scene = _demos.at(0);
+				_current = _scene;
+				buildScene();
 				_renderer = new GLRenderer{ *_scene };
 				_renderer->setProgram(&_programP);
 				glEnable(GL_DEPTH_TEST);
@@ -950,15 +954,23 @@ P3::mainMenu()
 				glPolygonOffset(1.0f, 1.0f);
 				glEnable(GL_LINE_SMOOTH);
 				_programG.use();
-				_current = _scene;
 
 			}
 			if (ImGui::MenuItem("Scene 2"))
 			{
+				_sceneObjectCounter = 0;
 				if (_demos.size() == 2)
 					_demos.pop_back();
 				initScene2();
 				
+			}
+			if (ImGui::MenuItem("Scene 3"))
+			{
+				_sceneObjectCounter = 0;
+				if (_demos.size() == 2)
+					_demos.pop_back();
+				initScene3();
+
 			}
 			ImGui::EndMenu();
 		}
@@ -1021,6 +1033,128 @@ P3::initScene2()
 		sceneObject->add(makePrimitive(_defaultMeshes.find("Sphere")));
 		sceneObject->transform()->translate(vec3f{ (float)(rand() % 5),(float)(rand() % 5),(float)(rand() % 5) });
 	}
+}
+
+inline void
+P3::initScene3()
+{
+	auto s = new Scene{ "Scene 3" };
+	_renderer = new GLRenderer{ *s };
+	_renderer->setProgram(&_programP);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_POLYGON_OFFSET_FILL);
+	glPolygonOffset(1.0f, 1.0f);
+	glEnable(GL_LINE_SMOOTH);
+	_programG.use();
+	_demos.push_back(s);
+	_current = s;
+	_scene = s;
+
+	Reference<SceneObject> sceneObject;
+	std::string name{ "Camera " + std::to_string(_sceneObjectCounter++) };
+	sceneObject = new SceneObject{ name.c_str(), _scene };
+	sceneObject->setParent(nullptr, true);
+	auto c = new Camera;
+	sceneObject->add(c);
+	Camera::setCurrent(c);
+	c->transform()->translate(vec3f{-0.4f,0.9f,5.5f});
+	c->transform()->rotate(vec3f{ 17,0,0 });
+
+	auto o = new SceneObject{ "Directional Light", _scene };
+	auto l = new Light;
+	o->add(l);
+	o->setParent(nullptr, true);
+	l->setType(Light::Type::Directional);
+	l->setColor(Color::white);
+
+	o = new SceneObject{ "Directional Light 2", _scene };
+	l = new Light;
+	o->add(l);
+	o->setParent(nullptr, true);
+	l->setType(Light::Type::Directional);
+	l->sceneObject()->transform()->rotate(vec3f{ 0,0,180 });
+	l->setColor(Color::white);
+
+	auto deer = new SceneObject{ "Deer", _scene };
+	deer->setParent(nullptr, true);
+	deer->transform()->setLocalScale(0.002f);
+	deer->transform()->translate(vec3f{ -0.9f,0,2.2f });
+	deer->transform()->rotate(vec3f{ 0,-47,0 });
+
+	auto pagli = new SceneObject{ "Pagli", _scene };
+	pagli->setParent(deer, true);
+	pagli->transform()->reset();
+	pagli->transform()->setLocalScale(100);
+	pagli->transform()->setLocalPosition(vec3f{ 0,-60,110 });
+	pagli->transform()->rotate(vec3f{ 0,0,180 });
+	auto& meshes = Assets::meshes();
+	if (!meshes.empty())
+	{
+		for (auto mit = meshes.begin(); mit != meshes.end(); ++mit)
+		{
+			if (std::strcmp(mit->first.c_str(), "deer.obj") == 0)
+			{
+				Assets::loadMesh(mit);
+				auto p = makePrimitive(mit);
+				p->material.diffuse.setRGB(155, 101, 41);
+				p->material.spot.setRGB(214, 161, 12);
+				deer->add(p);
+			}
+			if (std::strcmp(mit->first.c_str(), "paglijon.obj") == 0)
+			{
+				Assets::loadMesh(mit);
+				auto pag = makePrimitive(mit);
+				pagli->add(pag);
+			}
+		}
+	}
+
+	auto eye = new SceneObject{ "Eye", _scene };
+	eye->setParent(deer, true);
+	eye->transform()->setLocalScale(50);
+	eye->transform()->setLocalPosition(vec3f{ 420,1010,7 });
+	eye->transform()->rotate(vec3f{ 0,44,0 });
+	auto p = makePrimitive(_defaultMeshes.find("Sphere"));
+	p->material.diffuse.setRGB(0, 0, 0);
+	eye->add(p);
+
+	auto iris = new SceneObject{ "Iris", _scene };
+	iris->setParent(eye, true);
+	iris->transform()->setLocalScale(0.1f);
+	iris->transform()->setLocalPosition(vec3f{ -0.69f,0.08f,0.6f });
+	p = makePrimitive(_defaultMeshes.find("Sphere"));
+	p->material.diffuse.setRGB(22, 68, 114);
+	p->material.spot.setRGB(0, 0, 255);
+	iris->add(p);
+
+	o = new SceneObject{ "Spot Light", _scene };
+	l = new Light;
+	o->add(l);
+	o->setParent(iris, true);
+	l->setType(Light::Type::Spot);
+	l->sceneObject()->transform()->setLocalPosition(vec3f{ 3.2f,-0.2f,32 });
+	l->sceneObject()->transform()->rotate(vec3f{ 91,6.1f,0 });
+	l->setOpeningAngle(2);
+	l->setColor(Color::white);
+
+	o = new SceneObject{ "Point Light", _scene };
+	l = new Light;
+	o->add(l);
+	o->setParent(nullptr, true);
+	l->setType(Light::Type::Point);
+	l->sceneObject()->transform()->translate(vec3f{ -2,1.8f,3.7f });
+	l->setDecayValue(2);
+	l->setColor(Color::red);
+
+	o = new SceneObject{ "Ground", _scene };
+	o->setParent(nullptr, true);
+	o->transform()->setLocalScale(vec3f{ 5.8f,0.001f,13 });
+	p = makePrimitive(_defaultMeshes.find("Box"));
+	p->material.diffuse.setRGB(49, 140, 10);
+	p->material.spot.setRGB(142, 255, 0);
+	p->material.shine = 3;
+	o->add(p);
+
 }
 inline void
 P3::preview(int x, int y, int width, int height)
