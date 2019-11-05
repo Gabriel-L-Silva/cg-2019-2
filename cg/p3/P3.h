@@ -90,7 +90,8 @@ private:
   void buildScene();
   void renderScene();
 
-  void mainMenu();
+	void initOriginalScene();
+	void mainMenu();
   void fileMenu();
   void showOptions();
 

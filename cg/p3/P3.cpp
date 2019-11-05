@@ -944,33 +944,19 @@ P3::mainMenu()
 			if (ImGui::MenuItem("Original Scene"))
 			{
 				_sceneObjectCounter = 0;
-				_scene = _demos.at(0);
-				_current = _scene;
-				buildScene();
-				_renderer = new GLRenderer{ *_scene };
-				_renderer->setProgram(&_programP);
-				glEnable(GL_DEPTH_TEST);
-				glEnable(GL_POLYGON_OFFSET_FILL);
-				glPolygonOffset(1.0f, 1.0f);
-				glEnable(GL_LINE_SMOOTH);
-				_programG.use();
+				initOriginalScene();
 
 			}
 			if (ImGui::MenuItem("Scene 2"))
 			{
 				_sceneObjectCounter = 0;
-				if (_demos.size() == 2)
-					_demos.pop_back();
 				initScene2();
 				
 			}
 			if (ImGui::MenuItem("Scene 3"))
 			{
 				_sceneObjectCounter = 0;
-				if (_demos.size() == 2)
-					_demos.pop_back();
 				initScene3();
-
 			}
 			ImGui::EndMenu();
 		}
@@ -979,6 +965,18 @@ P3::mainMenu()
   }
 }
 
+inline void
+P3::initOriginalScene()
+{
+	buildScene();
+	_renderer = new GLRenderer{ *_scene };
+	_renderer->setProgram(&_programP);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_POLYGON_OFFSET_FILL);
+	glPolygonOffset(1.0f, 1.0f);
+	glEnable(GL_LINE_SMOOTH);
+	_programG.use();
+}
 inline void
 P3::initScene2()
 {
@@ -990,7 +988,6 @@ P3::initScene2()
 	glPolygonOffset(1.0f, 1.0f);
 	glEnable(GL_LINE_SMOOTH);
 	_programG.use();
-	_demos.push_back(s);
 	_current = s;
 	_scene = s;
 
@@ -1046,7 +1043,6 @@ P3::initScene3()
 	glPolygonOffset(1.0f, 1.0f);
 	glEnable(GL_LINE_SMOOTH);
 	_programG.use();
-	_demos.push_back(s);
 	_current = s;
 	_scene = s;
 
