@@ -1000,14 +1000,18 @@ P3::initScene2()
 	Camera::setCurrent(c);
 	c->transform()->translate(vec3f{ -5,2,4 });
 	c->transform()->rotate(vec3f{ 0,-90,0 });
-	auto o = new SceneObject{ "Spot Light", _scene };
+
+	name = { "Spot Light " + std::to_string(_spotLightCounter++) };
+	auto o = new SceneObject{ name.c_str(), _scene };
 	auto l = new Light;
 	o->add(l);
 	o->setParent(nullptr, true);
 	l->setType(Light::Type::Spot);
 	l->sceneObject()->transform()->translate(vec3f{ 0,15,0 });
 	l->setColor(Color::cyan);
-	o = new SceneObject{ "Spot Light 2", _scene };
+
+	name = { "Spot Light " + std::to_string(_spotLightCounter++) };
+	o = new SceneObject{ name.c_str(), _scene };
 	l = new Light;
 	o->add(l);
 	o->setParent(nullptr, true);
@@ -1015,7 +1019,9 @@ P3::initScene2()
 	l->sceneObject()->transform()->translate(vec3f{ 0,-15,0 });
 	l->sceneObject()->transform()->rotate(vec3f{ 0,0,180 });
 	l->setColor(Color::magenta);
-	o = new SceneObject{ "Spot Light 3", _scene };
+
+	name = { "Spot Light " + std::to_string(_spotLightCounter++) };
+	o = new SceneObject{ name.c_str(), _scene };
 	l = new Light;
 	o->add(l);
 	o->setParent(nullptr, true);
@@ -1056,14 +1062,16 @@ P3::initScene3()
 	c->transform()->translate(vec3f{-0.4f,0.9f,5.5f});
 	c->transform()->rotate(vec3f{ 17,0,0 });
 
-	auto o = new SceneObject{ "Directional Light", _scene };
+	name = { "Directional Light " + std::to_string(_dirLightCounter++) };
+	auto o = new SceneObject{ name.c_str(), _scene };
 	auto l = new Light;
 	o->add(l);
 	o->setParent(nullptr, true);
 	l->setType(Light::Type::Directional);
 	l->setColor(Color::white);
 
-	o = new SceneObject{ "Directional Light 2", _scene };
+	name = { "Directional Light " + std::to_string(_dirLightCounter++) };
+	o = new SceneObject{ name.c_str(), _scene };
 	l = new Light;
 	o->add(l);
 	o->setParent(nullptr, true);
@@ -1123,7 +1131,8 @@ P3::initScene3()
 	p->material.spot.setRGB(0, 0, 255);
 	iris->add(p);
 
-	o = new SceneObject{ "Spot Light", _scene };
+	name = { "Spot Light " + std::to_string(_spotLightCounter++) };
+	o = new SceneObject{ name.c_str(), _scene };
 	l = new Light;
 	o->add(l);
 	o->setParent(iris, true);
@@ -1133,7 +1142,8 @@ P3::initScene3()
 	l->setOpeningAngle(2);
 	l->setColor(Color::white);
 
-	o = new SceneObject{ "Point Light", _scene };
+	name = { "Point Light " + std::to_string(_pointLightCounter++) };
+	o = new SceneObject{ name.c_str(), _scene };
 	l = new Light;
 	o->add(l);
 	o->setParent(nullptr, true);
@@ -1473,7 +1483,7 @@ P3::loadLights(GLSL::Program* program, Camera* ec)
 
 	program->setUniformVec3("camPos", p);
 
-	for (; itL != endL || numLights > 10; itL++)
+	for (; itL != endL && numLights < 10; itL++)
 	{
 		if (auto l = dynamic_cast<Light*>((Component*)* itL))
 		{
