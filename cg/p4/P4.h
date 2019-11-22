@@ -2,6 +2,7 @@
 #define __P4_h
 
 #include "Assets.h"
+#include "BVH.h"
 #include "GLRenderer.h"
 #include "Light.h"
 #include "Primitive.h"
@@ -67,6 +68,9 @@ private:
     Pan = 2
   };
 
+	using BVHRef = Reference<BVH>;
+	using BVHMap = std::map<TriangleMesh*, BVHRef>;
+
 	GLSL::Program _programP, _programG;
   Reference<Scene> _scene;
   Reference<SceneEditor> _editor;
@@ -89,6 +93,7 @@ private:
   ViewMode _viewMode{ViewMode::Editor};
   Reference<RayTracer> _rayTracer;
   Reference<GLImage> _image;
+	BVHMap bvhMap;
 
   static MeshMap _defaultMeshes;
 

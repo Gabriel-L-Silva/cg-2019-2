@@ -32,6 +32,7 @@
 
 #include "Camera.h"
 #include "RayTracer.h"
+#include "Light.h"
 #include <time.h>
 
 using namespace std;
@@ -211,17 +212,73 @@ RayTracer::intersect(const Ray& ray, Intersection& hit)
 	{
 		if (auto p = dynamic_cast<Primitive*>((Component*)(*it)))
 		{
-			if (p->intersect(ray, hit.distance))
+			if (p->intersect(ray, hit))
 			{
 				_numberOfHits++;
 				if (hit.object != nullptr)
-					hit.object = hit.distance < lastDistance ? p : hit.object;
+				{
+					if (hit.distance < lastDistance)
+					{
+						hit.object = p;
+						lastDistance = hit.distance;
+					}
+				}
 				else
+				{
 					hit.object = p;
+					lastDistance = hit.distance;
+				}
 			}
 		}
 	}
   return hit.object != nullptr;
+}
+
+inline vec4f
+RayTracer::elementWise(vec4f firstVec, vec4f secVec)
+{
+	vec4f result;
+	for (int i = 0; i < 4; i++)
+	{
+		result[i] = firstVec[i] * secVec[i];
+	}
+
+	return result;
+}
+
+inline vec4f
+RayTracer::normalize(vec4f firstVec)
+{
+	return firstVec.normalize();
+}
+
+inline Color
+RayTracer::directLight()
+{
+	return Color::black;
+}
+
+inline float
+max(Color c)
+{
+	float ret;
+	auto r = c.r;
+	auto g = c.g;
+	auto b = c.b;
+
+	ret = r > b ? r : b;
+	ret = ret > g ? ret : g;
+	return ret;
+}
+
+inline Ray
+RayTracer::reflect(const Ray& ray, Intersection& hit)
+{
+	auto p = hit.object;
+	auto index = hit.triangleIndex;
+
+	auto data = p->mesh()->data();
+	return ray;
 }
 
 Color
@@ -236,7 +293,19 @@ RayTracer::shade(const Ray& ray, Intersection& hit, int level, float weight)
 //[]---------------------------------------------------[]
 {
   // TODO: insert your code here
-  return Color::black;
+	auto c = directLight();
+	auto Or = hit.object->material.specular;
+
+	if (Or != Color::black)
+	{
+		auto w = weight * max(Or);
+		if (w > _minWeight)
+		{
+			
+			c += trace(reflect(ray, hit), level + 1, w);
+		}
+	}
+	return c;
 }
 
 Color

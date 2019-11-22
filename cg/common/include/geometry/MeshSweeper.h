@@ -28,7 +28,7 @@
 // Class definition for mesh sweeper.
 //
 // Author: Paulo Pagliosa
-// Last revision: 05/09/2019
+// Last revision: 18/11/2019
 
 #ifndef __MeshSweeper_h
 #define __MeshSweeper_h

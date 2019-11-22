@@ -32,18 +32,19 @@
 
 #include "Primitive.h"
 #include "Transform.h"
+#include "Intersection.h"
 
 namespace cg
 { // begin namespace cg
 
 bool
-Primitive::intersect(const Ray& ray, float& distance) const
+Primitive::intersect(const Ray& ray, Intersection& hit) const
 {
   if (_mesh == nullptr)
     return false;
 
-  auto t = const_cast<Primitive*>(this)->transform();
-  Ray localRay{ray, t->worldToLocalMatrix()};
+  auto tr = const_cast<Primitive*>(this)->transform();
+  Ray localRay{ray, tr->worldToLocalMatrix()};
   auto d = math::inverse(localRay.direction.length());
   float tMin;
   float tMax;
@@ -55,11 +56,11 @@ Primitive::intersect(const Ray& ray, float& distance) const
 		auto data = _mesh->data();
 		auto nt = data.numberOfTriangles;
 		auto nv = data.numberOfVertices;
+		auto D = localRay.direction;
+		auto o = localRay.origin;
 
 		for (int i = 0; i < nt; i++)
 		{
-			auto d = ray.direction;
-			auto o = ray.origin;
 			auto ti = data.triangles[i];
 			auto p0 = data.vertices[ti.v[0]];
 			auto p1 = data.vertices[ti.v[1]];
@@ -67,44 +68,38 @@ Primitive::intersect(const Ray& ray, float& distance) const
 
 			auto e1 = p1 - p0;
 			auto e2 = p2 - p0;
-			auto s1 = d.cross(e2);
+			auto s1 = D.cross(e2);
 
 			auto s1e1 = s1.dot(e1);
-			auto invd = 1 / s1e1;
 			if (math::isZero(abs(s1e1)))
-				return false;
+				continue;
+			auto invd = 1 / s1e1;
 
 			auto s = o - p0;
 			auto s2 = s.cross(e1);
 			auto t = s2.dot(e2) * invd;
 			if (t < 0)
-				return false;
+				continue;
 
 			auto b1 = s1.dot(s) * invd;
 			if (b1 < 0)
-				return false;
+				continue;
 
-			auto b2 = s2.dot(d) * invd;
+			auto b2 = s2.dot(D) * invd;
 			if (b2 < 0)
-				return false;
+				continue;
 
-			if (b1 + b2 > 1)
-				return false;
+			auto b1b2 = b1 + b2;
+			if (b1b2 > 1)
+				continue;
 
+			hit.triangleIndex = i;
+			hit.distance = t;
+			hit.p = vec3f{ 1 - b1b2, b1, b2 };
 			return true;
 		}
 		
-		/*
-    if (tMin >= ray.tMin && tMin <= ray.tMax)
-    {
-      distance = tMin * d;
-      return true;
-    }
-    if (tMax >= ray.tMin && tMax <= ray.tMax)
-    {
-      distance = tMax * d;
-      return true;
-    }*/
+		
   }
   return false;
 }

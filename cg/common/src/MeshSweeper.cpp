@@ -28,7 +28,7 @@
 // Source file for mesh sweeper.
 //
 // Author: Paulo Pagliosa
-// Last revision: 02/06/2019
+// Last revision: 18/11/2019
 
 #include "geometry/MeshSweeper.h"
 #include <vector>
@@ -173,17 +173,21 @@ TriangleMesh*
 MeshSweeper::makeSphere(int ns)
 {
   // Number of meridians: ns.
-  // Number of parallels: ns + 2.
+  // Number of parallels: ns + 1 (including the poles).
+  // Number of layers: number of parallels - 1.
   // Number of vertices per parallel: ns + 1. The first and the last
   // vertices have the same position and normal vector, but distinct
   // texture coordinates (note that there are ns + 1 north and south
   // poles, each one with its own texture coordinates).
-  if (ns < 6)
-    ns = 6;
+  if (ns < 4)
+    ns = 4;
+  else if (ns % 2 == 1)
+    ++ns;
 
-  const auto np = ns + 1;
-  const auto nv = np * (np + 1); // number of vertices
-  const auto nt = 2 * np * ns; // number of triangles
+  const auto np = ns + 1; // number of vertices per parallel
+  const auto nl = ns; // number of layers
+  const auto nv = np * (nl + 1); // number of vertices
+  const auto nt = ns * (nl - 1) * 2; // number of triangles
   TriangleMesh::Data data;
 
   data.numberOfVertices = nv;
@@ -195,18 +199,18 @@ MeshSweeper::makeSphere(int ns)
 
   {
     constexpr auto pi = math::pi<float>();
-    const auto mStep = 2 * pi / ns;
-    const auto pStep = pi / np;
+    const auto mStep = pi / ns * 2;
+    const auto pStep = pi / nl;
     auto pAngle = pi / 2;
     auto vertex = data.vertices;
     auto normal = data.vertexNormals;
     auto uv = data.uv;
 
-    for (int p = 0; p <= np; ++p, pAngle -= pStep)
+    for (int p = 0; p <= nl; ++p, pAngle -= pStep)
     {
       auto t = cos(pAngle);
       auto y = sin(pAngle);
-      auto v = 1 - (float)p / np;
+      auto v = 1 - (float)p / nl;
       float mAngle{0};
 
       for (int m = 0; m <= ns; ++m, mAngle += mStep)
@@ -219,7 +223,7 @@ MeshSweeper::makeSphere(int ns)
 
   auto triangle = data.triangles;
 
-  for (int p = 0; p <= np; ++p)
+  for (int p = 0; p < nl; ++p)
   {
     auto i = p * np;
     auto j = i + np;
@@ -230,7 +234,7 @@ MeshSweeper::makeSphere(int ns)
 
       if (p != 0)
         triangle++->setVertices(i, j, k);
-      if (p != np)
+      if (p != nl - 1)
         triangle++->setVertices(k, j, j + 1);
     }
   }

@@ -67,6 +67,7 @@ P4::buildScene()
 	sceneObject->setParent(nullptr, true);
 	auto c = new Camera;
 	sceneObject->add(c);
+	c->transform()->translate(vec3f{ 0,0,10 });
 	Camera::setCurrent(c);
 	auto o = new SceneObject{ "Directional Light", _scene };
 	o->add(new Light);
@@ -1262,15 +1263,30 @@ P4::drawPrimitive(Primitive& primitive)
 
 	m->bind();
 	drawMesh(m, GL_FILL);
+	// **Begin BVH test
+	auto bvh = bvhMap[mesh];
+
+	if (bvh == nullptr)
+		bvhMap[mesh] = bvh = new BVH{ *mesh, 16 };
+	// **End BVH test
 	if (primitive.sceneObject() != _current)
 		return;
-  //_program.setUniformVec4("color", _selectedWireframeColor);
-  //_program.setUniform("flatMode", (int)1);
-  //drawMesh(m, GL_LINE);
-  //_editor->setVectorColor(Color::white);
-  //_editor->drawNormals(*mesh, t->localToWorldMatrix(), normalMatrix);
-  _editor->setLineColor(_selectedWireframeColor);
-  _editor->drawBounds(mesh->bounds(), t->localToWorldMatrix());
+
+  /*_editor->setLineColor(_selectedWireframeColor);
+  _editor->drawBounds(mesh->bounds(), t->localToWorldMatrix());*/
+
+	//_program.setUniformVec4("color", _selectedWireframeColor);
+	//drawMesh(m, GL_LINE);
+	//_editor->setVectorColor(Color::white);
+	//_editor->drawNormals(*mesh, t->localToWorldMatrix(), normalMatrix);
+	//_editor->setLineColor(_selectedWireframeColor);
+	//_editor->drawBounds(mesh->bounds(), t->localToWorldMatrix());
+	bvh->iterate([this, t](const BVHNodeInfo& node)
+		{
+			_editor->setLineColor(node.isLeaf ? Color::yellow : Color::magenta);
+			_editor->drawBounds(node.bounds, t->localToWorldMatrix());
+		});
+
 }
 
 inline void
@@ -1734,12 +1750,12 @@ P4::mouseButtonInputEvent(int button, int actions, int mods)
           continue;
 
         auto component = *it;
-        float distance;
+				Intersection hit;
 
         if (auto p = dynamic_cast<Primitive*>((Component*)component))
-          if (p->intersect(ray, distance) && distance < minDistance)
+          if (p->intersect(ray, hit) && hit.distance < minDistance)
           {
-            minDistance = distance;
+            minDistance = hit.distance;
             _current = o;
           }
       }
