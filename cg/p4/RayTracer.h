@@ -101,10 +101,11 @@ private:
   Color shoot(float x, float y);
   bool intersect(const Ray&, Intersection&);
   Color trace(const Ray& ray, uint32_t level, float weight);
-	Color directLight();
 	vec4f	elementWise(vec4f firstVec, vec4f secVec);
-	vec4f	normalize(vec4f firstVec);
-	Ray reflect(const Ray& ray, Intersection& hit);
+	vec4f	elementWise(vec4f firstVec, Color c);
+	vec3f	normalize(vec3f firstVec);
+	Color directLight(const Ray& ray, Intersection& hit);
+	vec3f reflect(vec3f v, vec3f r);
 	Color shade(const Ray&, Intersection&, int, float);
   bool shadow(const Ray&);
   Color background() const;

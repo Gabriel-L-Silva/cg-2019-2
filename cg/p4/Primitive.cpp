@@ -33,7 +33,7 @@
 #include "Primitive.h"
 #include "Transform.h"
 #include "Intersection.h"
-
+#include <iostream>
 namespace cg
 { // begin namespace cg
 
@@ -49,6 +49,7 @@ Primitive::intersect(const Ray& ray, Intersection& hit) const
   float tMin;
   float tMax;
 
+	float minT = math::Limits<float>::inf();
   localRay.direction *= d;
   if (_mesh->bounds().intersect(localRay, tMin, tMax))
   {
@@ -93,15 +94,15 @@ Primitive::intersect(const Ray& ray, Intersection& hit) const
 			if (b1b2 > 1)
 				continue;
 
+			if (t > minT)
+				continue;
+
 			hit.triangleIndex = i;
-			hit.distance = t;
+			hit.distance = minT = t;
 			hit.p = vec3f{ 1 - b1b2, b1, b2 };
-			return true;
 		}
-		
-		
   }
-  return false;
+  return minT != math::Limits<float>::inf();
 }
 
 } // end namespace cg

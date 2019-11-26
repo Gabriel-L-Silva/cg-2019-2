@@ -189,7 +189,7 @@ RayTracer::trace(const Ray& ray, uint32_t level, float weight)
 inline constexpr auto
 rt_eps()
 {
-  return 1e-4f;
+  return 1e-3f;
 }
 
 bool
@@ -204,7 +204,7 @@ RayTracer::intersect(const Ray& ray, Intersection& hit)
   hit.object = nullptr;
   hit.distance = ray.tMax;
   // TODO: insert your code here
-	float lastDistance = math::Limits<float>::inf();
+	float minDistance = math::Limits<float>::inf();
 
 	auto it = _scene->getPrimitiveIter();
 	auto end = _scene->getPrimitiveEnd();
@@ -217,16 +217,16 @@ RayTracer::intersect(const Ray& ray, Intersection& hit)
 				_numberOfHits++;
 				if (hit.object != nullptr)
 				{
-					if (hit.distance < lastDistance)
+					if (hit.distance < minDistance)
 					{
 						hit.object = p;
-						lastDistance = hit.distance;
+						minDistance = hit.distance;
 					}
 				}
 				else
 				{
 					hit.object = p;
-					lastDistance = hit.distance;
+					minDistance = hit.distance;
 				}
 			}
 		}
@@ -234,32 +234,91 @@ RayTracer::intersect(const Ray& ray, Intersection& hit)
   return hit.object != nullptr;
 }
 
-inline vec4f
-RayTracer::elementWise(vec4f firstVec, vec4f secVec)
-{
-	vec4f result;
-	for (int i = 0; i < 4; i++)
-	{
-		result[i] = firstVec[i] * secVec[i];
-	}
-
-	return result;
-}
-
-inline vec4f
-RayTracer::normalize(vec4f firstVec)
-{
-	return firstVec.normalize();
-}
-
 inline Color
-RayTracer::directLight()
+RayTracer::directLight(const Ray& ray, Intersection& hit)
 {
-	return Color::black;
+	//vec3f L{ 0.0f };
+	Color IL = Color::black;
+	auto material = hit.object->material;
+	auto ambientLight = _scene->ambientLight;
+	auto flatMode = 0;
+	auto A = ambientLight * float(1 - flatMode); //IA
+	auto OAIA = material.ambient * A;
+	auto V = (hit.object->sceneObject()->transform()->position() - Camera::current()->transform()->position()).normalize();
+	auto c = OAIA;
+	float temp;
+	float pw;
+	auto prim = hit.object;
+	vec3f L;
+	
+
+	auto data = hit.object->mesh()->data();
+	auto N = data.vertexNormals[data.triangles[hit.triangleIndex].v[0]] * hit.p.x
+		+ data.vertexNormals[data.triangles[hit.triangleIndex].v[1]] * hit.p.y
+		+ data.vertexNormals[data.triangles[hit.triangleIndex].v[2]] * hit.p.z;
+	
+	N = (hit.object->sceneObject()->transform()->worldToLocalMatrix()).transposed().transform(N);
+	N = N.versor();
+
+	auto it = _scene->getPrimitiveIter();
+	auto end = _scene->getPrimitiveEnd();
+	for (; it != end; it++)
+	{
+		if (auto l = dynamic_cast<Light*>((Component*)(*it)))
+		{
+			auto p = ray.origin + hit.distance * ray.direction;
+			auto LPosition = l->sceneObject()->transform()->position();
+			auto LDirection = l->type() == Light::Type::Directional ? l->sceneObject()->transform()->rotation() * vec3f(0, 1, 0) : (LPosition - p);
+			
+			if (N.dot(LDirection.versor()) < 0)
+				N = -N;
+			
+			p += rt_eps() * N;
+			if (!shadow({ p,LDirection.versor() }))
+			{
+
+				switch (l->type())
+				{
+				case (0): //directional
+					IL = l->color;
+					break;
+
+				case (1): //point 
+					temp = L.length();
+					pw = (pow(temp, l->decayValue()));
+					IL = l->color * (1/pw);
+					break;
+
+				case (2): //spot
+					temp = LDirection.length();
+					LDirection = LDirection.versor();
+					float angle = acos(LDirection.dot(L));
+					pw = (pow(temp, l->decayValue()));
+					IL = (angle < math::toRadians(l->openningAngle())) ? l->color * (1/pw) * pow(cos(angle), l->decayExponent()) : Color::black;
+
+					break;
+				}
+			}
+			auto R = (reflect(LDirection, N)).normalize();
+
+			//auto ODIL = elementWise({ material.diffuse.r,material.diffuse.g,material.diffuse.b,material.diffuse.a }, IL);
+			//auto OSIL = elementWise({ material.spot.r,material.spot.g,material.spot.b,material.spot.a }, IL);
+
+			auto ODIL = material.diffuse * IL;
+			auto OSIL = material.spot * IL;
+
+			auto firstTemp = ODIL * max(N.dot(LDirection),0.0f);
+			auto secTemp = OSIL * pow(max(R.dot(V), 0.0f), material.shine);
+			//firstTemp = elementWise(ODIL, max(dot(N, L), float(flatMode)); 
+			//firstTemp = elementWise(OSIL, max(dot(N, L), float(flatMode) - 1);
+			c += firstTemp + secTemp;
+		}
+	}
+	return Color{c.x,c.y,c.z,c.w};
 }
 
 inline float
-max(Color c)
+maxColor(Color c)
 {
 	float ret;
 	auto r = c.r;
@@ -271,14 +330,10 @@ max(Color c)
 	return ret;
 }
 
-inline Ray
-RayTracer::reflect(const Ray& ray, Intersection& hit)
+inline vec3f
+RayTracer::reflect(vec3f v, vec3f n)
 {
-	auto p = hit.object;
-	auto index = hit.triangleIndex;
-
-	auto data = p->mesh()->data();
-	return ray;
+	return (2.0f * (float)n.dot(v) * n) * (1 / pow(n.length(), 2)) - v;
 }
 
 Color
@@ -293,19 +348,20 @@ RayTracer::shade(const Ray& ray, Intersection& hit, int level, float weight)
 //[]---------------------------------------------------[]
 {
   // TODO: insert your code here
-	auto c = directLight();
-	auto Or = hit.object->material.specular;
+	auto c = directLight(ray,hit);
+	//auto Or = hit.object->material.specular;
 
-	if (Or != Color::black)
-	{
-		auto w = weight * max(Or);
-		if (w > _minWeight)
-		{
-			
-			c += trace(reflect(ray, hit), level + 1, w);
-		}
-	}
-	return c;
+	//if (Or != Color::black)
+	//{
+	//	auto w = weight * maxColor(Or);
+	//	if (w > _minWeight)
+	//	{
+	//		auto data = hit.object->mesh()->data();
+	//		auto r = reflect(ray.direction, data.vertexNormals[hit.triangleIndex]);
+	//		c += trace({ hit.p,r }, level + 1, w);//Ray
+	//	}
+	//}
+	//return c;
 }
 
 Color

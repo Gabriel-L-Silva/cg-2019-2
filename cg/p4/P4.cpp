@@ -67,10 +67,11 @@ P4::buildScene()
 	sceneObject->setParent(nullptr, true);
 	auto c = new Camera;
 	sceneObject->add(c);
-	c->transform()->translate(vec3f{ 0,0,10 });
+	c->transform()->translate(vec3f{ 0,0,3 });
 	Camera::setCurrent(c);
 	auto o = new SceneObject{ "Directional Light", _scene };
 	o->add(new Light);
+	o->transform()->translate({ 0,10,0 });
 	o->setParent(nullptr, true);
 	for (int i = 0; i < 5; i++) {
 		std::string name{ "Box " + std::to_string(_sceneObjectCounter++) };
@@ -825,6 +826,8 @@ P4::editorViewGui()
 inline void
 P4::assetsWindow()
 {
+	if (!_showAssets)
+		return;
   ImGui::Begin("Assets");
   if (ImGui::CollapsingHeader("Meshes"))
   {
