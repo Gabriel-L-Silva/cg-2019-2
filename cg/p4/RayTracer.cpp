@@ -244,7 +244,7 @@ RayTracer::directLight(const Ray& ray, Intersection& hit)
 	auto flatMode = 0;
 	auto A = ambientLight * float(1 - flatMode); //IA
 	auto OAIA = material.ambient * A;
-	auto V = (hit.object->sceneObject()->transform()->position() - Camera::current()->transform()->position()).normalize();
+	vec3f V;
 	auto c = OAIA;
 	float temp;
 	float pw;
@@ -260,6 +260,7 @@ RayTracer::directLight(const Ray& ray, Intersection& hit)
 	N = (hit.object->sceneObject()->transform()->worldToLocalMatrix()).transposed().transform(N);
 	N = N.versor();
 
+
 	auto it = _scene->getPrimitiveIter();
 	auto end = _scene->getPrimitiveEnd();
 	for (; it != end; it++)
@@ -267,13 +268,15 @@ RayTracer::directLight(const Ray& ray, Intersection& hit)
 		if (auto l = dynamic_cast<Light*>((Component*)(*it)))
 		{
 			auto p = ray.origin + hit.distance * ray.direction;
-			auto LPosition = l->sceneObject()->transform()->position();
-			auto LDirection = l->type() == Light::Type::Directional ? l->sceneObject()->transform()->rotation() * vec3f(0, 1, 0) : (LPosition - p);
+			auto LPosition = l->sceneObject()->transform()->position(); 
+			auto LDirection = l->sceneObject()->transform()->rotation() * vec3f(0, 1, 0);
+			L = l->type() == Light::Type::Directional ? LDirection : (LPosition - p);
 			
-			if (N.dot(LDirection.versor()) < 0)
-				N = -N;
+		/*	if (N.dot(LDirection.versor()) < 0)
+				N = -N;*/
 			
 			p += rt_eps() * N;
+			V = (p - Camera::current()->transform()->position()).normalize();
 			if (!shadow({ p,LDirection.versor() }))
 			{
 
@@ -290,11 +293,11 @@ RayTracer::directLight(const Ray& ray, Intersection& hit)
 					break;
 
 				case (2): //spot
-					temp = LDirection.length();
-					LDirection = LDirection.versor();
-					float angle = acos(LDirection.dot(L));
+					temp = L.length();
+					L = L.versor();
+					float angle = LDirection.dot(L);
 					pw = (pow(temp, l->decayValue()));
-					IL = (angle < math::toRadians(l->openningAngle())) ? l->color * (1/pw) * pow(cos(angle), l->decayExponent()) : Color::black;
+					IL = (acos(angle < 0 ? 0 : angle) < math::toRadians(l->openningAngle())) ? l->color * (1/pw) * pow(angle, l->decayExponent()) : Color::black;
 
 					break;
 				}
@@ -361,7 +364,7 @@ RayTracer::shade(const Ray& ray, Intersection& hit, int level, float weight)
 	//		c += trace({ hit.p,r }, level + 1, w);//Ray
 	//	}
 	//}
-	//return c;
+	return c;
 }
 
 Color
