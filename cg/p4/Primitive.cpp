@@ -46,64 +46,70 @@ Primitive::intersect(const Ray& ray, Intersection& hit) const
   auto t = const_cast<Primitive*>(this)->transform();
   auto o = t->worldToLocalMatrix().transform(ray.origin);
   auto D = t->worldToLocalMatrix().transformVector(ray.direction);
-  Ray localRay{o, D};
   auto d = math::inverse(D.length()); // ||s||
+  Ray localRay{o, D};
+	D = localRay.direction;
+	o = localRay.origin;
   float tMin;
   float tMax;
 
-  float minT = math::Limits<float>::inf();
   //localRay.direction *= d;
   if (_mesh->bounds().intersect(localRay, tMin, tMax))
   {
     // TODO: mesh intersection
-	auto data = _mesh->data();
-	auto nt = data.numberOfTriangles;
-	auto nv = data.numberOfVertices;
+		auto data = _mesh->data();
+		bool ret = false;
+		auto nt = data.numberOfTriangles;
+		auto nv = data.numberOfVertices;
 
-	for (int i = 0; i < nt; i++)
-	{
-		auto ti = data.triangles[i];
-		auto p0 = data.vertices[ti.v[0]];
-		auto p1 = data.vertices[ti.v[1]];
-		auto p2 = data.vertices[ti.v[2]];
+		for (int i = 0; i < nt; i++)
+		{
+			auto ti = data.triangles[i];
+			auto p0 = data.vertices[ti.v[0]];
+			auto p1 = data.vertices[ti.v[1]];
+			auto p2 = data.vertices[ti.v[2]];
 
-		auto e1 = p1 - p0;
-		auto e2 = p2 - p0;
-		auto s1 = D.cross(e2);
+			auto e1 = p1 - p0;
+			auto e2 = p2 - p0;
+			auto s1 = D.cross(e2);
 
-		auto s1e1 = s1.dot(e1);
-		if (math::isZero(abs(s1e1)))
-			continue;
-		auto invd = 1 / s1e1;
+			auto s1e1 = s1.dot(e1);
+			if (math::isZero(abs(s1e1)))
+				continue;
+			auto invd = 1 / s1e1;
 
-		auto s = o - p0;
-		auto s2 = s.cross(e1);
-		auto t = s2.dot(e2) * invd;
-		if (t < 0)
-			continue;
+			auto s = o - p0;
+			auto s2 = s.cross(e1);
+			auto t = s2.dot(e2) * invd;
+			if (!isgreaterequal(t,0.0f))
+				continue;
 
-		auto b1 = s1.dot(s) * invd;
-		if (b1 < 0)
-			continue;
+			auto dist = t * d;
+			if (dist > hit.distance)
+				continue;
 
-		auto b2 = s2.dot(D) * invd;
-		if (b2 < 0)
-			continue;
+			auto b1 = s1.dot(s) * invd;
+			if (!isgreaterequal(b1, 0.0f))
+				continue;
 
-		auto b1b2 = b1 + b2;
-		if (b1b2 > 1)
-			continue;
+			auto b2 = s2.dot(D) * invd;
+			if (!isgreaterequal(b2, 0.0f))
+				continue;
 
-		auto dist = t * d;
-		if (dist > minT)
-			continue;
+			auto b1b2 = b1 + b2;
+			if (isgreater(b1b2, 1))
+				continue;
 
-		hit.triangleIndex = i;
-		hit.distance = minT = dist;
-		hit.p = vec3f{ 1 - b1b2, b1, b2 };
-	}
+
+			hit.object = this;
+			hit.triangleIndex = i;
+			hit.distance = dist;
+			hit.p = vec3f{ 1 - b1b2, b1, b2 };
+			ret = true;
+		}
+		return ret;
   }
-  return minT != math::Limits<float>::inf();
+	return false;
 }
 
 } // end namespace cg

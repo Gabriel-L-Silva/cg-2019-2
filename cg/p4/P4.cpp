@@ -1740,7 +1740,6 @@ P4::mouseButtonInputEvent(int button, int actions, int mods)
       cursorPosition(_pivotX, _pivotY);
 
       const auto ray = makeRay(_pivotX, _pivotY);
-      auto minDistance = math::Limits<float>::inf();
 
       // **Begin picking of temporary scene objects
       // It should be replaced by your picking code
@@ -1754,11 +1753,11 @@ P4::mouseButtonInputEvent(int button, int actions, int mods)
 
         auto component = *it;
 				Intersection hit;
+				hit.distance = ray.tMax;
 
         if (auto p = dynamic_cast<Primitive*>((Component*)component))
-          if (p->intersect(ray, hit) && hit.distance < minDistance)
+          if (p->intersect(ray, hit))
           {
-            minDistance = hit.distance;
             _current = o;
           }
       }
