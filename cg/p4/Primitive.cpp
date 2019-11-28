@@ -37,79 +37,71 @@
 namespace cg
 { // begin namespace cg
 
-bool
-Primitive::intersect(const Ray& ray, Intersection& hit) const
-{
-  if (_mesh == nullptr)
-    return false;
+	bool
+		Primitive::intersect(const Ray& ray, Intersection& hit) const
+	{
+		if (_mesh == nullptr)
+			return false;
 
-  auto t = const_cast<Primitive*>(this)->transform();
-  auto o = t->worldToLocalMatrix().transform(ray.origin);
-  auto D = t->worldToLocalMatrix().transformVector(ray.direction);
-  auto d = math::inverse(D.length()); // ||s||
-  Ray localRay{o, D};
-	D = localRay.direction;
-	o = localRay.origin;
-  float tMin;
-  float tMax;
+		auto t = const_cast<Primitive*>(this)->transform();
+		auto org = t->worldToLocalMatrix().transform(ray.origin);
+		auto dirL = t->worldToLocalMatrix().transformVector(ray.direction);
+		auto d = math::inverse(dirL.length()); // ||s||
+		Ray localRay{ org, dirL };
+		float tMin;
+		float tMax;
 
-  //localRay.direction *= d;
-  if (_mesh->bounds().intersect(localRay, tMin, tMax))
-  {
-    // TODO: mesh intersection
-		auto data = _mesh->data();
-		bool ret = false;
-		auto nt = data.numberOfTriangles;
-		auto nv = data.numberOfVertices;
-
-		for (int i = 0; i < nt; i++)
+		//localRay.direction *= d; // normaliza raio local
+		if (_mesh->bounds().intersect(localRay, tMin, tMax))
 		{
-			auto ti = data.triangles[i];
-			auto p0 = data.vertices[ti.v[0]];
-			auto p1 = data.vertices[ti.v[1]];
-			auto p2 = data.vertices[ti.v[2]];
+			// mesh data
+			auto& data = _mesh->data();
+			auto distance = math::Limits<float>::inf();
+			auto intersect = false;
+			for (int i = 0; i < data.numberOfTriangles; ++i)
+			{
+				auto p0 = data.vertices[data.triangles[i].v[0]];
+				auto p1 = data.vertices[data.triangles[i].v[1]];
+				auto p2 = data.vertices[data.triangles[i].v[2]];
 
-			auto e1 = p1 - p0;
-			auto e2 = p2 - p0;
-			auto s1 = D.cross(e2);
+				vec3f e1{ p1 - p0 };
+				vec3f e2{ p2 - p0 };
+				vec3f s1{ vec3f::cross(localRay.direction, e2) };
 
-			auto s1e1 = s1.dot(e1);
-			if (math::isZero(abs(s1e1)))
-				continue;
-			auto invd = 1 / s1e1;
+				auto s1_e1 = vec3f::dot(s1, e1);
 
-			auto s = o - p0;
-			auto s2 = s.cross(e1);
-			auto t = s2.dot(e2) * invd;
-			if (!isgreaterequal(t,0.0f))
-				continue;
+				// se s1 * e1
+				if (math::isZero(s1_e1)) continue;
 
-			auto dist = t * d;
-			if (dist > hit.distance)
-				continue;
+				auto invD = math::inverse(s1_e1);
 
-			auto b1 = s1.dot(s) * invd;
-			if (!isgreaterequal(b1, 0.0f))
-				continue;
+				vec3f s{ localRay.origin - p0 };
+				vec3f s2{ vec3f::cross(s, e1) };
 
-			auto b2 = s2.dot(D) * invd;
-			if (!isgreaterequal(b2, 0.0f))
-				continue;
+				auto t = s2.dot(e2) * invD;
+				if (!isgreaterequal(t, 0.0f)) continue;
+				if ((distance = t * d) > hit.distance) continue;
 
-			auto b1b2 = b1 + b2;
-			if (isgreater(b1b2, 1))
-				continue;
+				auto b1 = s1.dot(s) * invD;
+				if (!isgreaterequal(b1, 0.0f)) continue;
 
+				auto b2 = s2.dot(localRay.direction) * invD;
+				if (!isgreaterequal(b2, 0.0f)) continue;
 
-			hit.object = this;
-			hit.triangleIndex = i;
-			hit.distance = dist;
-			hit.p = vec3f{ 1 - b1b2, b1, b2 };
-			ret = true;
+				if (b1 + b2 <= 1.0f)
+				{
+					// calcular info da intersecao
+					// t = t_l / |s|
+					hit.distance = distance;
+					hit.triangleIndex = i;
+					hit.object = this;
+					// coord baricentricas
+					hit.p = vec3f{ 1 - b1 - b2, b1, b2 };
+					intersect = true; // making sure it intersected
+				}
+			}
+			return intersect;
 		}
-		return ret;
-  }
-	return false;
+		return false;
+	}
 }
-
-} // end namespace cg

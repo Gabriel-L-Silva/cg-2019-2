@@ -990,6 +990,7 @@ P4::mainMenu()
 			{
 				if (ImGui::MenuItem("Scene 1"))
 				{
+					_sceneObjectCounter = 0;
 					initRayScene1();
 				}
 				if (ImGui::MenuItem("Scene 2"))
@@ -1235,8 +1236,8 @@ P4::initRayScene1()
 	o->transform()->rotate(vec3f{ -45,0,0 });
 	o->transform()->setLocalScale(vec3f{ 5.f,5.f,1 });
 	auto p = makePrimitive(_defaultMeshes.find("Box"));
-	p->material.diffuse.setRGB(0,0,0);
-	p->material.specular.setRGB(255,255,255);
+	p->material.diffuse.setRGB(Color::white*0.8f);
+	p->material.specular.setRGB(Color::white);
 	o->add(p);
 
 	o = new SceneObject{ "Directional Light", _scene };

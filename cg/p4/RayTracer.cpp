@@ -332,7 +332,7 @@ RayTracer::shade(const Ray& ray, Intersection& hit, int level, float weight)
 	auto c = directLight(ray,hit, N, p, V);
 	auto Or = hit.object->material.specular;
 
-	if (Or != Color::black)
+	if (Or.r != 0 && Or.g != 0 && Or.b != 0)
 	{
 		auto w = weight * std::max({Or.r, Or.g, Or.b});
 		if (w > _minWeight)
