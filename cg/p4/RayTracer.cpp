@@ -227,7 +227,7 @@ RayTracer::intersect(const Ray& ray, Intersection& hit)
 }
 
 inline Color
-RayTracer::directLight(const Ray& ray, Intersection& hit)
+RayTracer::directLight(const Ray& ray, Intersection& hit, vec3f& N, vec3f& p)
 {
 	//vec3f L{ 0.0f };
 	Color IL = Color::black;
@@ -240,20 +240,7 @@ RayTracer::directLight(const Ray& ray, Intersection& hit)
 	float pw;
 	auto prim = hit.object;
 	vec3f L;
-	auto normalMatrix = mat3f{ prim->sceneObject()->transform()->worldToLocalMatrix() }.transposed();
-
-	auto data = hit.object->mesh()->data();
-	auto N = data.vertexNormals[data.triangles[hit.triangleIndex].v[0]] * hit.p.x
-		+ data.vertexNormals[data.triangles[hit.triangleIndex].v[1]] * hit.p.y
-		+ data.vertexNormals[data.triangles[hit.triangleIndex].v[2]] * hit.p.z;
 	
-	N = (normalMatrix * N).normalize();
-
-	auto p = ray.origin + hit.distance * ray.direction;
-	p += rt_eps() * N;
-
-	if (N.dot(ray.direction) > 0.0f)
-		N = -N;
 
 	V = (Camera::current()->transform()->position() - p).normalize();
 	//tacertoateaqui
@@ -307,7 +294,7 @@ RayTracer::directLight(const Ray& ray, Intersection& hit)
 			c += firstTemp + secTemp;
 		}
 	}
-	return Color{c.x,c.y,c.z,c.w};
+	return c;
 }
 
 inline vec3f
@@ -328,19 +315,36 @@ RayTracer::shade(const Ray& ray, Intersection& hit, int level, float weight)
 //[]---------------------------------------------------[]
 {
   // TODO: insert your code here
-	auto c = directLight(ray,hit);
-	//auto Or = hit.object->material.specular;
+	auto normalMatrix = mat3f{ hit.object->sceneObject()->transform()->worldToLocalMatrix() }.transposed();
 
-	//if (Or != Color::black)
-	//{
-	//	auto w = weight * std::max({Or.r, Or.g, Or.b});
-	//	if (w > _minWeight)
-	//	{
-	//		auto data = hit.object->mesh()->data();
-	//		auto r = reflect(ray.direction, data.vertexNormals[hit.triangleIndex]);
-	//		c += trace({ hit.p,r }, level + 1, w);//Ray
-	//	}
-	//}
+	auto data = hit.object->mesh()->data();
+	auto N = data.vertexNormals[data.triangles[hit.triangleIndex].v[0]] * hit.p.x
+		+ data.vertexNormals[data.triangles[hit.triangleIndex].v[1]] * hit.p.y
+		+ data.vertexNormals[data.triangles[hit.triangleIndex].v[2]] * hit.p.z;
+
+	N = (normalMatrix * N).normalize();
+
+	auto p = ray.origin + hit.distance * ray.direction;
+	p += rt_eps() * N;
+
+	if (N.dot(ray.direction) > 0.0f)
+		N = -N;
+
+
+	auto c = directLight(ray,hit, N, p);
+	auto Or = hit.object->material.specular;
+
+	if (Or != Color::black)
+	{
+		auto w = weight * std::max({Or.r, Or.g, Or.b});
+		if (w > _minWeight)
+		{
+			auto r = reflect(ray.direction, N);
+			auto sec = trace({ p,r }, level + 1, w);
+			if(sec != _scene->backgroundColor)
+				c += Or * sec;
+		}
+	}
 	return c;
 }
 

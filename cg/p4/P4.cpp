@@ -986,6 +986,18 @@ P4::mainMenu()
 				_sceneObjectCounter = 0;
 				initScene3();
 			}
+			if (ImGui::BeginMenu("RayTracer Focused"))
+			{
+				if (ImGui::MenuItem("Scene 1"))
+				{
+					//TODO
+				}
+				if (ImGui::MenuItem("Scene 2"))
+				{
+					//TODO
+				}
+				ImGui::EndMenu();
+			}
 			ImGui::EndMenu();
 		}
 
@@ -996,6 +1008,7 @@ inline void
 P4::initOriginalScene()
 {
 	buildScene();
+	_rayTracer = new RayTracer{ *_scene };
 	_renderer = new GLRenderer{ *_scene };
 	_renderer->setProgram(&_programP);
 	glEnable(GL_DEPTH_TEST);
@@ -1008,6 +1021,7 @@ inline void
 P4::initScene2()
 {
 	auto s = new Scene{ "Scene 2" };
+	_rayTracer = new RayTracer{ *s };
 	_renderer = new GLRenderer{ *s };
 	_renderer->setProgram(&_programP);
 	glEnable(GL_DEPTH_TEST);
@@ -1034,6 +1048,7 @@ P4::initScene2()
 	o->add(l);
 	o->setParent(nullptr, true);
 	l->setType(Light::Type::Spot);
+	l->setOpeningAngle(13);
 	l->sceneObject()->transform()->translate(vec3f{ 0,15,0 });
 	l->setColor(Color::cyan);
 
@@ -1069,6 +1084,7 @@ inline void
 P4::initScene3()
 {
 	auto s = new Scene{ "Scene 3" };
+	_rayTracer = new RayTracer{ *s };
 	_renderer = new GLRenderer{ *s };
 	_renderer->setProgram(&_programP);
 	glEnable(GL_DEPTH_TEST);
