@@ -227,7 +227,7 @@ RayTracer::intersect(const Ray& ray, Intersection& hit)
 }
 
 inline Color
-RayTracer::directLight(const Ray& ray, Intersection& hit, vec3f& N, vec3f& p)
+RayTracer::directLight(const Ray& ray, Intersection& hit, vec3f& N, vec3f& p, vec3f& V)
 {
 	//vec3f L{ 0.0f };
 	Color IL = Color::black;
@@ -235,14 +235,11 @@ RayTracer::directLight(const Ray& ray, Intersection& hit, vec3f& N, vec3f& p)
 	auto ambientLight = _scene->ambientLight;
 	auto A = ambientLight; //IA
 	auto OAIA = material.ambient * A;
-	vec3f V;
 	auto c = OAIA;
 	float pw;
 	auto prim = hit.object;
 	vec3f L;
-	
 
-	V = (Camera::current()->transform()->position() - p).normalize();
 	//tacertoateaqui
 	auto it = _scene->getPrimitiveIter();
 	auto end = _scene->getPrimitiveEnd();
@@ -279,7 +276,7 @@ RayTracer::directLight(const Ray& ray, Intersection& hit, vec3f& N, vec3f& p)
 					break;
 				}
 			}
-			auto R = (reflect(L, N)).normalize();
+			auto R = (reflect(L, N)).versor();
 
 			//auto ODIL = elementWise({ material.diffuse.r,material.diffuse.g,material.diffuse.b,material.diffuse.a }, IL);
 			//auto OSIL = elementWise({ material.spot.r,material.spot.g,material.spot.b,material.spot.a }, IL);
@@ -330,8 +327,9 @@ RayTracer::shade(const Ray& ray, Intersection& hit, int level, float weight)
 	if (N.dot(ray.direction) > 0.0f)
 		N = -N;
 
+	auto V = (Camera::current()->transform()->position() - p).versor();
 
-	auto c = directLight(ray,hit, N, p);
+	auto c = directLight(ray,hit, N, p, V);
 	auto Or = hit.object->material.specular;
 
 	if (Or != Color::black)
@@ -339,8 +337,8 @@ RayTracer::shade(const Ray& ray, Intersection& hit, int level, float weight)
 		auto w = weight * std::max({Or.r, Or.g, Or.b});
 		if (w > _minWeight)
 		{
-			auto r = reflect(ray.direction, N);
-			auto sec = trace({ p,r }, level + 1, w);
+			auto R = reflect(ray.direction,N);
+			auto sec = trace({ p,R }, level + 1, w);
 			if(sec != _scene->backgroundColor)
 				c += Or * sec;
 		}

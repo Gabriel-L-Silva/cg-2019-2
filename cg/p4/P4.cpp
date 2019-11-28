@@ -990,7 +990,7 @@ P4::mainMenu()
 			{
 				if (ImGui::MenuItem("Scene 1"))
 				{
-					//TODO
+					initRayScene1();
 				}
 				if (ImGui::MenuItem("Scene 2"))
 				{
@@ -1204,6 +1204,62 @@ P4::initScene3()
 	p->material.shine = 3;
 	o->add(p);
 
+}
+
+inline void
+P4::initRayScene1()
+{
+	auto s = new Scene{ "RayScene 1" };
+	_rayTracer = new RayTracer{ *s };
+	_renderer = new GLRenderer{ *s };
+	_renderer->setProgram(&_programP);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_POLYGON_OFFSET_FILL);
+	glPolygonOffset(1.0f, 1.0f);
+	glEnable(GL_LINE_SMOOTH);
+	_programG.use();
+	_current = s;
+	_scene = s;
+
+	Reference<SceneObject> sceneObject;
+	std::string name{ "Camera " + std::to_string(_sceneObjectCounter++) };
+	sceneObject = new SceneObject{ name.c_str(), _scene };
+	sceneObject->setParent(nullptr, true);
+	auto c = new Camera;
+	sceneObject->add(c);
+	Camera::setCurrent(c);
+	c->transform()->translate(vec3f{ 0,0,12 });
+
+	auto o = new SceneObject{ "Mirror", _scene };
+	o->setParent(nullptr, true);
+	o->transform()->rotate(vec3f{ -45,0,0 });
+	o->transform()->setLocalScale(vec3f{ 5.f,5.f,1 });
+	auto p = makePrimitive(_defaultMeshes.find("Box"));
+	p->material.diffuse.setRGB(0,0,0);
+	p->material.specular.setRGB(255,255,255);
+	o->add(p);
+
+	o = new SceneObject{ "Directional Light", _scene };
+	o->setParent(nullptr, true);
+	o->add(new Light);
+
+	o = new SceneObject{ "Sphere", _scene };
+	o->setParent(nullptr, true);
+	o->transform()->translate(vec3f{ 0, 10, 0 });
+	p = makePrimitive(_defaultMeshes.find("Sphere"));
+	p->material.diffuse.setRGB(255, 0, 0);
+	o->add(p);
+
+	name = { "Spot Light " + std::to_string(_spotLightCounter++) };
+	auto sl = new SceneObject{ name.c_str(), _scene };
+	auto l = new Light;
+	sl->add(l);
+	sl->setParent(o, true);
+	l->setType(Light::Type::Spot);
+	l->sceneObject()->transform()->setLocalPosition(vec3f{ 0,-4,0 });
+	l->sceneObject()->transform()->rotate(vec3f{ 180,0,0 });
+	l->setOpeningAngle(8);
+	l->setColor(Color::white);
 }
 inline void
 P4::preview(int x, int y, int width, int height)

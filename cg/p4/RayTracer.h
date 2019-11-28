@@ -52,7 +52,7 @@ class RayTracer: public Renderer
 {
 public:
   // Constructor
-  RayTracer(Scene&, Camera* = 0);
+  RayTracer(Scene&, Camera* = nullptr);
 
   auto maxRecursionLevel() const
   {
@@ -101,7 +101,7 @@ private:
   Color shoot(float x, float y);
   bool intersect(const Ray&, Intersection&);
   Color trace(const Ray& ray, uint32_t level, float weight);
-	Color directLight(const Ray& ray, Intersection& hit, vec3f&, vec3f&);
+	Color directLight(const Ray& ray, Intersection& hit, vec3f&, vec3f&, vec3f&);
 	vec3f reflect(vec3f v, vec3f r);
 	Color shade(const Ray&, Intersection&, int, float);
   bool shadow(const Ray&);
