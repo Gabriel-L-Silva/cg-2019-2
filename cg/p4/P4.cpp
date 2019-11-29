@@ -973,18 +973,21 @@ P4::mainMenu()
 			{
 				_sceneObjectCounter = 0;
 				initOriginalScene();
+				_viewMode = Editor;
 
 			}
 			if (ImGui::MenuItem("Scene 2"))
 			{
 				_sceneObjectCounter = 0;
 				initScene2();
+				_viewMode = Editor;
 
 			}
 			if (ImGui::MenuItem("Scene 3"))
 			{
 				_sceneObjectCounter = 0;
 				initScene3();
+				_viewMode = Editor;
 			}
 			if (ImGui::BeginMenu("RayTracer Focused"))
 			{
@@ -992,15 +995,18 @@ P4::mainMenu()
 				{
 					_sceneObjectCounter = 0;
 					initRayScene1();
+					_viewMode = Editor;
 				}
 				if (ImGui::MenuItem("Scene 2"))
 				{
 					_sceneObjectCounter = 0;
 					initRayScene2();
+					_viewMode = Editor;
 				}
 				ImGui::EndMenu();
 			}
 			ImGui::EndMenu();
+			
 		}
 
     ImGui::EndMainMenuBar();
@@ -1436,7 +1442,12 @@ P4::drawPrimitive(Primitive& primitive)
 
 	if (bvh == nullptr)
 		bvhMap[mesh] = bvh = new BVH{ *mesh, 16 };
+	
+	// stores a reference to the bvh related to the primitive being drawn
+	primitive.setBVH(bvh);
+	
 	// **End BVH test
+
 	if (primitive.sceneObject() != _current)
 		return;
 
@@ -1449,11 +1460,15 @@ P4::drawPrimitive(Primitive& primitive)
 	//_editor->drawNormals(*mesh, t->localToWorldMatrix(), normalMatrix);
 	//_editor->setLineColor(_selectedWireframeColor);
 	//_editor->drawBounds(mesh->bounds(), t->localToWorldMatrix());
-	bvh->iterate([this, t](const BVHNodeInfo& node)
-		{
-			_editor->setLineColor(node.isLeaf ? Color::yellow : Color::magenta);
-			_editor->drawBounds(node.bounds, t->localToWorldMatrix());
-		});
+//#ifndef _DEBUG
+//
+//
+//	bvh->iterate([this, t](const BVHNodeInfo& node)
+//		{
+//			_editor->setLineColor(node.isLeaf ? Color::yellow : Color::magenta);
+//			_editor->drawBounds(node.bounds, t->localToWorldMatrix());
+//		});
+//#endif // !_DEBUG
 
 }
 

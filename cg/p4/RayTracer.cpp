@@ -208,11 +208,17 @@ RayTracer::intersect(const Ray& ray, Intersection& hit)
 
 	auto it = _scene->getPrimitiveIter();
 	auto end = _scene->getPrimitiveEnd();
+	
 	for (; it != end; it++)
 	{
 		if (auto p = dynamic_cast<Primitive*>((Component*)(*it)))
 		{
-			if (p->intersect(ray, hit))
+			auto t = p->transform();
+			auto o = t->worldToLocalMatrix().transform(ray.origin);
+			auto D = t->worldToLocalMatrix().transformVector(ray.direction);
+			auto d = math::inverse(D.length()); // ||s||
+
+			if (p->getBVH()->intersect({o, D}, hit, d))
 			{
 				_numberOfHits++;
 				if (hit.distance < minDistance)
