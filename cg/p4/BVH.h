@@ -67,7 +67,7 @@ public:
   Bounds3f bounds() const;
   void iterate(BVHNodeFunction f) const;
 
-  bool intersect(const Ray& ray, Intersection& hit) const;
+  bool intersect(const Ray& ray, Intersection& hit, float d) const;
 	
 private:
   struct Node;

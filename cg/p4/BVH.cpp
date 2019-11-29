@@ -237,7 +237,7 @@ BVH::iterate(BVHNodeFunction f) const
 }
 
 bool
-BVH::intersect(const Ray& ray, Intersection& hit) const
+BVH::intersect(const Ray& ray, Intersection& hit, float d) const
 {
   // TODO
 	std::stack<Node*> nodes;
@@ -252,9 +252,9 @@ BVH::intersect(const Ray& ray, Intersection& hit) const
 		auto top = nodes.top();
 		nodes.pop();
 
-		float tMin;
+		float tMin, tMax	;
 
-		if (!top->bounds.intersect(ray, tMin, hit.distance))
+		if (!top->bounds.intersect(ray, tMin, tMax))
 			continue;
 		else
 		{
@@ -270,13 +270,12 @@ BVH::intersect(const Ray& ray, Intersection& hit) const
 				
 				// TODO: mesh intersection
 				auto data = _mesh->data();
-				bool ret = false;
 				auto o = ray.origin;
 				auto D = ray.direction;
 
 				for (int i = top->first; i < top->first + top->count; i++) //right
 				{
-					auto ti = data.triangles[i];
+					auto ti = data.triangles[_triangles[i]];
 					auto p0 = data.vertices[ti.v[0]];
 					auto p1 = data.vertices[ti.v[1]];
 					auto p2 = data.vertices[ti.v[2]];
@@ -296,7 +295,7 @@ BVH::intersect(const Ray& ray, Intersection& hit) const
 					if (!isgreaterequal(t, 0.0f))
 						continue;
 
-					auto dist = t;
+					auto dist = t *d;
 					if (dist > hit.distance)
 						continue;
 
@@ -314,7 +313,7 @@ BVH::intersect(const Ray& ray, Intersection& hit) const
 
 
 					//hit.object = this;
-					hit.triangleIndex = i;
+					hit.triangleIndex = _triangles[i];
 					hit.distance = dist;
 					hit.p = vec3f{ 1 - b1b2, b1, b2 };
 					ret = true;
