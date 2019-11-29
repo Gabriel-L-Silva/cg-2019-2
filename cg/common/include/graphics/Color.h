@@ -1,6 +1,6 @@
 //[]---------------------------------------------------------------[]
 //|                                                                 |
-//| Copyright (C) 2014, 2018 Orthrus Group.                         |
+//| Copyright (C) 2014, 2019 Orthrus Group.                         |
 //|                                                                 |
 //| This software is provided 'as-is', without any express or       |
 //| implied warranty. In no event will the authors be held liable   |
@@ -28,7 +28,7 @@
 // Class definition for RGB color.
 //
 // Author: Paulo Pagliosa
-// Last revision: 01/08/2018
+// Last revision: 28/11/2019
 
 #ifndef __Color_h
 #define __Color_h
@@ -238,9 +238,15 @@ public:
 
   /// Returns true if this object is equals to c.
   HOST DEVICE
+  bool equals(const Color& c, float eps = math::Limits<float>::eps()) const
+  {
+    return math::isNull(r - c.r, g - c.g, b - c.b, eps);
+  }
+
+  HOST DEVICE
   bool operator ==(const Color& c) const
   {
-    return math::isNull(r - c.r, g - c.g, b - c.b);
+    return equals(c);
   }
 
   /// Returns true if this object is not equals to c.

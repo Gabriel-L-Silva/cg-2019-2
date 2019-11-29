@@ -990,11 +990,13 @@ P4::mainMenu()
 			{
 				if (ImGui::MenuItem("Scene 1"))
 				{
+					_sceneObjectCounter = 0;
 					initRayScene1();
 				}
 				if (ImGui::MenuItem("Scene 2"))
 				{
-					//TODO
+					_sceneObjectCounter = 0;
+					initRayScene2();
 				}
 				ImGui::EndMenu();
 			}
@@ -1235,8 +1237,8 @@ P4::initRayScene1()
 	o->transform()->rotate(vec3f{ -45,0,0 });
 	o->transform()->setLocalScale(vec3f{ 5.f,5.f,1 });
 	auto p = makePrimitive(_defaultMeshes.find("Box"));
-	p->material.diffuse.setRGB(0,0,0);
-	p->material.specular.setRGB(255,255,255);
+	p->material.diffuse.setRGB(Color::white*0.8f);
+	p->material.specular.setRGB(Color::white);
 	o->add(p);
 
 	o = new SceneObject{ "Directional Light", _scene };
@@ -1260,6 +1262,97 @@ P4::initRayScene1()
 	l->sceneObject()->transform()->rotate(vec3f{ 180,0,0 });
 	l->setOpeningAngle(8);
 	l->setColor(Color::white);
+}
+
+inline void
+P4::initRayScene2()
+{
+	auto s = new Scene{ "RayScene 2" };
+	_rayTracer = new RayTracer{ *s };
+	_renderer = new GLRenderer{ *s };
+	_renderer->setProgram(&_programP);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_POLYGON_OFFSET_FILL);
+	glPolygonOffset(1.0f, 1.0f);
+	glEnable(GL_LINE_SMOOTH);
+	_programG.use();
+	_current = s;
+	_scene = s;
+
+	Reference<SceneObject> sceneObject;
+	std::string name{ "Camera " + std::to_string(_sceneObjectCounter++) };
+	sceneObject = new SceneObject{ name.c_str(), _scene };
+	sceneObject->setParent(nullptr, true);
+	auto c = new Camera;
+	sceneObject->add(c);
+	Camera::setCurrent(c);
+	sceneObject->transform()->translate(vec3f{ 4.7f, 5.3f, 6 });
+	sceneObject->transform()->rotate(vec3f{ -35, 38, 6 });
+
+	auto o = new SceneObject{ "Directional Light", _scene };
+	o->setParent(nullptr, true);
+	o->transform()->rotate({ 40,0,0 });
+	o->add(new Light);
+
+
+	o = new SceneObject{ "Ground", _scene };
+	o->setParent(nullptr, true);
+	o->transform()->setLocalScale(vec3f{ 15,0.001f,15 });
+	auto p = makePrimitive(_defaultMeshes.find("Box"));
+	p->material.diffuse.setRGB(50, 50, 50);
+	o->add(p);
+	
+	name = { "Sphere " + std::to_string(_sceneObjectCounter++) };
+	o = new SceneObject{ name.c_str(), _scene };
+	o->setParent(nullptr, true);
+	o->transform()->translate(vec3f{ 3, 1, 1 });
+	p = makePrimitive(_defaultMeshes.find("Sphere"));
+	p->material.diffuse.setRGB(255, 255, 0);
+	o->add(p);
+
+	name = { "Sphere " + std::to_string(_sceneObjectCounter++) };
+	o = new SceneObject{ name.c_str(), _scene };
+	o->setParent(nullptr, true);
+	o->transform()->translate(vec3f{ -3, 1, 1 });
+	p = makePrimitive(_defaultMeshes.find("Sphere"));
+	p->material.diffuse.setRGB(255, 0, 255);
+	o->add(p);
+
+	name = { "Sphere " + std::to_string(_sceneObjectCounter++) };
+	o = new SceneObject{ name.c_str(), _scene };
+	o->setParent(nullptr, true);
+	o->transform()->translate(vec3f{ 0, 1, 3 });
+	p = makePrimitive(_defaultMeshes.find("Sphere"));
+	p->material.diffuse.setRGB(255, 0, 0);
+	o->add(p);
+
+	name = { "Sphere " + std::to_string(_sceneObjectCounter++) };
+	o = new SceneObject{ name.c_str(), _scene };
+	o->setParent(nullptr, true);
+	o->transform()->translate(vec3f{ 3, 1, 3 });
+	p = makePrimitive(_defaultMeshes.find("Sphere"));
+	p->material.diffuse.setRGB(0, 255, 0);
+	o->add(p);
+
+	name = { "Sphere " + std::to_string(_sceneObjectCounter++) };
+	o = new SceneObject{ name.c_str(), _scene };
+	o->setParent(nullptr, true);
+	o->transform()->translate(vec3f{ -3, 1, 3 });
+	p = makePrimitive(_defaultMeshes.find("Sphere"));
+	p->material.diffuse.setRGB(0, 0, 255);
+	o->add(p);
+
+	
+	o = new SceneObject{ "Mirror Sphere", _scene };
+	o->setParent(nullptr, true);
+	o->transform()->setLocalScale(vec3f{ 2,2,2 });
+	o->transform()->translate(vec3f{ 0, 2, 0 });
+	p = makePrimitive(_defaultMeshes.find("Sphere"));
+	p->material.diffuse.setRGB(255, 255, 255);
+	p->material.specular.setRGB(255, 255, 255);
+	o->add(p);
+
+
 }
 inline void
 P4::preview(int x, int y, int width, int height)
@@ -1835,10 +1928,11 @@ P4::mouseButtonInputEvent(int button, int actions, int mods)
         auto component = *it;
 				Intersection hit;
 				hit.distance = ray.tMax;
-
+				auto minDist = math::Limits<float>::inf();
         if (auto p = dynamic_cast<Primitive*>((Component*)component))
-          if (p->intersect(ray, hit))
+          if (p->intersect(ray, hit) && hit.distance < minDist)
           {
+						minDist = hit.distance;
             _current = o;
           }
       }
