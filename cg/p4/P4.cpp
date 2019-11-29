@@ -1001,6 +1001,7 @@ P4::mainMenu()
 				ImGui::EndMenu();
 			}
 			ImGui::EndMenu();
+			_viewMode = Editor;
 		}
 
     ImGui::EndMainMenuBar();
