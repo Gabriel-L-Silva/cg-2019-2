@@ -212,7 +212,7 @@ RayTracer::intersect(const Ray& ray, Intersection& hit)
 	{
 		if (auto p = dynamic_cast<Primitive*>((Component*)(*it)))
 		{
-			if (p->intersect(ray, hit))
+			if (p->getBVH()->intersect(ray, hit))
 			{
 				_numberOfHits++;
 				if (hit.distance < minDistance)

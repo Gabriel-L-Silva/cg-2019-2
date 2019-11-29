@@ -240,7 +240,92 @@ bool
 BVH::intersect(const Ray& ray, Intersection& hit) const
 {
   // TODO
-  return false;
+	std::stack<Node*> nodes;
+
+	bool ret = false;
+	nodes.push(_root);
+
+	// 
+	while (!nodes.empty())
+	{
+		// get the top element and update the stack content 
+		auto top = nodes.top();
+		nodes.pop();
+
+		float tMin;
+
+		if (!top->bounds.intersect(ray, tMin, hit.distance))
+			continue;
+		else
+		{
+			if (!top->isLeaf())
+			{
+				auto children = top->children;
+				nodes.push(children[0]);
+				nodes.push(children[1]);
+			}
+			// primitive intersect starts here
+			else
+			{
+				
+				// TODO: mesh intersection
+				auto data = _mesh->data();
+				bool ret = false;
+				auto o = ray.origin;
+				auto D = ray.direction;
+
+				for (int i = top->first; i < top->first + top->count; i++) //right
+				{
+					auto ti = data.triangles[i];
+					auto p0 = data.vertices[ti.v[0]];
+					auto p1 = data.vertices[ti.v[1]];
+					auto p2 = data.vertices[ti.v[2]];
+
+					auto e1 = p1 - p0;
+					auto e2 = p2 - p0;
+					auto s1 = D.cross(e2);
+
+					auto s1e1 = s1.dot(e1);
+					if (math::isZero(abs(s1e1)))
+						continue;
+					auto invd = 1 / s1e1;
+
+					auto s = o - p0;
+					auto s2 = s.cross(e1);
+					auto t = s2.dot(e2) * invd;
+					if (!isgreaterequal(t, 0.0f))
+						continue;
+
+					auto dist = t;
+					if (dist > hit.distance)
+						continue;
+
+					auto b1 = s1.dot(s) * invd;
+					if (!isgreaterequal(b1, 0.0f))
+						continue;
+
+					auto b2 = s2.dot(D) * invd;
+					if (!isgreaterequal(b2, 0.0f))
+						continue;
+
+					auto b1b2 = b1 + b2;
+					if (isgreater(b1b2, 1))
+						continue;
+
+
+					//hit.object = this;
+					hit.triangleIndex = i;
+					hit.distance = dist;
+					hit.p = vec3f{ 1 - b1b2, b1, b2 };
+					ret = true;
+					
+				}
+			}
+		}
+
+	}
+
+  return ret;
 }
 
 } // end namespace cg

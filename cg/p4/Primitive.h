@@ -38,6 +38,7 @@
 #include "graphics/GLMesh.h"
 #include "Material.h"
 #include "Intersection.h"
+#include "BVH.h"
 
 namespace cg
 { // begin namespace cg
@@ -76,11 +77,23 @@ public:
     _meshName = meshName;
   }
 
-	bool intersect(const Ray& ray, Intersection& hit) const;
+  BVH* getBVH()
+  {
+	  return _BVH;
+  }
+
+  void setBVH(BVH* bvh)
+  {
+	  _BVH = bvh;
+  }
+
+  bool intersect(const Ray& ray, Intersection& hit) const;
+
 
 private:
   Reference<TriangleMesh> _mesh;
   std::string _meshName;
+  Reference<BVH> _BVH;
 
 
 }; // Primitive
