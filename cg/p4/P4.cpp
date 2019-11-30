@@ -997,10 +997,22 @@ P4::mainMenu()
 					initRayScene1();
 					_viewMode = Editor;
 				}
-				if (ImGui::MenuItem("Scene 2"))
+				if (ImGui::MenuItem("Scene 2 (191s to Render)"))
 				{
 					_sceneObjectCounter = 0;
 					initRayScene2();
+					_viewMode = Editor;
+				}
+				if (ImGui::MenuItem("Bat Paulo (5s to Render)"))
+				{
+					_sceneObjectCounter = 0;
+					initRayScene0();
+					_viewMode = Editor;
+				}
+				if (ImGui::MenuItem("Iron Paulo (85s to Render)"))
+				{
+					_sceneObjectCounter = 0;
+					initRayScene();
 					_viewMode = Editor;
 				}
 				ImGui::EndMenu();
@@ -1215,6 +1227,294 @@ P4::initScene3()
 }
 
 inline void
+P4::initRayScene()
+{
+	auto s = new Scene{ "Paulo de Ferro" };
+	_rayTracer = new RayTracer{ *s };
+	_renderer = new GLRenderer{ *s };
+	_renderer->setProgram(&_programP);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_POLYGON_OFFSET_FILL);
+	glPolygonOffset(1.0f, 1.0f);
+	glEnable(GL_LINE_SMOOTH);
+	_programG.use();
+	_current = s;
+	_scene = s;
+
+	// camera 0
+	Reference<SceneObject> sceneObject;
+	std::string name{ "Camera " + std::to_string(_sceneObjectCounter++) };
+	sceneObject = new SceneObject{ name.c_str(), _scene };
+	sceneObject->setParent(nullptr, true);
+	auto c = new Camera;
+	sceneObject->add(c);
+	Camera::setCurrent(c);
+	c->transform()->translate(vec3f{ -3.9f,9.7f,8.9f });
+	c->transform()->rotate(vec3f{ -14,-21,0 });
+
+	// directional light
+	auto dl = new SceneObject{ "Directional Light", _scene };
+	dl->setParent(nullptr, true);
+	auto l1 = new Light();
+	dl->transform()->setLocalPosition(vec3f{0,10,0});
+	dl->transform()->rotate(vec3f{ 50,30,0 });
+	l1->setType(Light::Type::Directional);
+	l1->setColor(Color::white);
+	dl->add(l1);
+
+	// iron man
+	Reference<SceneObject> ironMan = new SceneObject{ "Iron Man", _scene };
+	ironMan->setParent(nullptr, true);
+
+	// body
+	Reference<SceneObject> body = new SceneObject{ "Body", _scene };
+	body->setParent(ironMan, true);
+	body->transform()->setLocalPosition(vec3f{ -4.2f, 0.0f, 0.0f });
+	body->transform()->rotate(vec3f{ -84.0, -20.0, -12.0 });
+	body->transform()->setLocalScale(0.01f);
+
+	// right arm
+	Reference<SceneObject> rightArm = new SceneObject{ "Right arm", _scene };
+	rightArm->setParent(ironMan, true);
+	rightArm->transform()->setLocalPosition(vec3f{ -4.6f, 6, -5.5f });
+	rightArm->transform()->rotate(vec3f{ 0.4f, -24.0f, -2.6f });
+	rightArm->transform()->setLocalScale(0.01f);
+
+	// left arm
+	Reference<SceneObject> leftArm = new SceneObject{ "Left arm", _scene };
+	leftArm->setParent(ironMan, true);
+	leftArm->transform()->setLocalPosition(vec3f{ 2.6f, 0, -5.0f });
+	leftArm->transform()->rotate(vec3f{ 0, -21.0f, 3.2f });
+	leftArm->transform()->setLocalScale(0.01f);
+
+	// pagliosa
+	Reference<SceneObject> pagliosa = new SceneObject{ "Pagliosa", _scene };
+	pagliosa->setParent(ironMan, true);
+	pagliosa->transform()->setLocalPosition(vec3f{ 0.4f, 6.3f, -2.9f });
+	pagliosa->transform()->rotate(vec3f{ -90.0f, 170.0f, 0.0 });
+	pagliosa->transform()->setLocalScale(0.5f);
+
+	// core chest light
+	auto cc = new SceneObject{ "Core Chest Light", _scene };
+	cc->setParent(nullptr, true);
+	auto l2 = new Light();
+	cc->transform()->setLocalPosition(vec3f{ 0.2f,5.9f,0.9f });
+	cc->transform()->rotate(vec3f{ 91,1,-0.2f });
+	l2->setType(Light::Type::Spot);
+	l2->setOpeningAngle(9);
+	l2->setColor(Color::white);
+	cc->add(l2);
+
+	// spot light 1
+	auto spt1 = new SceneObject{ "Spot Light 1", _scene };
+	spt1->setParent(cc, true);
+	auto l3 = new Light();
+	spt1->add(l3);
+	l3->setType(Light::Type::Spot);
+	l3->setOpeningAngle(9);
+	l3->setColor(Color::white);
+	spt1->transform()->setLocalPosition(vec3f{ 0.0, 0.0, 0.0 });
+	spt1->transform()->setRotation(l2->transform()->rotation());
+
+	// spot light 2
+	auto spt2 = new SceneObject{ "Spot Light 2", _scene };
+	spt2->setParent(cc, true);
+	auto l4 = new Light();
+	spt2->add(l4);
+	l4->setType(Light::Type::Spot);
+	l4->setOpeningAngle(9);
+	l4->setColor(Color::white);
+	spt2->transform()->setLocalPosition(vec3f{ 0.0, 0.0, 0.0 });
+	spt2->transform()->setRotation(l2->transform()->rotation());
+
+	// spot light 3
+	auto spt3 = new SceneObject{ "Hand Light", _scene };
+	spt3->setParent(nullptr, true);
+	auto l5 = new Light();
+	spt3->add(l5);
+	spt3->transform()->setLocalPosition(vec3f{ -6.3f,7.5f,3.1f });
+	spt3->transform()->rotate(vec3f{ 91,1.5f,0 });
+	l5->setType(Light::Type::Spot);
+	l5->setOpeningAngle(7);
+	l5->setColor(Color::white);
+
+	// spot light 4
+	auto spt4 = new SceneObject{ "Spot Light 4", _scene };
+	spt4->setParent(spt3, true);
+	auto l6 = new Light();
+	spt4->add(l6);
+	l6->setType(Light::Type::Spot);
+	l6->setOpeningAngle(7);
+	l6->setColor(Color::white);
+	spt4->transform()->setLocalPosition(vec3f{ 0.0, 0.0, 0.0 });
+	spt4->transform()->setRotation(l5->transform()->rotation());
+
+	// spot light 5
+	auto spt5 = new SceneObject{ "Spot Light 5", _scene };
+	spt5->setParent(spt3, true);
+	auto l7 = new Light();
+	spt5->add(l7);
+	l7->setType(Light::Type::Spot);
+	l7->setOpeningAngle(7);
+	l7->setColor(Color::white);
+	spt5->transform()->setLocalPosition(vec3f{ 0.0, 0.0, 0.0 });
+	spt5->transform()->setRotation(l5->transform()->rotation());
+
+
+	Reference<SceneObject> thor = new SceneObject{ "Thor Hammer", _scene };
+	thor->setParent(nullptr, true);
+	thor->transform()->setLocalPosition(vec3f{ 1.7f, 5.4f, 2.2f });
+	spt4->transform()->rotate({ 0,70,0 });
+	thor->transform()->setLocalScale(0.3f);
+	//// directional light 0
+	//auto dl0 = new SceneObject{ "Directional Light 0", _scene };
+	//dl0->setParent(nullptr, true);
+	//auto l8 = new Light();
+	//dl0->transform()->setLocalPosition(vec3f{ 0.0, 0.0, 0.0 });
+	//dl0->transform()->rotate(vec3f{ 180,0,0 });
+	//l8->setType(Light::Type::Directional);
+	//l8->setColor(Color::white);
+	//dl0->add(l8);
+
+	auto& meshes = Assets::meshes();
+	if (!meshes.empty())
+	{
+		for (auto mit = meshes.begin(); mit != meshes.end(); ++mit)
+		{
+			if (std::strcmp(mit->first.c_str(), "bodyv1.obj") == 0)
+			{
+				Assets::loadMesh(mit);
+				auto p = makePrimitive(mit);
+				p->material.ambient.setRGB(51, 51, 51);
+				p->material.diffuse.setRGB(199, 88, 88);
+				p->material.spot.setRGB(255, 255, 0);
+				p->material.specular.setRGB(150, 150, 150);
+				body->add(p);
+			}
+			if (std::strcmp(mit->first.c_str(), "right+handv1.obj") == 0)
+			{
+				Assets::loadMesh(mit);
+				auto p = makePrimitive(mit);
+				p->material.ambient.setRGB(51, 51, 51);
+				p->material.diffuse.setRGB(199, 88, 88);
+				p->material.spot.setRGB(255, 255, 0);
+				p->material.specular.setRGB(150, 150, 150);
+				rightArm->add(p);
+			}
+			if (std::strcmp(mit->first.c_str(), "left+handv1.obj") == 0)
+			{
+				Assets::loadMesh(mit);
+				auto p = makePrimitive(mit);
+				p->material.ambient.setRGB(51, 51, 51);
+				p->material.diffuse.setRGB(206, 83, 83);
+				p->material.spot.setRGB(255, 255, 0);
+				p->material.specular.setRGB(150, 150, 150);
+				leftArm->add(p);
+			}
+			if (std::strcmp(mit->first.c_str(), "paglijon.obj") == 0)
+			{
+				Assets::loadMesh(mit);
+				auto p = makePrimitive(mit);
+				p->material.ambient.setRGB(51, 51, 51);
+				p->material.diffuse.setRGB(215, 185, 185);
+				p->material.spot.setRGB(0, 0, 0);
+				p->material.specular.setRGB(10, 10, 10);
+				pagliosa->add(p);
+			}
+			if (std::strcmp(mit->first.c_str(), "thor.obj") == 0)
+			{
+				Assets::loadMesh(mit);
+				auto p = makePrimitive(mit);
+				p->material.ambient.setRGB(51, 51, 51);
+				p->material.diffuse.setRGB(200, 200, 200);
+				p->material.spot.setRGB(0, 210, 255);
+				p->material.specular.setRGB(255,255,255);
+				thor->add(p);
+			}
+		}
+	}
+
+}
+
+inline void
+P4::initRayScene0()
+{
+	auto s = new Scene{ "Batpaulo" };
+	_rayTracer = new RayTracer{ *s };
+	_renderer = new GLRenderer{ *s };
+	_renderer->setProgram(&_programP);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_POLYGON_OFFSET_FILL);
+	glPolygonOffset(1.0f, 1.0f);
+	glEnable(GL_LINE_SMOOTH);
+	_programG.use();
+	_current = s;
+	_scene = s;
+
+	Reference<SceneObject> sceneObject;
+	std::string name{ "Camera " + std::to_string(_sceneObjectCounter++) };
+	sceneObject = new SceneObject{ name.c_str(), _scene };
+	sceneObject->setParent(nullptr, true);
+	auto c = new Camera;
+	sceneObject->add(c);
+	Camera::setCurrent(c);
+	c->transform()->translate(vec3f{ 0.9f,1.1f,2.4f });
+	c->transform()->rotate(vec3f{ 0,0,0 });
+
+	auto dk = new SceneObject{ "Batman Pagli", _scene }; //você sabe o que é dk ?
+	dk->setParent(nullptr, true);
+	dk->transform()->rotate(vec3f{ 0,26,0 });
+	dk->transform()->setLocalScale({ 0.01f,0.005f,0.01f });
+
+	auto pp = new SceneObject{ "Pagliosa", _scene };
+	pp->setParent(dk, true);
+	pp->transform()->setLocalScale(vec3f{ 4.f,4.f,4.f });
+	pp->transform()->setLocalPosition(vec3f{ 0.0f, 164.0f, 5.6f });
+	pp->transform()->rotate(vec3f{ -76.0f, 210.0f, 0.0f });
+
+
+	auto dk2 = new SceneObject{ "Batman", _scene }; //você sabe o que é dk ?
+	dk2->setParent(nullptr, true);
+	dk2->transform()->rotate(vec3f{ 0,-35,0 });
+	dk2->transform()->setLocalPosition(vec3f{ 1.9f, 0.0f, 0.0f });
+	dk2->transform()->setLocalScale(0.01f);
+
+	auto& meshes = Assets::meshes();
+	if (!meshes.empty())
+	{
+		for (auto mit = meshes.begin(); mit != meshes.end(); ++mit)
+		{
+			if (std::strcmp(mit->first.c_str(), "DarkKnight.obj") == 0)
+			{
+				Assets::loadMesh(mit);
+				auto p = makePrimitive(mit);
+				p->material.diffuse.setRGB(64,60,55);
+				p->material.spot.setRGB(255, 240,	0);
+				dk->add(p);
+				p = makePrimitive(mit);
+				p->material.diffuse.setRGB(64, 60, 55);
+				p->material.spot.setRGB(255, 240, 0);
+				dk2->add(p);
+			}
+			if (std::strcmp(mit->first.c_str(), "paglijon.obj") == 0)
+			{
+				Assets::loadMesh(mit);
+				auto pag = makePrimitive(mit);
+				pag->material.diffuse.setRGB(225, 185, 185);
+				pp->add(pag);
+			}
+		}
+	}
+
+	auto dl = new SceneObject{ "Directional Light", _scene };
+	dl->setParent(nullptr, true);
+	auto l = new Light;
+	dl->add(l);
+	l->sceneObject()->transform()->rotate(vec3f{ 40,0,0 });
+	
+}
+
+inline void
 P4::initRayScene1()
 {
 	auto s = new Scene{ "RayScene 1" };
@@ -1295,66 +1595,95 @@ P4::initRayScene2()
 	sceneObject->transform()->translate(vec3f{ 4.7f, 5.3f, 6 });
 	sceneObject->transform()->rotate(vec3f{ -35, 38, 6 });
 
-	auto o = new SceneObject{ "Directional Light", _scene };
+	auto o = new SceneObject{ "Spot Light", _scene };
 	o->setParent(nullptr, true);
-	o->transform()->rotate({ 40,0,0 });
-	o->add(new Light);
+	auto l = new Light;
+	o->add(l);
+	l->transform()->setLocalPosition({8.2f,6.3f,8.5f});
+	l->transform()->rotate({9,-42,-69});
+	l->setType(Light::Type::Spot);
+	l->setOpeningAngle(30);
 
 
 	o = new SceneObject{ "Ground", _scene };
 	o->setParent(nullptr, true);
-	o->transform()->setLocalScale(vec3f{ 15,0.001f,15 });
+	o->transform()->setLocalScale(vec3f{ 10,0.01f,10 });
 	auto p = makePrimitive(_defaultMeshes.find("Box"));
 	p->material.diffuse.setRGB(50, 50, 50);
 	o->add(p);
 	
-	name = { "Sphere " + std::to_string(_sceneObjectCounter++) };
-	o = new SceneObject{ name.c_str(), _scene };
+	auto numOfBalls = 3;
+	for (int i = -numOfBalls; i < numOfBalls; i++)
+	{
+		for (int j = -numOfBalls; j < numOfBalls; j++)
+		{
+			float x = 2.f * i + 1;
+			float z = 2.f * j + 1;
+			if (abs(x) != 1 || abs(z) != 1)
+			{
+				name = { "Sphere " + std::to_string(_sceneObjectCounter++) };
+				o = new SceneObject{ name.c_str(), _scene };
+				o->setParent(nullptr, true);
+				o->transform()->translate(vec3f{ x, 1, z });
+				p = makePrimitive(_defaultMeshes.find("Sphere"));
+				p->material.diffuse.setRGB(rand() % 265 + rand() % 100, rand() % 265 + rand() % 100, rand() % 265 + rand() % 100);
+				p->material.specular.setRGB(255, 255, 255);
+				o->add(p);
+			}
+		}
+	}
+
+	o = new SceneObject{ "Wall 1", _scene };
 	o->setParent(nullptr, true);
-	o->transform()->translate(vec3f{ 3, 1, 1 });
-	p = makePrimitive(_defaultMeshes.find("Sphere"));
-	p->material.diffuse.setRGB(255, 255, 0);
+	o->transform()->setLocalScale(vec3f{ 10,10,0.01f });
+	o->transform()->translate(vec3f{ 0, 0,-10});
+	p = makePrimitive(_defaultMeshes.find("Box"));
+	p->material.diffuse.setRGB(100, 100, 100);
+	p->material.specular.setRGB(255, 255, 255);
 	o->add(p);
 
-	name = { "Sphere " + std::to_string(_sceneObjectCounter++) };
-	o = new SceneObject{ name.c_str(), _scene };
+	o = new SceneObject{ "Wall 2", _scene };
 	o->setParent(nullptr, true);
-	o->transform()->translate(vec3f{ -3, 1, 1 });
-	p = makePrimitive(_defaultMeshes.find("Sphere"));
-	p->material.diffuse.setRGB(255, 0, 255);
+	o->transform()->setLocalScale(vec3f{ 0.01f,10,10});
+	o->transform()->translate(vec3f{ -10, 0,0 });
+	p = makePrimitive(_defaultMeshes.find("Box"));
+	p->material.diffuse.setRGB(100, 100, 100);
+	p->material.specular.setRGB(255, 255, 255);
 	o->add(p);
 
-	name = { "Sphere " + std::to_string(_sceneObjectCounter++) };
-	o = new SceneObject{ name.c_str(), _scene };
+	o = new SceneObject{ "Wall 3", _scene };
 	o->setParent(nullptr, true);
-	o->transform()->translate(vec3f{ 0, 1, 3 });
-	p = makePrimitive(_defaultMeshes.find("Sphere"));
-	p->material.diffuse.setRGB(255, 0, 0);
+	o->transform()->setLocalScale(vec3f{ 10,10,0.01f });
+	o->transform()->translate(vec3f{ 0, 0,10 });
+	p = makePrimitive(_defaultMeshes.find("Box"));
+	p->material.diffuse.setRGB(100, 100, 100);
+	p->material.specular.setRGB(255, 255, 255);
 	o->add(p);
 
-	name = { "Sphere " + std::to_string(_sceneObjectCounter++) };
-	o = new SceneObject{ name.c_str(), _scene };
+	o = new SceneObject{ "Wall 4", _scene };
 	o->setParent(nullptr, true);
-	o->transform()->translate(vec3f{ 3, 1, 3 });
-	p = makePrimitive(_defaultMeshes.find("Sphere"));
-	p->material.diffuse.setRGB(0, 255, 0);
+	o->transform()->setLocalScale(vec3f{ 0.01f,10,10 });
+	o->transform()->translate(vec3f{ 10, 0,0 });
+	p = makePrimitive(_defaultMeshes.find("Box"));
+	p->material.diffuse.setRGB(100, 100, 100);
+	p->material.specular.setRGB(255, 255, 255);
 	o->add(p);
 
-	name = { "Sphere " + std::to_string(_sceneObjectCounter++) };
-	o = new SceneObject{ name.c_str(), _scene };
+	o = new SceneObject{ "Wall 4", _scene };
 	o->setParent(nullptr, true);
-	o->transform()->translate(vec3f{ -3, 1, 3 });
-	p = makePrimitive(_defaultMeshes.find("Sphere"));
-	p->material.diffuse.setRGB(0, 0, 255);
+	o->transform()->setLocalScale(vec3f{ 10,0.01f,10 });
+	o->transform()->translate(vec3f{ 0, 10,0 });
+	p = makePrimitive(_defaultMeshes.find("Box"));
+	p->material.diffuse.setRGB(100, 100, 100);
+	p->material.specular.setRGB(255, 255, 255);
 	o->add(p);
 
-	
 	o = new SceneObject{ "Mirror Sphere", _scene };
 	o->setParent(nullptr, true);
 	o->transform()->setLocalScale(vec3f{ 2,2,2 });
 	o->transform()->translate(vec3f{ 0, 2, 0 });
 	p = makePrimitive(_defaultMeshes.find("Sphere"));
-	p->material.diffuse.setRGB(255, 255, 255);
+	p->material.diffuse.setRGB(100, 100, 100);
 	p->material.specular.setRGB(255, 255, 255);
 	o->add(p);
 

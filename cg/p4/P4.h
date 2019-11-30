@@ -116,9 +116,12 @@ private:
 	void previewWindow(Camera* c);
 	void initScene2();
 	void initScene3();
+	void initRayScene();
+	void initRayScene0();
 	void initRayScene1();
 	void initRayScene2();
-	void initRayScene3();
+	void slenderScene();
+	//void initRayScene3();
 	void preview(int, int, int, int);
   void inspectPrimitive(Primitive&);
   void inspectShape(Primitive&);
