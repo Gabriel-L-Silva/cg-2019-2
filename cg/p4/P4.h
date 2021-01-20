@@ -13,6 +13,24 @@
 #include "graphics/GLImage.h"
 #include <vector>
 
+#include "regression/common/far_utils.h"
+#include "opensubdiv/far/primvarRefiner.h"
+#include "opensubdiv/far/topologyDescriptor.h"
+#include "opensubdiv/osd/cpuEvaluator.h"
+#include "opensubdiv/osd/cpuGLVertexBuffer.h"
+#include "OsdVertex.h"
+#include "OsdPrimitive.h"
+#include "OsdLight.h"
+#include <opensubdiv/osd/glslPatchShaderSource.h>
+#include "examples/glViewer/init_shapes.h"
+#include "examples/common/glShaderCache.h"
+#include "examples/common/glUtils.h"
+#include "examples/common/shaderCache.h"
+#include "examples/common/objAnim.h"
+#include "examples/common/glControlMeshDisplay.h"
+#include "examples/common/stopwatch.h"
+#include "examples/common/simple_math.h"
+
 using namespace cg;
 
 class P4: public GLWindow
@@ -25,7 +43,7 @@ public:
   {
     // do nothing
   }
-
+  
   /// Initialize the app.
   void initialize() override;
 
@@ -44,7 +62,6 @@ public:
 	void addSphereCurrent();
 	void addLightCurrent(Light::Type);
 	void focus();
-
 private:
   enum ViewMode
   {
@@ -120,20 +137,27 @@ private:
 	void initRayScene0();
 	void initRayScene1();
 	void initRayScene2();
-	void slenderScene();
+  void initOsdScene1();
+  void initOsdScene2();
 	//void initRayScene3();
 	void preview(int, int, int, int);
   void inspectPrimitive(Primitive&);
+  void inspectPrimitive(OsdPrimitive&);
   void inspectShape(Primitive&);
+  void inspectShape(OsdPrimitive&);
   void inspectMaterial(Material&);
   void inspectLight(Light&);
   void inspectCamera(Camera&);
+  void inspectOsdParam(OsdPrimitive&);
   void addComponentButton(SceneObject&);
-
+  void rebuildOsdMesh();
+  void updateUniformBlocks();
+  OsdLight::Lighting loadOsdLights();
+  void drawPrimitive(OsdPrimitive&);
   void drawPrimitive(Primitive&);
   void drawLight(Light&);
   void drawCamera(Camera&);
-
+  void drawMesh(GLMesh*,GLuint);
   bool windowResizeEvent(int, int) override;
   bool keyInputEvent(int, int, int) override;
   bool scrollEvent(double, double) override;

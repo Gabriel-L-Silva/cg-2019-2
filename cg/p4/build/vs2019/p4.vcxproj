@@ -34,6 +34,9 @@
     <ClInclude Include="..\..\Intersection.h" />
     <ClInclude Include="..\..\Light.h" />
     <ClInclude Include="..\..\Material.h" />
+    <ClInclude Include="..\..\OsdLight.h" />
+    <ClInclude Include="..\..\OsdPrimitive.h" />
+    <ClInclude Include="..\..\OsdVertex.h" />
     <ClInclude Include="..\..\P4.h" />
     <ClInclude Include="..\..\Primitive.h" />
     <ClInclude Include="..\..\RayTracer.h" />
@@ -45,6 +48,7 @@
     <ClInclude Include="..\..\Transform.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\assets\shaders\osd.shader" />
     <None Include="..\..\assets\shaders\p3.fs" />
     <None Include="..\..\assets\shaders\p3.vs" />
     <None Include="..\..\assets\shaders\p3F.frag" />
@@ -100,12 +104,12 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
-      <AdditionalIncludeDirectories>.;../../../common/externals/include;../../../common/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../../../../../OpenSubdiv/glLoader;../../../../../../OpenSubdiv;.;../../../common/externals/include;../../../common/include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>../../../common/lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>cgD.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>../../../../../../OpenSubdiv/build/regression/common/regression_far_utils_obj.dir/Debug;../../../common/lib;../../../../../../OpenSubdiv/build/examples/common/examples_common_gl_obj.dir/Debug/;../../../../../../OpenSubdiv/build/lib/Debug/;../../../../../../OpenSubdiv/build/regression/common/regression_common_obj.dir/Debug/</AdditionalLibraryDirectories>
+      <AdditionalDependencies>cgD.lib;opengl32.lib;%(AdditionalDependencies);osdCPU.lib;osdGPU.lib;examples_common_gl_obj.lib;regression_common_obj.lib;regression_far_utils_obj.lib</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>
       </IgnoreAllDefaultLibraries>
       <IgnoreSpecificDefaultLibraries>MSVCRT</IgnoreSpecificDefaultLibraries>
@@ -121,14 +125,14 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
-      <AdditionalIncludeDirectories>.;../../../common/externals/include;../../../common/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../../../../../OpenSubdiv/glLoader;../../../../../../OpenSubdiv;.;../../../common/externals/include;../../../common/include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>../../../common/lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>cg.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>../../../../../../OpenSubdiv/build/regression/common/regression_far_utils_obj.dir/Debug;../../../common/lib;../../../../../../OpenSubdiv/build/examples/common/examples_common_gl_obj.dir/Debug/;../../../../../../OpenSubdiv/build/lib/Debug/;../../../../../../OpenSubdiv/build/regression/common/regression_common_obj.dir/Debug/</AdditionalLibraryDirectories>
+      <AdditionalDependencies>cg.lib;opengl32.lib;%(AdditionalDependencies);osdCPU.lib;osdGPU.lib;examples_common_gl_obj.lib;regression_common_obj.lib;regression_far_utils_obj.lib</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>
       </IgnoreAllDefaultLibraries>
       <IgnoreSpecificDefaultLibraries>

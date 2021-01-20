@@ -1,6 +1,346 @@
 #include "geometry/MeshSweeper.h"
 #include "P4.h"
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <sstream>
 
+enum KernelType {
+	kCPU = 0,
+	kOPENMP = 1,
+	kTBB = 2,
+	kCUDA = 3,
+	kCL = 4,
+	kGLSL = 5,
+	kGLSLCompute = 6
+};
+
+enum DisplayStyle {
+	kDisplayStyleWire,
+	kDisplayStyleShaded,
+	kDisplayStyleWireOnShaded
+};
+
+enum ShadingMode {
+	kShadingMaterial,
+	kShadingVaryingColor,
+	kShadingInterleavedVaryingColor,
+	kShadingFaceVaryingColor,
+	kShadingPatchType,
+	kShadingPatchDepth,
+	kShadingPatchCoord,
+	kShadingNormal
+};
+
+enum EndCap {
+	kEndCapBilinearBasis = 0,
+	kEndCapBSplineBasis,
+	kEndCapGregoryBasis,
+	kEndCapLegacyGregory
+};
+
+enum HudCheckBox {
+	kHUD_CB_DISPLAY_CONTROL_MESH_EDGES,
+	kHUD_CB_DISPLAY_CONTROL_MESH_VERTS,
+	kHUD_CB_ANIMATE_VERTICES,
+	kHUD_CB_DISPLAY_PATCH_COLOR,
+	kHUD_CB_VIEW_LOD,
+	kHUD_CB_FRACTIONAL_SPACING,
+	kHUD_CB_PATCH_CULL,
+	kHUD_CB_FREEZE,
+	kHUD_CB_DISPLAY_PATCH_COUNTS,
+	kHUD_CB_ADAPTIVE,
+	kHUD_CB_SMOOTH_CORNER_PATCH,
+	kHUD_CB_SINGLE_CREASE_PATCH,
+	kHUD_CB_INF_SHARP_PATCH
+};
+
+OpenSubdiv::Osd::GLMeshInterface* g_mesh = NULL;
+
+int g_currentShape = 0;
+
+ObjAnim const* g_objAnim = 0;
+
+int   g_frame = 0,
+g_repeatCount = 0;
+float g_animTime = 0;
+
+// GUI variables
+int   g_freeze = 0,
+g_shadingMode = kShadingMaterial,
+g_displayStyle = kDisplayStyleWireOnShaded;
+bool g_adaptive = 1,g_dispVert,g_dispEdge;
+int
+g_endCap = kEndCapBSplineBasis,
+g_smoothCornerPatch = 1,
+g_singleCreasePatch = 1,
+g_infSharpPatch = 1,
+g_mbutton[3] = { 0, 0, 0 },
+g_running = 1;
+
+int   g_screenSpaceTess = 0,
+g_fractionalSpacing = 0,
+g_patchCull = 0,
+g_displayPatchCounts = 0;
+
+float g_rotate[2] = { 0, 0 },
+g_dolly = 5,
+g_pan[2] = { 0, 0 },
+g_center[3] = { 0, 0, 0 },
+g_size = 0;
+
+bool  g_yup = false;
+
+int   g_prev_x = 0,
+g_prev_y = 0;
+
+int   g_width = 1024,
+g_height = 1024;
+
+GLControlMeshDisplay g_controlMeshDisplay;
+
+// performance
+float g_cpuTime = 0;
+float g_gpuTime = 0;
+Stopwatch g_fpsTimer;
+
+// geometry
+std::vector<float> g_orgPositions;
+
+int g_level = 2;
+int g_tessLevel = 1;
+int g_tessLevelMin = 1;
+int g_kernel = kCPU;
+float g_moveScale = 0.0f;
+
+GLuint g_queries[2] = { 0, 0 };
+
+GLuint g_transformUB = 0,
+g_transformBinding = 0,
+g_tessellationUB = 0,
+g_tessellationBinding = 1,
+g_lightingUB = 0,
+g_lightingBinding = 2,
+g_fvarArrayDataUB = 0,
+g_fvarArrayDataBinding = 3;
+
+struct TransformOsd {
+	float ModelViewMatrix[16];
+	float ProjectionMatrix[16];
+	float ModelViewProjectionMatrix[16];
+	float ModelViewInverseMatrix[16];
+} g_transformData;
+
+GLuint g_vao = 0;
+int numLights = 0;
+
+// XXX:
+// this struct meant to be used as a stopgap entity until we fully implement
+// face-varying stuffs into patch table.
+//
+struct FVarData
+{
+	FVarData() :
+		textureBuffer(0), textureParamBuffer(0) {
+	}
+	~FVarData() {
+		Release();
+	}
+	void Release() {
+		if (textureBuffer)
+			glDeleteTextures(1, &textureBuffer);
+		textureBuffer = 0;
+		if (textureParamBuffer)
+			glDeleteTextures(1, &textureParamBuffer);
+		textureParamBuffer = 0;
+	}
+	void Create(OpenSubdiv::Far::PatchTable const* patchTable,
+		int fvarWidth, std::vector<float> const& fvarSrcData) {
+
+		using namespace OpenSubdiv;
+
+		Release();
+		Far::ConstIndexArray indices = patchTable->GetFVarValues();
+
+		// expand fvardata to per-patch array
+		std::vector<float> data;
+		data.reserve(indices.size() * fvarWidth);
+
+		for (int fvert = 0; fvert < (int)indices.size(); ++fvert) {
+			int index = indices[fvert] * fvarWidth;
+			for (int i = 0; i < fvarWidth; ++i) {
+				data.push_back(fvarSrcData[index++]);
+			}
+		}
+		GLuint buffer;
+		glGenBuffers(1, &buffer);
+		glBindBuffer(GL_ARRAY_BUFFER, buffer);
+		glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(float),
+			&data[0], GL_STATIC_DRAW);
+
+		glGenTextures(1, &textureBuffer);
+		glBindTexture(GL_TEXTURE_BUFFER, textureBuffer);
+		glTexBuffer(GL_TEXTURE_BUFFER, GL_R32F, buffer);
+		glBindTexture(GL_TEXTURE_BUFFER, 0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+		glDeleteBuffers(1, &buffer);
+
+		Far::ConstPatchParamArray fvarParam = patchTable->GetFVarPatchParams();
+		glGenBuffers(1, &buffer);
+		glBindBuffer(GL_ARRAY_BUFFER, buffer);
+		glBufferData(GL_ARRAY_BUFFER, fvarParam.size() * sizeof(Far::PatchParam),
+			&fvarParam[0], GL_STATIC_DRAW);
+
+		glGenTextures(1, &textureParamBuffer);
+		glBindTexture(GL_TEXTURE_BUFFER, textureParamBuffer);
+		glTexBuffer(GL_TEXTURE_BUFFER, GL_RG32I, buffer);
+		glBindTexture(GL_TEXTURE_BUFFER, 0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+		glDeleteBuffers(1, &buffer);
+	}
+	GLuint textureBuffer, textureParamBuffer;
+} g_fvarData;
+
+//------------------------------------------------------------------------------
+static void
+updateGeom() {
+
+	std::vector<float> vertex, varying;
+
+	int nverts = 0;
+	int stride = (g_shadingMode == kShadingInterleavedVaryingColor ? 7 : 3);
+
+	if (g_objAnim && g_currentShape == 0) {
+
+		nverts = g_objAnim->GetShape()->GetNumVertices(),
+
+			vertex.resize(nverts * stride);
+
+		if (g_shadingMode == kShadingVaryingColor) {
+			varying.resize(nverts * 4);
+		}
+
+		g_objAnim->InterpolatePositions(g_animTime, &vertex[0], stride);
+
+		if (g_shadingMode == kShadingVaryingColor ||
+			g_shadingMode == kShadingInterleavedVaryingColor) {
+
+			const float* p = &g_objAnim->GetShape()->verts[0];
+			for (int i = 0; i < nverts; ++i) {
+				if (g_shadingMode == kShadingInterleavedVaryingColor) {
+					int ofs = i * stride;
+					vertex[ofs + 0] = p[1];
+					vertex[ofs + 1] = p[2];
+					vertex[ofs + 2] = p[0];
+					vertex[ofs + 3] = 0.0f;
+					p += 3;
+				}
+				if (g_shadingMode == kShadingVaryingColor) {
+					varying.push_back(p[2]);
+					varying.push_back(p[1]);
+					varying.push_back(p[0]);
+					varying.push_back(1);
+					p += 3;
+				}
+			}
+		}
+	}
+	else {
+
+		nverts = (int)g_orgPositions.size() / 3;
+
+		vertex.reserve(nverts * stride);
+
+		if (g_shadingMode == kShadingVaryingColor) {
+			varying.reserve(nverts * 4);
+		}
+
+		const float* p = &g_orgPositions[0];
+		float r = sin(g_frame * 0.001f) * g_moveScale;
+		for (int i = 0; i < nverts; ++i) {
+			float ct = cos(p[2] * r);
+			float st = sin(p[2] * r);
+			vertex.push_back(p[0] * ct + p[1] * st);
+			vertex.push_back(-p[0] * st + p[1] * ct);
+			vertex.push_back(p[2]);
+			if (g_shadingMode == kShadingInterleavedVaryingColor) {
+				vertex.push_back(p[1]);
+				vertex.push_back(p[2]);
+				vertex.push_back(p[0]);
+				vertex.push_back(1.0f);
+			}
+			else if (g_shadingMode == kShadingVaryingColor) {
+				varying.push_back(p[2]);
+				varying.push_back(p[1]);
+				varying.push_back(p[0]);
+				varying.push_back(1);
+			}
+			p += 3;
+		}
+	}
+
+	g_mesh->UpdateVertexBuffer(&vertex[0], 0, nverts);
+
+	if (g_shadingMode == kShadingVaryingColor)
+		g_mesh->UpdateVaryingBuffer(&varying[0], 0, nverts);
+	
+
+	g_mesh->Refine();
+	
+
+	g_mesh->Synchronize();
+
+}
+
+void APIENTRY
+MessageCallback(GLenum source,
+	GLenum type,
+	GLuint id,
+	GLenum severity,
+	GLsizei length,
+	const GLchar* message,
+	const void* userParam)
+{
+	// ignore non-significant error/warning codes
+	if (id == 131169 || id == 131185 || id == 131218 || id == 131204) return;
+
+	std::cout << "---------------" << std::endl;
+	std::cout << "Debug message (" << id << "): " << message << std::endl;
+
+	switch (source)
+	{
+	case GL_DEBUG_SOURCE_API:             std::cout << "Source: API"; break;
+	case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   std::cout << "Source: Window System"; break;
+	case GL_DEBUG_SOURCE_SHADER_COMPILER: std::cout << "Source: Shader Compiler"; break;
+	case GL_DEBUG_SOURCE_THIRD_PARTY:     std::cout << "Source: Third Party"; break;
+	case GL_DEBUG_SOURCE_APPLICATION:     std::cout << "Source: Application"; break;
+	case GL_DEBUG_SOURCE_OTHER:           std::cout << "Source: Other"; break;
+	} std::cout << std::endl;
+
+	switch (type)
+	{
+	case GL_DEBUG_TYPE_ERROR:               std::cout << "Type: Error"; break;
+	case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: std::cout << "Type: Deprecated Behaviour"; break;
+	case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  std::cout << "Type: Undefined Behaviour"; break;
+	case GL_DEBUG_TYPE_PORTABILITY:         std::cout << "Type: Portability"; break;
+	case GL_DEBUG_TYPE_PERFORMANCE:         std::cout << "Type: Performance"; break;
+	case GL_DEBUG_TYPE_MARKER:              std::cout << "Type: Marker"; break;
+	case GL_DEBUG_TYPE_PUSH_GROUP:          std::cout << "Type: Push Group"; break;
+	case GL_DEBUG_TYPE_POP_GROUP:           std::cout << "Type: Pop Group"; break;
+	case GL_DEBUG_TYPE_OTHER:               std::cout << "Type: Other"; break;
+	} std::cout << std::endl;
+
+	switch (severity)
+	{
+	case GL_DEBUG_SEVERITY_HIGH:         std::cout << "Severity: high"; break;
+	case GL_DEBUG_SEVERITY_MEDIUM:       std::cout << "Severity: medium"; break;
+	case GL_DEBUG_SEVERITY_LOW:          std::cout << "Severity: low"; break;
+	case GL_DEBUG_SEVERITY_NOTIFICATION: std::cout << "Severity: notification"; break;
+	} std::cout << std::endl;
+	std::cout << std::endl;
+}
 MeshMap P4::_defaultMeshes;
 
 inline auto
@@ -91,7 +431,8 @@ P4::initialize()
 	//Application::loadShaders(_program, "shaders/p3.vs", "shaders/p3.fs");
 	Application::loadShaders(_programG, "shaders/p3G.vert", "shaders/p3G.frag");
 	Application::loadShaders(_programP, "shaders/p3F.vert", "shaders/p3F.frag");
-  Assets::initialize();
+	Assets::initialize();
+	initShapes();
   buildDefaultMeshes();
   buildScene();
   _renderer = new GLRenderer{*_scene};
@@ -101,8 +442,18 @@ P4::initialize()
   glEnable(GL_POLYGON_OFFSET_FILL);
   glPolygonOffset(1.0f, 1.0f);
   glEnable(GL_LINE_SMOOTH);
+	//init gl
+	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+	glCullFace(GL_BACK);
+	glEnable(GL_CULL_FACE);
+	// During init, enable debug output
+	glEnable(GL_DEBUG_OUTPUT);
+	glDebugMessageCallback(MessageCallback, 0);
+	glGenQueries(2, g_queries);
+	glGenVertexArrays(1, &g_vao);
   _programG.use();
 }
+
 void
 P4::dragDrop(SceneNode* sceneObject)
 {
@@ -280,6 +631,9 @@ inline void
 P4::hierarchyWindow()
 {
 	ImGui::Begin("Hierarchy");
+	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
+		1000.0 / (ImGui::GetIO().Framerate), (ImGui::GetIO().Framerate));
+	ImGui::Separator();
 	if (ImGui::Button("Create###object"))
 		ImGui::OpenPopup("CreateObjectPopup");
 	if (ImGui::BeginPopup("CreateObjectPopup"))
@@ -465,6 +819,37 @@ P4::inspectShape(Primitive& primitive)
 }
 
 inline void
+P4::inspectShape(OsdPrimitive& primitive)
+{
+	char buffer[16];
+
+	snprintf(buffer, 16, "%s", primitive.meshName());
+	ImGui::InputText("Mesh", buffer, 16, ImGuiInputTextFlags_ReadOnly);
+	ImGui::SameLine();
+	if (ImGui::Button("...###PrimitiveMesh"))
+		ImGui::OpenPopup("PrimitiveMeshPopup");
+	if (ImGui::BeginPopup("PrimitiveMeshPopup"))
+	{
+		auto& meshes = g_defaultShapes;
+
+		if (!meshes.empty())
+		{
+			int i = 0;
+			for (auto mit = meshes.begin(); mit != meshes.end(); ++mit, i++)
+				if (ImGui::Selectable(mit->name.c_str()))
+				{
+					//rebuiild mesh
+					g_currentShape = i;
+					rebuildOsdMesh();
+				}
+			ImGui::Separator();
+		}
+		ImGui::EndPopup();
+	}
+}
+
+
+inline void
 P4::inspectMaterial(Material& material)
 {
   ImGui::ColorEdit3("Ambient", material.ambient);
@@ -474,15 +859,51 @@ P4::inspectMaterial(Material& material)
   ImGui::ColorEdit3("Specular", material.specular);
 }
 
+const char* items[] = {"0","1","2","3","4","5","6","7","8","9","10"};
+static const char* current_item = items[g_level];
+inline void
+P4::inspectOsdParam(OsdPrimitive& primitive)
+{
+	auto prev = current_item;
+	g_dispEdge = g_controlMeshDisplay.GetEdgesDisplay();
+	g_dispVert = g_controlMeshDisplay.GetVerticesDisplay();
+	if (ImGui::Checkbox("Control Edges", &g_dispEdge))
+		g_controlMeshDisplay.SetEdgesDisplay(g_dispEdge);
+	ImGui::SameLine();
+	if (ImGui::Checkbox("Control Vert", &g_dispVert))
+		g_controlMeshDisplay.SetVerticesDisplay(g_dispVert);
+	ImGui::SameLine(); 
+	if (ImGui::Checkbox("Adaptative", &g_adaptive))
+		rebuildOsdMesh();
+	if (ImGui::BeginCombo("Level", current_item))
+	{
+		for (int i = 0; i < 11; i++)
+		{
+			bool is_selected = (current_item == items[i]);
+			if (ImGui::Selectable(items[i], is_selected))
+				current_item = items[i];
+			if (is_selected)
+				ImGui::SetItemDefaultFocus();
+		}
+		ImGui::EndCombo();
+		if (strcmp(current_item, prev) != 0) {
+			g_level = atoi(current_item);
+			rebuildOsdMesh();
+		}
+	}
+}
+
 inline void
 P4::inspectPrimitive(Primitive& primitive)
 {
-  //const auto flag = ImGuiTreeNodeFlags_NoTreePushOnOpen;
+  inspectShape(primitive);
+  inspectMaterial(primitive.material);
+}
 
-  //if (ImGui::TreeNodeEx("Shape", flag))
-    inspectShape(primitive);
-  //if (ImGui::TreeNodeEx("Material", flag))
-    inspectMaterial(primitive.material);
+void P4::inspectPrimitive(OsdPrimitive& primitive)
+{
+	inspectShape(primitive);
+	inspectOsdParam(primitive);
 }
 
 inline void
@@ -704,6 +1125,21 @@ P4::sceneObjectGui()
 			}
 		}
 		else if (auto p = dynamic_cast<Primitive*>((Component*)(*it)))//Se for primitive
+		{
+			auto notDelete{ true };
+			auto open = ImGui::CollapsingHeader(p->typeName(), &notDelete);
+
+			if (!notDelete)
+			{
+				// TODONE: delete primitive
+				object->remove(p);
+				it = object->getComponentIter();
+				end = object->getComponentEnd();
+			}
+			else if (open)
+				inspectPrimitive(*p);
+		}
+		else if (auto p = dynamic_cast<OsdPrimitive*>((Component*)(*it)))//Se for OsdPrimitive
 		{
 			auto notDelete{ true };
 			auto open = ImGui::CollapsingHeader(p->typeName(), &notDelete);
@@ -1020,10 +1456,374 @@ P4::mainMenu()
 			ImGui::EndMenu();
 			
 		}
-
+		if (ImGui::BeginMenu("OSD DEMO"))
+		{
+			if (ImGui::MenuItem("Scene 1"))
+			{
+				//TODO call osd scene 1
+				_sceneObjectCounter = 0;
+				initOsdScene1();
+				_viewMode = Editor;
+			}
+			if (ImGui::MenuItem("Scene 2"))
+			{
+				//TODO call osd scene 2
+				_sceneObjectCounter = 0;
+				initOsdScene2();
+				_viewMode = Editor;
+			}
+			ImGui::EndMenu();
+		}
     ImGui::EndMainMenuBar();
   }
 }
+
+inline void
+P4::initOsdScene1()
+{
+	//Initialize Osd and refine mesh
+	{
+		// Cube geometry from catmark_cube.h
+		static float g_verts[8][3] = { { -0.5f, -0.5f,  0.5f },
+																	{  0.5f, -0.5f,  0.5f },
+																	{ -0.5f,  0.5f,  0.5f },
+																	{  0.5f,  0.5f,  0.5f },
+																	{ -0.5f,  0.5f, -0.5f },
+																	{  0.5f,  0.5f, -0.5f },
+																	{ -0.5f, -0.5f, -0.5f },
+																	{  0.5f, -0.5f, -0.5f } };
+
+		static int g_nverts = 8,
+			g_nfaces = 6;
+
+		static int g_vertsperface[6] = { 4, 4, 4, 4, 4, 4 };
+
+		static int g_vertIndices[24] = { 0, 1, 3, 2,
+																		 2, 3, 5, 4,
+																		 4, 5, 7, 6,
+																		 6, 7, 1, 0,
+																		 1, 7, 5, 3,
+																		 6, 0, 2, 4 };
+		using namespace OpenSubdiv;
+		// Populate a topology descriptor with our raw data
+
+		typedef Far::TopologyDescriptor Descriptor;
+
+		Sdc::SchemeType type = OpenSubdiv::Sdc::SCHEME_CATMARK;
+
+		Sdc::Options options;
+		options.SetVtxBoundaryInterpolation(Sdc::Options::VTX_BOUNDARY_EDGE_ONLY);
+
+		Descriptor desc;
+		desc.numVertices = g_nverts;
+		desc.numFaces = g_nfaces;
+		desc.numVertsPerFace = g_vertsperface;
+		desc.vertIndicesPerFace = g_vertIndices;
+
+
+		// Instantiate a Far::TopologyRefiner from the descriptor
+		Far::TopologyRefiner* refiner = Far::TopologyRefinerFactory<Descriptor>::Create(desc,
+			Far::TopologyRefinerFactory<Descriptor>::Options(type, options));
+
+		// Uniformly refine the topology up to 'g_level'
+		refiner->RefineUniform(Far::TopologyRefiner::UniformOptions(g_level));
+
+
+		// Allocate a buffer for vertex primvar data. The buffer length is set to
+		// be the sum of all children vertices up to the highest level of refinement.
+		std::vector<OsdVertex> vbuffer(refiner->GetNumVerticesTotal());
+		OsdVertex* verts = &vbuffer[0];
+
+
+		// Initialize coarse mesh positions
+		int nCoarseVerts = g_nverts;
+		for (int i = 0; i < nCoarseVerts; ++i) {
+			verts[i].SetPosition(g_verts[i][0], g_verts[i][1], g_verts[i][2]);
+		}
+
+
+		// Interpolate vertex primvar data
+		Far::PrimvarRefiner primvarRefiner(*refiner);
+
+		OsdVertex* src = verts;
+		for (int level = 1; level <= g_level; ++level) {
+			OsdVertex* dst = src + refiner->GetLevel(level - 1).GetNumVertices();
+			primvarRefiner.Interpolate(level, src, dst);
+			src = dst;
+		}
+
+
+		{ // Output OBJ for max level refined -----------
+
+			std::ofstream file;
+			std::stringstream path;
+			path << "../../assets/meshes/testmeshLevel" << g_level << ".obj";
+			file.open(path.str());
+			Far::TopologyLevel const& refLastLevel = refiner->GetLevel(g_level);
+
+			int nverts = refLastLevel.GetNumVertices();
+			int nfaces = refLastLevel.GetNumFaces();
+
+			// Print vertex positions
+			int firstOfLastVerts = refiner->GetNumVerticesTotal() - nverts;
+
+			for (int vert = 0; vert < nverts; ++vert) {
+				float const* pos = verts[firstOfLastVerts + vert].GetPosition();
+				printf("v %f %f %f\n", pos[0], pos[1], pos[2]);
+				file << "v " << pos[0] << " " << pos[1] << " " << pos[2] << "\n";
+			}
+
+			// Print faces
+			for (int face = 0; face < nfaces; ++face) {
+
+				Far::ConstIndexArray fverts = refLastLevel.GetFaceVertices(face);
+
+				// all refined Catmark faces should be quads
+				assert(fverts.size() == 4);
+
+				printf("f ");
+				file << "f ";
+				for (int vert = 0; vert < fverts.size(); ++vert) {
+					printf("%d ", fverts[vert] + 1); // OBJ uses 1-based arrays...
+					file << fverts[vert] + 1 << " ";
+				}
+				printf("\n");
+				file << "\n";
+			}
+			file.close();
+
+		}//end namespace opensubdiv
+	}
+	Assets::initialize();
+
+	auto s = new Scene{ "Osd ToyExample" };
+	_rayTracer = new RayTracer{ *s };
+	_renderer = new GLRenderer{ *s };
+	_renderer->setProgram(&_programP);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_POLYGON_OFFSET_FILL);
+	glPolygonOffset(1.0f, 1.0f);
+	glEnable(GL_LINE_SMOOTH);
+	_programG.use();
+	_current = s;
+	_scene = s;
+
+	// camera 0
+	Reference<SceneObject> sceneObject;
+	std::string name{ "Camera " + std::to_string(_sceneObjectCounter++) };
+	sceneObject = new SceneObject{ name.c_str(), _scene };
+	sceneObject->setParent(nullptr, true);
+	auto c = new Camera;
+	sceneObject->add(c);
+	Camera::setCurrent(c);
+	c->transform()->translate(vec3f{ -0.8f,1.3f,1.4f });
+	c->transform()->rotate(vec3f{ -24,-31,0 });
+
+	// directional light
+	auto dl = new SceneObject{ "Directional Light", _scene };
+	dl->setParent(nullptr, true);
+	auto l1 = new Light();
+	dl->transform()->setLocalPosition(vec3f{ 0,10,0 });
+	dl->transform()->rotate(vec3f{ 50,30,0 });
+	l1->setType(Light::Type::Directional);
+	l1->setColor(Color::white);
+	dl->add(l1);
+
+	Reference<SceneObject> OsdMesh = new SceneObject{ "Sphere", _scene };
+	OsdMesh->setParent(nullptr, true);
+
+	auto& meshes = Assets::meshes();
+	if (!meshes.empty())
+	{
+		for (auto mit = meshes.begin(); mit != meshes.end(); ++mit)
+		{
+			if (std::strcmp(mit->first.c_str(), "testmeshLevel1.obj") == 0)
+			{
+				Assets::loadMesh(mit);
+				auto p = makePrimitive(mit);
+				p->material.ambient.setRGB(51, 51, 51);
+				p->material.diffuse.setRGB(199, 88, 88);
+				p->material.spot.setRGB(255, 255, 0);
+				p->material.specular.setRGB(150, 150, 150);
+				OsdMesh->add(p);
+			}
+		}
+	}
+}
+
+inline void
+P4::rebuildOsdMesh()
+{
+	using namespace OpenSubdiv;
+	ShapeDesc const& shapeDesc = g_defaultShapes[g_currentShape];
+	auto it = _scene->getPrimitiveIter();
+	auto end = _scene->getPrimitiveEnd();
+	// itera nos primitivos
+	for (; it != end; it++)
+	
+		 if (auto p = dynamic_cast<OsdPrimitive*>((Component*)*it))
+			 p->setMeshName(g_defaultShapes[g_currentShape].name.c_str());
+
+	int level = g_level;
+	int kernel = g_kernel;
+	bool doAnim = g_objAnim && g_currentShape == 0;
+
+	Shape const* shape = 0;
+	if (doAnim) {
+		shape = g_objAnim->GetShape();
+	}
+	else {
+		shape = Shape::parseObj(shapeDesc);
+	}
+
+	// create Far mesh (topology)
+	Sdc::SchemeType sdctype = GetSdcType(*shape);
+	Sdc::Options sdcoptions = GetSdcOptions(*shape);
+
+	Far::TopologyRefiner* refiner =
+		Far::TopologyRefinerFactory<Shape>::Create(*shape,
+			Far::TopologyRefinerFactory<Shape>::Options(sdctype, sdcoptions));
+
+	g_orgPositions = shape->verts;
+
+	Osd::MeshBitset bits;
+	bits.set(Osd::MeshAdaptive, g_adaptive != 0);
+	bits.set(Osd::MeshUseSmoothCornerPatch, g_smoothCornerPatch != 0);
+	bits.set(Osd::MeshUseSingleCreasePatch, g_singleCreasePatch != 0);
+	bits.set(Osd::MeshUseInfSharpPatch, g_infSharpPatch != 0);
+	bits.set(Osd::MeshInterleaveVarying, g_shadingMode == kShadingInterleavedVaryingColor);
+	bits.set(Osd::MeshFVarData, g_shadingMode == kShadingFaceVaryingColor);
+	bits.set(Osd::MeshEndCapBilinearBasis, g_endCap == kEndCapBilinearBasis);
+	bits.set(Osd::MeshEndCapBSplineBasis, g_endCap == kEndCapBSplineBasis);
+	bits.set(Osd::MeshEndCapGregoryBasis, g_endCap == kEndCapGregoryBasis);
+	bits.set(Osd::MeshEndCapLegacyGregory, g_endCap == kEndCapLegacyGregory);
+
+	int numVertexElements = 3;
+	int numVaryingElements =
+		(g_shadingMode == kShadingVaryingColor || bits.test(Osd::MeshInterleaveVarying)) ? 4 : 0;
+
+	delete g_mesh;
+	g_mesh = NULL;
+	
+	g_mesh = new Osd::Mesh<Osd::CpuGLVertexBuffer,
+		Far::StencilTable,
+		Osd::CpuEvaluator,
+		Osd::GLPatchTable>(
+			refiner,
+			numVertexElements,
+			numVaryingElements,
+			level, bits);
+	//// save coarse topology (used for coarse mesh drawing)
+	g_controlMeshDisplay.SetTopology(refiner->GetLevel(0));
+	if (g_shadingMode == kShadingFaceVaryingColor && shape->HasUV()) {
+
+		std::vector<float> fvarData;
+
+		InterpolateFVarData(*refiner, *shape, fvarData);
+
+		// set fvardata to texture buffer
+		g_fvarData.Create(g_mesh->GetFarPatchTable(),
+			shape->GetFVarWidth(), fvarData);
+	}
+
+	if (!doAnim) {
+		delete shape;
+	}
+
+	// compute model bounding
+	float min[3] = { FLT_MAX,  FLT_MAX,  FLT_MAX };
+	float max[3] = { -FLT_MAX, -FLT_MAX, -FLT_MAX };
+	for (size_t i = 0; i < g_orgPositions.size() / 3; ++i) {
+		for (int j = 0; j < 3; ++j) {
+			float v = g_orgPositions[i * 3 + j];
+			min[j] = std::min(min[j], v);
+			max[j] = std::max(max[j], v);
+		}
+	}
+	for (int j = 0; j < 3; ++j) {
+		g_center[j] = (min[j] + max[j]) * 0.5f;
+		g_size += (max[j] - min[j]) * (max[j] - min[j]);
+	}
+	g_size = sqrtf(g_size);
+
+	g_tessLevelMin = 1;
+
+	g_tessLevel = std::max(g_tessLevel, g_tessLevelMin);
+
+	updateGeom();
+
+	// -------- VAO
+	glBindVertexArray(g_vao);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_mesh->GetPatchTable()->GetPatchIndexBuffer());
+	glBindBuffer(GL_ARRAY_BUFFER, g_mesh->BindVertexBuffer());
+
+	glEnableVertexAttribArray(0);
+
+	if (g_shadingMode == kShadingVaryingColor) {
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, 0);
+		glBindBuffer(GL_ARRAY_BUFFER, g_mesh->BindVaryingBuffer());
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 4, 0);
+	}
+	else if (g_shadingMode == kShadingInterleavedVaryingColor) {
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 7, 0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 7, (void*)(sizeof(GLfloat) * 3));
+	}
+	else {
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, 0);
+		glDisableVertexAttribArray(1);
+	}
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+}
+inline void
+P4::initOsdScene2()
+{
+	auto s = new Scene{ "Osd ToyExample2" };
+	_rayTracer = new RayTracer{ *s };
+	_renderer = new GLRenderer{ *s };
+	_renderer->setProgram(&_programP);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_POLYGON_OFFSET_FILL);
+	glPolygonOffset(1.0f, 1.0f);
+	glEnable(GL_LINE_SMOOTH);
+	_programG.use();
+	_current = s;
+	_scene = s;
+
+	// camera 0
+	Reference<SceneObject> sceneObject;
+	std::string name{ "Camera " + std::to_string(_sceneObjectCounter++) };
+	sceneObject = new SceneObject{ name.c_str(), _scene };
+	sceneObject->setParent(nullptr, true);
+	auto c = new Camera;
+	sceneObject->add(c);
+	Camera::setCurrent(c);
+	c->transform()->translate(vec3f{ -0.8f,1.3f,1.4f });
+	c->transform()->rotate(vec3f{ -24,-31,0 });
+
+	// directional light
+	auto dl = new SceneObject{ "Directional Light", _scene };
+	dl->setParent(nullptr, true);
+	auto l1 = new Light();
+	dl->transform()->setLocalPosition(vec3f{ 0,10,0 });
+	l1->setType(Light::Type::Directional);
+	l1->setColor(Color::white);
+	dl->add(l1);
+
+	Reference<SceneObject> OsdMesh = new SceneObject{ "OsdMesh", _scene };
+	OsdMesh->setParent(nullptr, true);
+	rebuildOsdMesh();
+	auto p = new OsdPrimitive{g_mesh,g_defaultShapes[g_currentShape].name.c_str()};
+	OsdMesh->add(p);
+	OsdMesh->transform()->rotate({ -90,0,0 });
+
+	
+}
+
 inline void
 P4::initOriginalScene()
 {
@@ -1037,6 +1837,7 @@ P4::initOriginalScene()
 	glEnable(GL_LINE_SMOOTH);
 	_programG.use();
 }
+
 inline void
 P4::initScene2()
 {
@@ -1738,10 +2539,642 @@ P4::gui()
 }
 
 inline void
-drawMesh(GLMesh* mesh, GLuint mode)
+P4::drawMesh(GLMesh* mesh, GLuint mode)
 {
   glPolygonMode(GL_FRONT_AND_BACK, mode);
   glDrawElements(GL_TRIANGLES, mesh->vertexCount(), GL_UNSIGNED_INT, 0);
+}
+
+union Effect {
+	Effect(int displayStyle_, int shadingMode_, int screenSpaceTess_,
+		int fractionalSpacing_, int patchCull_, int singleCreasePatch_)
+		: value(0) {
+		displayStyle = displayStyle_;
+		shadingMode = shadingMode_;
+		screenSpaceTess = screenSpaceTess_;
+		fractionalSpacing = fractionalSpacing_;
+		patchCull = patchCull_;
+		singleCreasePatch = singleCreasePatch_;
+	}
+
+	struct {
+		unsigned int displayStyle : 2;
+		unsigned int shadingMode : 4;
+		unsigned int screenSpaceTess : 1;
+		unsigned int fractionalSpacing : 1;
+		unsigned int patchCull : 1;
+		unsigned int singleCreasePatch : 1;
+	};
+	int value;
+
+	bool operator < (const Effect& e) const {
+		return value < e.value;
+	}
+};
+
+static Effect
+GetEffect()
+{
+	return Effect(g_displayStyle,
+		g_shadingMode,
+		g_screenSpaceTess,
+		g_fractionalSpacing,
+		g_patchCull,
+		g_singleCreasePatch);
+}
+
+struct EffectDesc {
+	EffectDesc(OpenSubdiv::Far::PatchDescriptor desc,
+		Effect effect) : desc(desc), effect(effect),
+		maxValence(0), numElements(0) { }
+
+	OpenSubdiv::Far::PatchDescriptor desc;
+	Effect effect;
+	int maxValence;
+	int numElements;
+
+	bool operator < (const EffectDesc& e) const {
+		return
+			(desc < e.desc || ((desc == e.desc &&
+				(maxValence < e.maxValence || ((maxValence == e.maxValence) &&
+					(numElements < e.numElements || ((numElements == e.numElements) &&
+						(effect < e.effect))))))));
+	}
+};
+
+static const char* shaderSource() {
+	static const char* res = NULL;
+	if (!res) {
+		static const char* gen =
+#include "assets/shaders/osd.shader"
+			;
+		static const char* gen3 =
+#include "opensubdiv/../build/examples/glViewer/shader_gl3.gen.h"
+			;
+		if (GLUtils::SupportsAdaptiveTessellation()) {
+			res = gen;
+		}
+		else {
+			res = gen3;
+		}
+	}
+	return res;
+}
+
+class ShaderCache : public GLShaderCache<EffectDesc> {
+public:
+	virtual GLDrawConfig* CreateDrawConfig(EffectDesc const& effectDesc) {
+
+		using namespace OpenSubdiv;
+
+		// compile shader program
+
+		GLDrawConfig* config = new GLDrawConfig(GLUtils::GetShaderVersionInclude().c_str());
+
+		Far::PatchDescriptor::Type type = effectDesc.desc.GetType();
+
+		// common defines
+		std::stringstream ss;
+
+		if (type == Far::PatchDescriptor::QUADS) {
+			ss << "#define PRIM_QUAD\n";
+		}
+		else {
+			ss << "#define PRIM_TRI\n";
+		}
+
+		// OSD tessellation controls
+		if (effectDesc.effect.screenSpaceTess) {
+			ss << "#define OSD_ENABLE_SCREENSPACE_TESSELLATION\n";
+		}
+		if (effectDesc.effect.fractionalSpacing) {
+			ss << "#define OSD_FRACTIONAL_ODD_SPACING\n";
+		}
+		if (effectDesc.effect.patchCull) {
+			ss << "#define OSD_ENABLE_PATCH_CULL\n";
+		}
+		if (effectDesc.effect.singleCreasePatch &&
+			type == Far::PatchDescriptor::REGULAR) {
+			ss << "#define OSD_PATCH_ENABLE_SINGLE_CREASE\n";
+		}
+		// for legacy gregory
+		ss << "#define OSD_MAX_VALENCE " << effectDesc.maxValence << "\n";
+		ss << "#define OSD_NUM_ELEMENTS " << effectDesc.numElements << "\n";
+
+		// display styles
+		switch (effectDesc.effect.displayStyle) {
+		case kDisplayStyleWire:
+			ss << "#define GEOMETRY_OUT_WIRE\n";
+			break;
+		case kDisplayStyleWireOnShaded:
+			ss << "#define GEOMETRY_OUT_LINE\n";
+			break;
+		case kDisplayStyleShaded:
+			ss << "#define GEOMETRY_OUT_FILL\n";
+			break;
+		}
+
+		// shading mode
+		switch (effectDesc.effect.shadingMode) {
+		case kShadingMaterial:
+			ss << "#define SHADING_MATERIAL\n";
+			break;
+		case kShadingVaryingColor:
+			ss << "#define SHADING_VARYING_COLOR\n";
+			break;
+		case kShadingInterleavedVaryingColor:
+			ss << "#define SHADING_VARYING_COLOR\n";
+			break;
+		case kShadingFaceVaryingColor:
+			ss << "#define OSD_FVAR_WIDTH 2\n";
+			ss << "#define SHADING_FACEVARYING_COLOR\n";
+			if (!effectDesc.desc.IsAdaptive()) {
+				ss << "#define SHADING_FACEVARYING_UNIFORM_SUBDIVISION\n";
+			}
+			break;
+		case kShadingPatchType:
+			ss << "#define SHADING_PATCH_TYPE\n";
+			break;
+		case kShadingPatchDepth:
+			ss << "#define SHADING_PATCH_DEPTH\n";
+			break;
+		case kShadingPatchCoord:
+			ss << "#define SHADING_PATCH_COORD\n";
+			break;
+		case kShadingNormal:
+			ss << "#define SHADING_NORMAL\n";
+			break;
+		}
+
+		if (type != Far::PatchDescriptor::TRIANGLES &&
+			type != Far::PatchDescriptor::QUADS) {
+			ss << "#define SMOOTH_NORMALS\n";
+		}
+
+		// need for patch color-coding : we need these defines in the fragment shader
+		if (type == Far::PatchDescriptor::GREGORY) {
+			ss << "#define OSD_PATCH_GREGORY\n";
+		}
+		else if (type == Far::PatchDescriptor::GREGORY_BOUNDARY) {
+			ss << "#define OSD_PATCH_GREGORY_BOUNDARY\n";
+		}
+		else if (type == Far::PatchDescriptor::GREGORY_BASIS) {
+			ss << "#define OSD_PATCH_GREGORY_BASIS\n";
+		}
+		else if (type == Far::PatchDescriptor::LOOP) {
+			ss << "#define OSD_PATCH_LOOP\n";
+		}
+		else if (type == Far::PatchDescriptor::GREGORY_TRIANGLE) {
+			ss << "#define OSD_PATCH_GREGORY_TRIANGLE\n";
+		}
+
+		// include osd PatchCommon
+		ss << "#define OSD_PATCH_BASIS_GLSL\n";
+		ss << Osd::GLSLPatchShaderSource::GetPatchBasisShaderSource();
+		ss << Osd::GLSLPatchShaderSource::GetCommonShaderSource();
+		std::string common = ss.str();
+		ss.str("");
+
+		// vertex shader
+		ss << common
+			// enable local vertex shader
+			<< (effectDesc.desc.IsAdaptive() ? "" : "#define VERTEX_SHADER\n")
+			<< shaderSource()
+			<< Osd::GLSLPatchShaderSource::GetVertexShaderSource(type);
+		config->CompileAndAttachShader(GL_VERTEX_SHADER, ss.str());
+		ss.str("");
+
+		if (effectDesc.desc.IsAdaptive()) {
+			// tess control shader
+			ss << common
+				<< shaderSource()
+				<< Osd::GLSLPatchShaderSource::GetTessControlShaderSource(type);
+			config->CompileAndAttachShader(GL_TESS_CONTROL_SHADER, ss.str());
+			ss.str("");
+
+			// tess eval shader
+			ss << common
+				<< shaderSource()
+				<< Osd::GLSLPatchShaderSource::GetTessEvalShaderSource(type);
+			config->CompileAndAttachShader(GL_TESS_EVALUATION_SHADER, ss.str());
+			ss.str("");
+		}
+
+		// geometry shader
+		ss << common
+			<< "#define GEOMETRY_SHADER\n"
+			<< shaderSource();
+		config->CompileAndAttachShader(GL_GEOMETRY_SHADER, ss.str());
+		ss.str("");
+
+		// fragment shader
+		ss << common
+			<< "#define FRAGMENT_SHADER\n"
+			<< shaderSource();
+		config->CompileAndAttachShader(GL_FRAGMENT_SHADER, ss.str());
+		ss.str("");
+
+		if (!config->Link()) {
+			delete config;
+			return NULL;
+		}
+
+		// assign uniform locations
+		GLuint uboIndex;
+		GLuint program = config->GetProgram();
+		uboIndex = glGetUniformBlockIndex(program, "Transform");
+		if (uboIndex != GL_INVALID_INDEX)
+			glUniformBlockBinding(program, uboIndex, g_transformBinding);
+
+		uboIndex = glGetUniformBlockIndex(program, "Tessellation");
+		if (uboIndex != GL_INVALID_INDEX)
+			glUniformBlockBinding(program, uboIndex, g_tessellationBinding);
+
+		uboIndex = glGetUniformBlockIndex(program, "Lighting");
+		if (uboIndex != GL_INVALID_INDEX)
+			glUniformBlockBinding(program, uboIndex, g_lightingBinding);
+
+		uboIndex = glGetUniformBlockIndex(program, "OsdFVarArrayData");
+		if (uboIndex != GL_INVALID_INDEX)
+			glUniformBlockBinding(program, uboIndex, g_fvarArrayDataBinding);
+
+		// assign texture locations
+		GLint loc;
+		
+		glUseProgram(program);
+		if ((loc = glGetUniformLocation(program, "OsdPatchParamBuffer")) != -1) {
+			glUniform1i(loc, 0); // GL_TEXTURE0
+		}
+		if ((loc = glGetUniformLocation(program, "OsdFVarDataBuffer")) != -1) {
+			glUniform1i(loc, 1); // GL_TEXTURE1
+		}
+		if ((loc = glGetUniformLocation(program, "OsdFVarParamBuffer")) != -1) {
+			glUniform1i(loc, 2); // GL_TEXTURE2
+		}
+		// for legacy gregory patches
+		if ((loc = glGetUniformLocation(program, "OsdVertexBuffer")) != -1) {
+			glUniform1i(loc, 3); // GL_TEXTURE3
+		}
+		if ((loc = glGetUniformLocation(program, "OsdValenceBuffer")) != -1) {
+			glUniform1i(loc, 4); // GL_TEXTURE4
+		}
+		if ((loc = glGetUniformLocation(program, "OsdQuadOffsetBuffer")) != -1) {
+			glUniform1i(loc, 5); // GL_TEXTURE5
+		}
+		glUseProgram(0);
+
+		return config;
+	}
+};
+
+ShaderCache g_shaderCache;
+
+static GLenum
+bindProgram(Effect effect,
+	OpenSubdiv::Osd::PatchArray const& patch, GLuint &program) {
+	EffectDesc effectDesc(patch.GetDescriptor(), effect);
+
+	// only legacy gregory needs maxValence and numElements
+	// neither legacy gregory nor gregory basis need single crease
+	typedef OpenSubdiv::Far::PatchDescriptor Descriptor;
+	if (patch.GetDescriptor().GetType() == Descriptor::GREGORY ||
+		patch.GetDescriptor().GetType() == Descriptor::GREGORY_BOUNDARY) {
+		int maxValence = g_mesh->GetMaxValence();
+		int numElements = (g_shadingMode == kShadingInterleavedVaryingColor ? 7 : 3);
+		effectDesc.maxValence = maxValence;
+		effectDesc.numElements = numElements;
+		effectDesc.effect.singleCreasePatch = 0;
+	}
+	if (patch.GetDescriptor().GetType() == Descriptor::GREGORY_BASIS) {
+		effectDesc.effect.singleCreasePatch = 0;
+	}
+
+	// lookup shader cache (compile the shader if needed)
+	GLDrawConfig* config = g_shaderCache.GetDrawConfig(effectDesc);
+	if (!config) return 0;
+
+	program = config->GetProgram();
+	glUseProgram(program);
+
+	// bind standalone uniforms
+	GLint uniformPrimitiveIdBase =
+		glGetUniformLocation(program, "PrimitiveIdBase");
+	if (uniformPrimitiveIdBase >= 0)
+		glUniform1i(uniformPrimitiveIdBase, patch.GetPrimitiveIdBase());
+
+	// update uniform
+	GLint uniformDiffuseColor =
+		glGetUniformLocation(program, "diffuseColor");
+	if (uniformDiffuseColor >= 0)
+		glUniform4f(uniformDiffuseColor, 0.4f, 0.4f, 0.8f, 1);
+
+	// return primtype
+	GLenum primType;
+	switch (effectDesc.desc.GetType()) {
+	case Descriptor::QUADS:
+		primType = GL_LINES_ADJACENCY;
+		break;
+	case Descriptor::TRIANGLES:
+		primType = GL_TRIANGLES;
+		break;
+	default:
+#if defined(GL_ARB_tessellation_shader) || defined(GL_VERSION_4_0)
+		primType = GL_PATCHES;
+		glPatchParameteri(GL_PATCH_VERTICES, effectDesc.desc.GetNumControlVertices());
+#else
+		primType = GL_POINTS;
+#endif
+		break;
+	}
+
+	return primType;
+}
+static void
+bindTextures() {
+	// bind patch textures
+	if (g_mesh->GetPatchTable()->GetPatchParamTextureBuffer()) {
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_BUFFER,
+			g_mesh->GetPatchTable()->GetPatchParamTextureBuffer());
+	}
+
+	if (true) {
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_BUFFER,
+			g_fvarData.textureBuffer);
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_BUFFER,
+			g_fvarData.textureParamBuffer);
+	}
+	glActiveTexture(GL_TEXTURE0);
+}
+void
+P4::updateUniformBlocks() {
+
+	using namespace OpenSubdiv;
+
+	if (!g_transformUB) {
+		glGenBuffers(1, &g_transformUB);
+		glBindBuffer(GL_UNIFORM_BUFFER, g_transformUB);
+		glBufferData(GL_UNIFORM_BUFFER,
+			sizeof(g_transformData), NULL, GL_STATIC_DRAW);
+	};
+	glBindBuffer(GL_UNIFORM_BUFFER, g_transformUB);
+	glBufferSubData(GL_UNIFORM_BUFFER,
+		0, sizeof(g_transformData), &g_transformData);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+	glBindBufferBase(GL_UNIFORM_BUFFER, g_transformBinding, g_transformUB);
+
+	// Update and bind tessellation state
+	struct Tessellation {
+		float TessLevel;
+	} tessellationData;
+
+	tessellationData.TessLevel = static_cast<float>(1 << g_tessLevel);
+
+	if (!g_tessellationUB) {
+		glGenBuffers(1, &g_tessellationUB);
+		glBindBuffer(GL_UNIFORM_BUFFER, g_tessellationUB);
+		glBufferData(GL_UNIFORM_BUFFER,
+			sizeof(tessellationData), NULL, GL_STATIC_DRAW);
+	};
+	glBindBuffer(GL_UNIFORM_BUFFER, g_tessellationUB);
+	glBufferSubData(GL_UNIFORM_BUFFER,
+		0, sizeof(tessellationData), &tessellationData);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+	glBindBufferBase(GL_UNIFORM_BUFFER, g_tessellationBinding, g_tessellationUB);
+
+	// Update and bind fvar patch array state
+	if (g_mesh->GetPatchTable()->GetNumFVarChannels() > 0) {
+		Osd::PatchArrayVector const& fvarPatchArrays =
+			g_mesh->GetPatchTable()->GetFVarPatchArrays();
+
+		// bind patch arrays UBO (std140 struct size padded to vec4 alignment)
+		int patchArraySize =
+			sizeof(GLint) * ((sizeof(Osd::PatchArray) / sizeof(GLint) + 3) & ~3);
+		if (!g_fvarArrayDataUB) {
+			glGenBuffers(1, &g_fvarArrayDataUB);
+		}
+		glBindBuffer(GL_UNIFORM_BUFFER, g_fvarArrayDataUB);
+		glBufferData(GL_UNIFORM_BUFFER,
+			fvarPatchArrays.size() * patchArraySize, NULL, GL_STATIC_DRAW);
+		for (int i = 0; i < (int)fvarPatchArrays.size(); ++i) {
+			glBufferSubData(GL_UNIFORM_BUFFER,
+				i * patchArraySize, sizeof(Osd::PatchArray), &fvarPatchArrays[i]);
+		}
+
+		glBindBufferBase(GL_UNIFORM_BUFFER,
+			g_fvarArrayDataBinding, g_fvarArrayDataUB);
+	}
+
+	// Update and bind lighting state
+	OsdLight::Lighting lightingData;
+	lightingData = loadOsdLights();
+	if (!g_lightingUB) {
+		glGenBuffers(1, &g_lightingUB);
+		glBindBuffer(GL_UNIFORM_BUFFER, g_lightingUB);
+		glBufferData(GL_UNIFORM_BUFFER,
+			sizeof(lightingData), NULL, GL_STATIC_DRAW);
+	};
+	glBindBuffer(GL_UNIFORM_BUFFER, g_lightingUB);
+	glBufferSubData(GL_UNIFORM_BUFFER,
+		0, sizeof(lightingData), &lightingData);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+	glBindBufferBase(GL_UNIFORM_BUFFER, g_lightingBinding, g_lightingUB);
+}
+
+inline OsdLight::Lighting 
+P4::loadOsdLights()
+{
+	// percorrer a lista de lights e passar os parametros de luz
+	auto itL = _scene->getPrimitiveIter();
+	auto endL = _scene->getPrimitiveEnd();
+	numLights = 0;
+	std::string name;
+	OsdLight::Lighting::Light light[10] = { 0 };
+	for (; itL != endL && numLights < 10; itL++)
+	{
+		if (auto l = dynamic_cast<Light*>((Component*)*itL))
+		{
+			auto p = l->sceneObject()->transform()->position();
+			auto d = l->sceneObject()->transform()->rotation() * vec3f(0, 1, 0);
+			auto c = l->color;
+			light[numLights] = {
+				{p.x, p.y, p.z, 0},
+				{d.x, d.y, d.z, 0},
+				{ 0.1f, 0.1f, 0.1f, 1.0f },
+				{ 0.8f, 0.8f, 0.8f, 1.0f },
+				{ 1.0f, 1.0f, 1.0f, 1.0f },
+				{ c.x, c.y, c.z ,1.0f},
+				{ (float)l->type(), (float)l->decayValue(), (float)l->decayExponent(), l->openningAngle()}
+			};
+			numLights++;
+		}
+
+		/*program->setUniform((name + "type").c_str(), l->type());
+		program->setUniform((name + "fallof").c_str(), l->decayValue());
+		program->setUniform((name + "decayExponent").c_str(), l->decayExponent());
+		program->setUniform((name + "openningAngle").c_str(), l->openningAngle());
+		program->setUniformVec3((name + "lightPosition").c_str(), l->sceneObject()->transform()->position());
+		program->setUniformVec4((name + "lightColor").c_str(), l->color);
+		program->setUniformVec3((name + "Ldirection").c_str(), l->sceneObject()->transform()->rotation() * vec3f(0, 1, 0));
+	*/
+	}
+	OsdLight::Lighting lighting;
+	auto pos = _editor->camera()->sceneObject()->transform()->position();
+	float camPos[3] = { pos.x, pos.y, pos.z };
+	memcpy(lighting.lightSource, light, sizeof(OsdLight::Lighting::Light) * 10);
+	return lighting;
+}
+
+inline void
+P4::drawPrimitive(OsdPrimitive& primitive)
+{
+	g_width = width();
+	g_height = height();
+	auto t = primitive.transform();
+	auto c = _editor->camera();
+	
+	mat4f modelMatrix{ t->localToWorldMatrix() };
+	mat4f viewMatrix{ c->worldToCameraMatrix() };
+	mat4f projMatrix{ c->projectionMatrix() };
+	mat4f mv = viewMatrix * modelMatrix;
+	mat4f imv;
+	mv.inverse(imv);
+
+	Stopwatch s;
+	s.Start();
+	glViewport(0, 0, g_width, g_height);
+	// prepare view matrix
+	double aspect = g_width / (double)g_height;
+	for (int i = 0; i < 4; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			g_transformData.ModelViewMatrix[4 * i + j] = mv[i][j];
+			g_transformData.ModelViewInverseMatrix[4 * i + j] = imv[i][j];
+			g_transformData.ModelViewProjectionMatrix[4 * i + j] = (projMatrix * mv)[i][j];
+			g_transformData.ProjectionMatrix[4 * i + j] = projMatrix[i][j];
+		}
+	}
+	// make sure that the vertex buffer is interoped back as a GL resource.
+	GLuint vbo = g_mesh->BindVertexBuffer();
+
+
+	if (g_shadingMode == kShadingVaryingColor)
+		g_mesh->BindVaryingBuffer();
+
+	// update transform and lighting uniform blocks
+	updateUniformBlocks();
+
+	// also bind patch related textures
+	bindTextures();
+
+	if (g_displayStyle == kDisplayStyleWire)
+		glDisable(GL_CULL_FACE);
+
+	glEnable(GL_DEPTH_TEST);
+	glBindVertexArray(g_vao);
+	OpenSubdiv::Osd::PatchArrayVector const& patches =
+		g_mesh->GetPatchTable()->GetPatchArrays();
+	// patch drawing
+	int patchCount[13]; // [Type] (see far/patchTable.h)
+	int numTotalPatches = 0;
+	int numDrawCalls = 0;
+	memset(patchCount, 0, sizeof(patchCount));
+
+	// primitive counting
+	glBeginQuery(GL_PRIMITIVES_GENERATED, g_queries[0]);
+	// core draw-calls
+	for (int i = 0; i < (int)patches.size(); ++i) {
+		OpenSubdiv::Osd::PatchArray const& patch = patches[i];
+
+		OpenSubdiv::Far::PatchDescriptor desc = patch.GetDescriptor();
+		OpenSubdiv::Far::PatchDescriptor::Type patchType = desc.GetType();
+
+		patchCount[patchType] += patch.GetNumPatches();
+		numTotalPatches += patch.GetNumPatches();
+		GLuint program;
+		GLenum primType = bindProgram(GetEffect(), patch, program);
+		auto loc = glGetUniformLocation(program, "NumLights");
+		glUniform1i(loc, numLights);
+		loc = glGetUniformLocation(program, "CamPos");
+		glUniform4fv(loc, 1, (float*)&_editor->camera()->sceneObject()->transform()->position());
+		glDrawElements(primType,
+			patch.GetNumPatches() * desc.GetNumControlVertices(),
+			GL_UNSIGNED_INT,
+			(void*)(patch.GetIndexBase() * sizeof(unsigned int)));
+		++numDrawCalls;
+	}
+	s.Stop();
+	float drawCpuTime = float(s.GetElapsed() * 1000.0f);
+
+	glEndQuery(GL_PRIMITIVES_GENERATED);
+	glBindVertexArray(0);
+	glUseProgram(0);
+
+	if (g_displayStyle == kDisplayStyleWire)
+		glEnable(GL_CULL_FACE);
+	// draw the control mesh
+	int stride = g_shadingMode == kShadingInterleavedVaryingColor ? 7 : 3;
+	g_controlMeshDisplay.Draw(vbo, stride * sizeof(float),
+		g_transformData.ModelViewProjectionMatrix);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	GLuint numPrimsGenerated = 0;
+	GLuint timeElapsed = 0;
+	glGetQueryObjectuiv(g_queries[0], GL_QUERY_RESULT, &numPrimsGenerated);
+
+	float drawGpuTime = timeElapsed / 1000.0f / 1000.0f;
+
+	g_fpsTimer.Stop();
+	float elapsed = (float)g_fpsTimer.GetElapsed();
+	if (!g_freeze) {
+		g_animTime += elapsed;
+	}
+	g_fpsTimer.Start();
+
+	/*if (g_hud.IsVisible()) {
+
+		typedef OpenSubdiv::Far::PatchDescriptor Descriptor;
+
+		double fps = 1.0 / elapsed;
+
+		if (g_displayPatchCounts) {
+			int x = -420;
+			int y = -140;
+			g_hud.DrawString(x, y, "Quads            : %d",
+				patchCount[Descriptor::QUADS]); y += 20;
+			g_hud.DrawString(x, y, "Triangles        : %d",
+				patchCount[Descriptor::TRIANGLES]); y += 20;
+			g_hud.DrawString(x, y, "Regular          : %d",
+				patchCount[Descriptor::REGULAR]); y += 20;
+			g_hud.DrawString(x, y, "Loop             : %d",
+				patchCount[Descriptor::LOOP]); y += 20;
+			g_hud.DrawString(x, y, "Gregory Basis    : %d",
+				patchCount[Descriptor::GREGORY_BASIS]); y += 20;
+			g_hud.DrawString(x, y, "Gregory Triangle : %d",
+				patchCount[Descriptor::GREGORY_TRIANGLE]); y += 20;
+		}
+
+		int y = -220;
+		g_hud.DrawString(10, y, "Tess level : %d", g_tessLevel); y += 20;
+		g_hud.DrawString(10, y, "Patches    : %d", numTotalPatches); y += 20;
+		g_hud.DrawString(10, y, "Draw calls : %d", numDrawCalls); y += 20;
+		g_hud.DrawString(10, y, "Primitives : %d", numPrimsGenerated); y += 20;
+		g_hud.DrawString(10, y, "Vertices   : %d", g_mesh->GetNumVertices()); y += 20;
+		g_hud.DrawString(10, y, "GPU Kernel : %.3f ms", g_gpuTime); y += 20;
+		g_hud.DrawString(10, y, "CPU Kernel : %.3f ms", g_cpuTime); y += 20;
+		g_hud.DrawString(10, y, "GPU Draw   : %.3f ms", drawGpuTime); y += 20;
+		g_hud.DrawString(10, y, "CPU Draw   : %.3f ms", drawCpuTime); y += 20;
+		g_hud.DrawString(10, y, "FPS        : %3.1f", fps); y += 20;
+
+		g_hud.Flush();
+	}*/
+
+	glFinish();
 }
 
 inline void
@@ -1755,7 +3188,8 @@ P4::drawPrimitive(Primitive& primitive)
 
 	auto t = primitive.transform();
 	auto normalMatrix = mat3f{ t->worldToLocalMatrix() }.transposed();
-
+	_programG.disuse();
+	_programG.use();
 	_programG.setUniformMat4("transform", t->localToWorldMatrix());
 	_programG.setUniformMat3("normalMatrix", normalMatrix);
 	_programG.setUniformVec4("material.ambient", primitive.material.ambient);
@@ -2109,6 +3543,8 @@ P4::render()
 
 		if (auto p = dynamic_cast<Primitive*>(component))
 			drawPrimitive(*p);
+		else if (auto p = dynamic_cast<OsdPrimitive*>(component))
+			drawPrimitive(*p);
 		else if (auto c = dynamic_cast<Camera*>(component))
 		{
 			if (c->sceneObject() == dynamic_cast<SceneObject*>(_current))
@@ -2127,6 +3563,7 @@ P4::render()
 		if (o == _current)
 		{
 			auto t = o->transform();
+			_editor->setPolygonMode(GLGraphicsBase::PolygonMode::FILL);
 			_editor->drawAxes(t->position(), mat3f{ t->rotation() });
 		}
 	}

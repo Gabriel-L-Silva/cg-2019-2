@@ -106,6 +106,15 @@
     <ClInclude Include="..\..\BVH.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\OsdVertex.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\OsdPrimitive.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\OsdLight.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\assets\shaders\p3.fs">
@@ -130,6 +139,9 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\..\assets\shaders\p4.vs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\assets\shaders\osd.shader">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

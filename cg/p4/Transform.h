@@ -232,6 +232,10 @@ public:
     return _rotation.rotate(d);
   }
 
+  const mat4f localMat() {
+    return localMatrix();
+  }
+
   /// Sets this transform as an identity transform.
   void reset();
 

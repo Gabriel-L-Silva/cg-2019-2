@@ -230,8 +230,8 @@ GLWindow::show()
     Application::error("Primary monitor not found");
   // Create the GLFW window.
   glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   _window = createGlfwWindow(_title.c_str(), _width, _height);
@@ -242,15 +242,15 @@ GLWindow::show()
   centerWindow();
   glfwMakeContextCurrent(_window);
   gl3wInit();
-  if (!gl3wIsSupported(3, 3))
-    Application::error("OpenGL v330 is not supported");
+  if (!gl3wIsSupported(4, 6))
+    Application::error("OpenGL v460 is not supported");
   glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
   registerGlfwCallBacks();
   // Setup Dear ImGui binding.
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
   ImGui_ImplGlfw_InitForOpenGL(_window, false);
-  ImGui_ImplOpenGL3_Init("#version 330");
+  ImGui_ImplOpenGL3_Init("#version 460");
 
   // Setup style.
   auto& style = ImGui::GetStyle();
